@@ -31,7 +31,13 @@ Dependencies
 How to install:
 ---
 
-under active development
+MarkerMAG can be installed via `pip3`:
+
+    # First-time installation
+    pip3 install MarkerMAG
+        
+    # for upgrade
+    pip3 install --upgrade MarkerMAG
 
 
 How to run:
