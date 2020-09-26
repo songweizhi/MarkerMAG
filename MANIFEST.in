@@ -1,0 +1,4 @@
+include README.md
+include MarkerMAG/MarkerMAG_config.py
+include MarkerMAG/get_sankey_plot.R
+include MarkerMAG/VERSION

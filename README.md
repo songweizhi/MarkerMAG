@@ -1,6 +1,9 @@
 
 ## MarkerMAG (link MAGs with marker genes)
 
+[![pypi licence](https://img.shields.io/pypi/l/MarkerMAG.svg)](https://opensource.org/licenses/gpl-3.0.html)
+[![pypi version](https://img.shields.io/pypi/v/MarkerMAG.svg)](https://pypi.python.org/pypi/MarkerMAG) 
+
 Contact
 ---
 

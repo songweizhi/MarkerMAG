@@ -1,0 +1,20 @@
+Metadata-Version: 1.0
+Name: MarkerMAG
+Version: 1.0.2
+Summary: link MAGs with marker genes
+Home-page: https://github.com/songweizhi/MarkerMAG
+Author: Weizhi Song, Torsten Thomas
+Author-email: songwz03@gmail.com
+License: GPL3+
+Description: 
+        
+        MarkerMAG: link MAGs with marker genes
+        
+        Weizhi Song (songwz03@gmail.com)
+        
+        Center for Marine Science & Innovation (CMSI)
+        University of New South Wales, Sydney, Australia
+        
+        
+Keywords: Bioinformatics Metagenomics Marker_Gene
+Platform: UNKNOWN
