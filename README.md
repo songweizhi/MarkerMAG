@@ -64,3 +64,9 @@ Output files:
     MarkerGene__p4_02304	GenomicSeq__p4	0	43	no
     MarkerGene__g4_00414	GenomicSeq__g4	196	139	yes
     MarkerGene__o3_02626	GenomicSeq__o3	100	81	yes
+
+
+Intra-genome 16S rRNA gene divergence [[ref.]](https://doi.org/10.1371/journal.pone.0057923)
+---
+
+![end_match](images/Intra_genome_16S_divergence.png) 

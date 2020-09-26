@@ -406,11 +406,11 @@ def MarkerMAG(args, config_dict):
     marker_gene_seqs                    = args['m']
     min_cigar_M                         = args['cigarM']
     min_cigar_S                         = args['cigarS']
-    iden_cutoff                         = args['iden']
-    cov_cutoff                          = args['cov']
-    iden16s                             = args['iden16S']
-    cov16s                              = args['cov16S']
-    aln16s                              = args['aln16S']
+    iden_cutoff                         = args['ri']
+    cov_cutoff                          = args['rc']
+    iden16s                             = args['mi']
+    cov16s                              = args['mc']
+    aln16s                              = args['ma']
     force_overwrite                     = args['force']
     keep_quiet                          = args['quiet']
     num_threads                         = args['t']
@@ -836,7 +836,7 @@ def MarkerMAG(args, config_dict):
 
     if test_mode is True:
 
-        report_and_log(('Test mode is on, assessing linkages'), pwd_log_file, keep_quiet)
+        report_and_log(('Test mode on, assessing linkages'), pwd_log_file, keep_quiet)
 
         marker_num = 0
         for marker_seq_record in SeqIO.parse(marker_gene_seqs, 'fasta'):
@@ -889,11 +889,11 @@ if __name__ == '__main__':
     MarkerMAG_parser.add_argument('-x',         required=False, default='fasta',            help='MAG file extension, default: fasta')
     MarkerMAG_parser.add_argument('-cigarM',    required=False, type=int, default=30,       help='cigarM cutoff, default: 30')
     MarkerMAG_parser.add_argument('-cigarS',    required=False, type=int, default=30,       help='cigarS cutoff, default: 30')
-    MarkerMAG_parser.add_argument('-iden',      required=False, type=float, default=100,    help='identity cutoff, default: 100')
-    MarkerMAG_parser.add_argument('-cov',       required=False, type=float, default=100,    help='coverage cutoff, default: 100')
-    MarkerMAG_parser.add_argument('-iden16S',   required=False, type=float, default=99.5,   help='within genome 16S identity cutoff, default: 99.5')
-    MarkerMAG_parser.add_argument('-aln16S',    required=False, type=int, default=500,      help='alignment length cutoff for calculating 16S identity, default: 500')
-    MarkerMAG_parser.add_argument('-cov16S',    required=False, type=float, default=90,     help='alignment coverage cutoff for calculating 16S identity, default: 90')
+    MarkerMAG_parser.add_argument('-ri',        required=False, type=float, default=100,    help='identity cutoff, default: 100')
+    MarkerMAG_parser.add_argument('-rc',        required=False, type=float, default=100,    help='coverage cutoff, default: 100')
+    MarkerMAG_parser.add_argument('-mi',        required=False, type=float, default=99.5,   help='within genome 16S identity cutoff, default: 99.5')
+    MarkerMAG_parser.add_argument('-mc',        required=False, type=float, default=90,     help='alignment coverage cutoff for calculating 16S identity, default: 90')
+    MarkerMAG_parser.add_argument('-ma',        required=False, type=int, default=500,      help='alignment length cutoff for calculating 16S identity, default: 500')
     MarkerMAG_parser.add_argument('-t',         required=False, type=int, default=1,        help='number of threads, default: 1')
     MarkerMAG_parser.add_argument('-quiet',     required=False, action="store_true",        help='not report progress')
     MarkerMAG_parser.add_argument('-force',     required=False, action="store_true",        help='force overwrite existing results')
