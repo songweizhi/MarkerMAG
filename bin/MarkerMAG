@@ -26,15 +26,15 @@ from time import sleep
 import multiprocessing as mp
 from datetime import datetime
 from distutils.spawn import find_executable
-#from MarkerMAG.MarkerMAG_config import config_dict
+from MarkerMAG.MarkerMAG_config import config_dict
 
 
-config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split('/')[:-1]),
-               'bowtie2'            : 'bowtie2',
-               'bowtie2_build'      : 'bowtie2-build',
-               'blastn'             : 'blastn',
-               'makeblastdb'        : 'makeblastdb',
-               'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
+# config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split('/')[:-1]),
+#                'bowtie2'            : 'bowtie2',
+#                'bowtie2_build'      : 'bowtie2-build',
+#                'blastn'             : 'blastn',
+#                'makeblastdb'        : 'makeblastdb',
+#                'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
 
 
 MarkerMAG_usage = '''
@@ -914,9 +914,11 @@ rm -r MarkerMAG.egg-info
 python setup.py sdist bdist_wheel
 
 twine upload dist/*
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-
 songweizhi
+
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+songweizhi
+
 shan88
 
 pip3 install --upgrade MarkerMAG

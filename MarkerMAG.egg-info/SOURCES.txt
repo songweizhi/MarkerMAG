@@ -10,3 +10,4 @@ MarkerMAG.egg-info/dependency_links.txt
 MarkerMAG.egg-info/requires.txt
 MarkerMAG.egg-info/top_level.txt
 bin/MarkerMAG
+bin/Rename_reads

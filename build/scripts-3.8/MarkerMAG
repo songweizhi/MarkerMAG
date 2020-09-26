@@ -40,14 +40,14 @@ from MarkerMAG.MarkerMAG_config import config_dict
 MarkerMAG_usage = '''
 =================================== MarkerMAG example commands ===================================
 
-1. rename paired reads
-MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference 
-of their names is the last character. "BioSAK rename_reads_for_Reago" do this job.
- 
 MarkerMAG -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
 MarkerMAG -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAGs -x fa -t 4
 
-===================================================================================================
+Note:
+MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference 
+is the last character. You can rename your reads with "Rename_reads".
+
+==================================================================================================
 
 '''
 
@@ -853,7 +853,6 @@ def MarkerMAG(args, config_dict):
         report_and_log(('Intxn:\t%s\t%s' % (marker_recovery_intersection, link_accuracy_intersection)), pwd_log_file, keep_quiet)
 
 
-
     ################################################### remove tmp files ###################################################
 
     if keep_temp is False:
@@ -905,22 +904,32 @@ if __name__ == '__main__':
     MarkerMAG(args, config_dict)
 
 
+Notes = '''
+
+alias twine='/Users/songweizhi/Library/Python/3.7/bin/twine'
+cd /Users/songweizhi/PycharmProjects/MarkerMAG
+rm -r build
+rm -r dist
+rm -r MarkerMAG.egg-info
+python setup.py sdist bdist_wheel
+
+twine upload dist/*
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+songweizhi
+shan88
+
+pip3 install --upgrade MarkerMAG
+pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
+
+'''
+
 To_do = '''
 
 1. enable multiple placement for a read?
 2. where does the paired read of the clipping mapped read mapped to? (should take into consideration!!!)
 3. check whether the final output is blank
 4. how to incorporate the taxonomy of MAGs and 16S sequences
-5. rename reads as xxx.1 and xxx.2
 7. the effect of sequencing depth, insert size and read length
-
-Torsten's comments:
 3. the depth of 16S sequences always not lower than the genome they come from
-
-
-# Test
-export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH
-cd /Users/songweizhi/Desktop/link_wd
-python3 ~/PycharmProjects/MarkerMAG/bin/MarkerMAG -p EvenDepth -r1 R1.fasta -r2 R2.fasta -m combined_16S.ffn -mag selected_genomes_renamed_no_plasmid -x fna -t 4 -tmp -force -test_mode
 
 '''
