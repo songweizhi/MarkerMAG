@@ -42,6 +42,17 @@ MarkerMAG can be installed via `pip3`:
 
 How to run:
 ---
+ 
+
+1. MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference is the last character.
+You can rename your reads with "Rename_reads".
+
+       Rename_reads -r1 R1.fasta -r2 R2.fasta -p Soil
+       
+       # output files: 
+       # Soil_R1_renamed.fasta 
+       # Soil_R2_renamed.fasta 
+
 
 1. Link 16S rRNA gene sequences with metagenomic assemblies: 
 
@@ -66,7 +77,10 @@ Output files:
     MarkerGene__o3_02626	GenomicSeq__o3	100	81	yes
 
 
-Intra-genome 16S rRNA gene divergence [[ref.]](https://doi.org/10.1371/journal.pone.0057923)
+Reference: intra-genome 16S rRNA gene divergence [[ref.]](https://doi.org/10.1371/journal.pone.0057923)
 ---
 
 ![end_match](images/Intra_genome_16S_divergence.png) 
+
+
+

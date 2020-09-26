@@ -13,14 +13,11 @@ def version():
 __long_description__ = '''
 
 MarkerMAG: link MAGs with marker genes
-
 Weizhi Song (songwz03@gmail.com)
-
 Center for Marine Science & Innovation (CMSI)
 University of New South Wales, Sydney, Australia
 
 '''
-
 
 setup(name="MarkerMAG",
       version=version(),
@@ -35,5 +32,4 @@ setup(name="MarkerMAG",
       package_data={'': ['*.r', '*.R', '*.py', 'VERSION']},
       include_package_data=True,
       install_requires=['biopython', 'pandas'],
-      scripts=['bin/MarkerMAG'])
-
+      scripts=['bin/MarkerMAG', 'bin/Rename_reads'])

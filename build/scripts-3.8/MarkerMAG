@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import os
 import glob
 import shutil
@@ -29,13 +28,14 @@ from datetime import datetime
 from distutils.spawn import find_executable
 from MarkerMAG.MarkerMAG_config import config_dict
 
-# config_dict = {'config_file_path': '/'.join(os.path.realpath(__file__).split('/')[:-1]),
-#                'bowtie2': 'bowtie2',
-#                'bowtie2_build': 'bowtie2-build',
-#                'blastn': 'blastn',
-#                'makeblastdb': 'makeblastdb',
-#                'get_sankey_plot_R': '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
-#
+
+# config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split('/')[:-1]),
+#                'bowtie2'            : 'bowtie2',
+#                'bowtie2_build'      : 'bowtie2-build',
+#                'blastn'             : 'blastn',
+#                'makeblastdb'        : 'makeblastdb',
+#                'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
+
 
 MarkerMAG_usage = '''
 =================================== MarkerMAG example commands ===================================
@@ -406,11 +406,11 @@ def MarkerMAG(args, config_dict):
     marker_gene_seqs                    = args['m']
     min_cigar_M                         = args['cigarM']
     min_cigar_S                         = args['cigarS']
-    iden_cutoff                         = args['iden']
-    cov_cutoff                          = args['cov']
-    iden16s                             = args['iden16S']
-    cov16s                              = args['cov16S']
-    aln16s                              = args['aln16S']
+    reads_iden_cutoff                   = args['ri']
+    reads_cov_cutoff                    = args['rc']
+    iden16s                             = args['mi']
+    cov16s                              = args['mc']
+    aln16s                              = args['ma']
     force_overwrite                     = args['force']
     keep_quiet                          = args['quiet']
     num_threads                         = args['t']
@@ -441,7 +441,7 @@ def MarkerMAG(args, config_dict):
     ############################################# create working directory #############################################
 
     # create working directory
-    working_directory = '%s_MarkerMAG_M%s_S%s_ri%s_rc%s_mi%s_mc%s_ma%sbp_wd' % (output_prefix, min_cigar_M, min_cigar_S, iden_cutoff, cov_cutoff, iden16s, cov16s, aln16s)
+    working_directory = '%s_MarkerMAG_M%s_S%s_ri%s_rc%s_mi%s_mc%s_ma%sbp_wd' % (output_prefix, min_cigar_M, min_cigar_S, reads_iden_cutoff, reads_cov_cutoff, iden16s, cov16s, aln16s)
     if (os.path.isdir(working_directory) is True) and (force_overwrite is False):
         print('Working directory detected, program exited!')
         exit()
@@ -530,7 +530,7 @@ def MarkerMAG(args, config_dict):
     # run mapping
     report_and_log(('Mapping reads to marker gene sequences'), pwd_log_file, keep_quiet)
     sleep(1)
-    report_and_log(('Please ignore warning messages starting with "Use of uninitialized value" during Bowtie mapping'), pwd_log_file, keep_quiet)
+    report_and_log(('Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
     sleep(1)
 
     bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
@@ -540,7 +540,7 @@ def MarkerMAG(args, config_dict):
     os.system(bowtie2_mapping_cmd)
 
     sleep(1)
-    report_and_log(('Please ignore warning messages starting with "Use of uninitialized value" during Bowtie mapping'), pwd_log_file, keep_quiet)
+    report_and_log(('Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
     sleep(1)
 
 
@@ -675,8 +675,8 @@ def MarkerMAG(args, config_dict):
     report_and_log(('Parsing blast results for paired reads'), pwd_log_file, keep_quiet)
 
     # filter blast results for paired and clipping mapped reads
-    unmapped_paired_reads_to_ctg_dict = blast_results_to_dict(unmapped_paired_reads_blastn, iden_cutoff, cov_cutoff)
-    clipping_parts_to_ctg_dict        = blast_results_to_dict(clipping_reads_not_matched_part_seq_blastn, iden_cutoff, cov_cutoff)
+    unmapped_paired_reads_to_ctg_dict = blast_results_to_dict(unmapped_paired_reads_blastn, reads_iden_cutoff, reads_cov_cutoff)
+    clipping_parts_to_ctg_dict        = blast_results_to_dict(clipping_reads_not_matched_part_seq_blastn, reads_iden_cutoff, reads_cov_cutoff)
     paired_stats_dict_num             = {}
     paired_reads_match_profile_handle = open(paired_reads_match_profile, 'w')
     paired_reads_match_profile_handle.write('ID\tR1\tR2\n')
@@ -836,7 +836,7 @@ def MarkerMAG(args, config_dict):
 
     if test_mode is True:
 
-        report_and_log(('Test mode is on, assessing linkages'), pwd_log_file, keep_quiet)
+        report_and_log(('Test mode on, assessing linkages'), pwd_log_file, keep_quiet)
 
         marker_num = 0
         for marker_seq_record in SeqIO.parse(marker_gene_seqs, 'fasta'):
@@ -877,30 +877,30 @@ def MarkerMAG(args, config_dict):
 
 if __name__ == '__main__':
 
-    link_16S_and_MAG_parser = argparse.ArgumentParser(description=('Version %s, link MAGs with marker genes' % version()), usage=MarkerMAG_usage)
+    MarkerMAG_parser = argparse.ArgumentParser(description=('Link MAGs with marker genes, v%s' % version()), usage=MarkerMAG_usage)
 
     # arguments for link_16S_and_MAG
-    link_16S_and_MAG_parser.add_argument('-p',              required=True,                            help='Output prefix')
-    link_16S_and_MAG_parser.add_argument('-r1',             required=True,                            help='Paired reads r1')
-    link_16S_and_MAG_parser.add_argument('-r2',             required=True,                            help='Paired reads r2')
-    link_16S_and_MAG_parser.add_argument('-m',              required=True,                            help='Marker gene sequences')
-    link_16S_and_MAG_parser.add_argument('-g',              required=False, default=None,             help='Genomic sequences')
-    link_16S_and_MAG_parser.add_argument('-mag',            required=False, default=None,             help='Metagenome-assembled-genome (MAG) folder')
-    link_16S_and_MAG_parser.add_argument('-x',              required=False, default='fasta',          help='MAG file extension, default: fasta')
-    link_16S_and_MAG_parser.add_argument('-cigarM',         required=False, type=int, default=30,     help='cigarM cutoff, default: 30')
-    link_16S_and_MAG_parser.add_argument('-cigarS',         required=False, type=int, default=30,     help='cigarS cutoff, default: 30')
-    link_16S_and_MAG_parser.add_argument('-iden',           required=False, type=float, default=100,  help='identity cutoff, default: 100')
-    link_16S_and_MAG_parser.add_argument('-cov',            required=False, type=float, default=100,  help='coverage cutoff, default: 100')
-    link_16S_and_MAG_parser.add_argument('-iden16S',        required=False, type=float, default=99.5, help='within genome 16S identity cutoff, default: 99.5')
-    link_16S_and_MAG_parser.add_argument('-aln16S',         required=False, type=int, default=500,    help='alignment length cutoff for calculating 16S identity, default: 500')
-    link_16S_and_MAG_parser.add_argument('-cov16S',         required=False, type=float, default=90,   help='alignment coverage cutoff for calculating 16S identity, default: 90')
-    link_16S_and_MAG_parser.add_argument('-t',              required=False, type=int, default=1,      help='number of threads, default: 1')
-    link_16S_and_MAG_parser.add_argument('-quiet',          required=False, action="store_true",      help='not report progress')
-    link_16S_and_MAG_parser.add_argument('-force',          required=False, action="store_true",      help='force overwrite existing results')
-    link_16S_and_MAG_parser.add_argument('-tmp',            required=False, action="store_true",      help='keep temporary files')
-    link_16S_and_MAG_parser.add_argument('-test_mode',      required=False, action="store_true",      help='only for debugging, do not provide')
+    MarkerMAG_parser.add_argument('-p',         required=True,                                  help='Output prefix')
+    MarkerMAG_parser.add_argument('-r1',        required=True,                                  help='paired reads r1')
+    MarkerMAG_parser.add_argument('-r2',        required=True,                                  help='paired reads r2')
+    MarkerMAG_parser.add_argument('-m',         required=True,                                  help='marker gene sequences')
+    MarkerMAG_parser.add_argument('-g',         required=False,             default=None,       help='genomic sequences')
+    MarkerMAG_parser.add_argument('-mag',       required=False,             default=None,       help='metagenome-assembled-genome (MAG) folder')
+    MarkerMAG_parser.add_argument('-x',         required=False,             default='fasta',    help='MAG file extension, default: fasta')
+    MarkerMAG_parser.add_argument('-cigarM',    required=False, type=int,   default=30,         help='cigarM cutoff, default: 30')
+    MarkerMAG_parser.add_argument('-cigarS',    required=False, type=int,   default=30,         help='cigarS cutoff, default: 30')
+    MarkerMAG_parser.add_argument('-ri',        required=False, type=float, default=100,        help='identity cutoff, default: 100')
+    MarkerMAG_parser.add_argument('-rc',        required=False, type=float, default=100,        help='coverage cutoff, default: 100')
+    MarkerMAG_parser.add_argument('-mi',        required=False, type=float, default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
+    MarkerMAG_parser.add_argument('-mc',        required=False, type=float, default=90,         help='alignment coverage cutoff for calculating 16S identity, default: 90')
+    MarkerMAG_parser.add_argument('-ma',        required=False, type=int,   default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
+    MarkerMAG_parser.add_argument('-t',         required=False, type=int,   default=1,          help='number of threads, default: 1')
+    MarkerMAG_parser.add_argument('-quiet',     required=False, action="store_true",            help='not report progress')
+    MarkerMAG_parser.add_argument('-force',     required=False, action="store_true",            help='force overwrite existing results')
+    MarkerMAG_parser.add_argument('-tmp',       required=False, action="store_true",            help='keep temporary files')
+    MarkerMAG_parser.add_argument('-test_mode', required=False, action="store_true",            help='only for debugging, do not provide')
 
-    args = vars(link_16S_and_MAG_parser.parse_args())
+    args = vars(MarkerMAG_parser.parse_args())
 
     MarkerMAG(args, config_dict)
 

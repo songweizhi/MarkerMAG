@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+
+import os
+import argparse
+from Bio import SeqIO
+
+
+Rename_reads_usage = '''
+===================== Rename_reads example commands =====================
+
+Rename_reads -r1 Soil_R1.fasta -r2 Soil_R2.fasta -p Soil
+
+# Note
+The order of paired reads in the two files must be the same.
+
+# output files: 
+Soil_R1_renamed.fasta
+Soil_R2_renamed.fasta 
+
+=========================================================================
+'''
+
+
+def sep_path_basename_ext(file_in):
+
+    # separate path and file name
+    file_path, file_name = os.path.split(file_in)
+    if file_path == '':
+        file_path = '.'
+
+    # separate file basename and extension
+    file_basename, file_extension = os.path.splitext(file_name)
+
+    return file_path, file_basename, file_extension
+
+
+def Rename_reads(args):
+
+    reads_r1 = args['r1']
+    reads_r2 = args['r2']
+    output_prefix = args['p']
+
+    output_file_r1 = '%s_R1_renamed.fasta' % output_prefix
+    output_file_r2 = '%s_R2_renamed.fasta' % output_prefix
+
+    output_file_r1_handle = open(output_file_r1, 'w')
+    r1_index = 1
+    for r1_record in SeqIO.parse(reads_r1, 'fasta'):
+        output_file_r1_handle.write('>%s_%s.1\n' % (output_prefix, r1_index))
+        output_file_r1_handle.write('%s\n' % r1_record.seq)
+        r1_index += 1
+    output_file_r1_handle.close()
+
+    output_file_r2_handle = open(output_file_r2, 'w')
+    r2_index = 1
+    for r2_record in SeqIO.parse(reads_r2, 'fasta'):
+        output_file_r2_handle.write('>%s_%s.2\n' % (output_prefix, r2_index))
+        output_file_r2_handle.write('%s\n' % r2_record.seq)
+        r2_index += 1
+    output_file_r2_handle.close()
+
+
+if __name__ == '__main__':
+
+    Rename_reads_parser = argparse.ArgumentParser(description='', usage=Rename_reads_usage)
+
+    Rename_reads_parser.add_argument('-r1',  required=True,  type=str, help='forward reads file, in fasta format')
+    Rename_reads_parser.add_argument('-r2',  required=True,  type=str, help='reverse reads file, in fasta format')
+    Rename_reads_parser.add_argument('-p',   required=True,  type=str, help='output prefix')
+
+    args = vars(Rename_reads_parser.parse_args())
+
+    Rename_reads(args)
+
