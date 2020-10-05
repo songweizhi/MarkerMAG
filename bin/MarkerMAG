@@ -26,15 +26,15 @@ from time import sleep
 import multiprocessing as mp
 from datetime import datetime
 from distutils.spawn import find_executable
-from MarkerMAG.MarkerMAG_config import config_dict
+#from MarkerMAG.MarkerMAG_config import config_dict
 
 
-# config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split('/')[:-1]),
-#                'bowtie2'            : 'bowtie2',
-#                'bowtie2_build'      : 'bowtie2-build',
-#                'blastn'             : 'blastn',
-#                'makeblastdb'        : 'makeblastdb',
-#                'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
+config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split('/')[:-1]),
+               'bowtie2'            : 'bowtie2',
+               'bowtie2_build'      : 'bowtie2-build',
+               'blastn'             : 'blastn',
+               'makeblastdb'        : 'makeblastdb',
+               'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
 
 
 MarkerMAG_usage = '''
@@ -212,6 +212,39 @@ def blast_results_to_dict(blastn_results, iden_cutoff, query_cov_cutoff):
     return query_to_subject_list_dict
 
 
+def blast_results_to_dict_by_bitscore(blastn_results, iden_cutoff):
+    # get query_to_best_bitscore_dict
+    query_to_best_bitscore_dict = {}
+    for blast_hit in open(blastn_results):
+        blast_hit_split = blast_hit.strip().split('\t')
+        query = blast_hit_split[0]
+        bitscore = float(blast_hit_split[11])
+
+        if query not in query_to_best_bitscore_dict:
+            query_to_best_bitscore_dict[query] = bitscore
+        else:
+            if bitscore > query_to_best_bitscore_dict[query]:
+                query_to_best_bitscore_dict[query] = bitscore
+
+    # filter balst results
+    query_to_subject_list_dict = {}
+    for blast_hit in open(blastn_results):
+        blast_hit_split = blast_hit.strip().split('\t')
+        query = blast_hit_split[0]
+        subject = blast_hit_split[1]
+        subject_with_prefix = 'GenomicSeq__%s' % subject
+        iden = float(blast_hit_split[2])
+        bitscore = float(blast_hit_split[11])
+        current_query_best_bitscore = query_to_best_bitscore_dict[query]
+        if (iden >= iden_cutoff) and (bitscore == current_query_best_bitscore):
+            if query not in query_to_subject_list_dict:
+                query_to_subject_list_dict[query] = [subject_with_prefix]
+            else:
+                query_to_subject_list_dict[query].append(subject_with_prefix)
+
+    return query_to_subject_list_dict
+
+
 def stats_dict_to_sankey_file_in(clipping_stats_dict, paired_stats_dict, sankey_file_in_clipping, sankey_file_in_paired):
 
     # prepare input file for plot of clipping mapped reads
@@ -300,7 +333,7 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
     file_out_handle.close()
 
     # remove tmp file
-    os.remove(file_in_sorted)
+    # os.remove(file_in_sorted)
 
 
 def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, file_out_summary, file_out_intersect_linkages):
@@ -377,10 +410,10 @@ def get_accuracy(file_in, marker_num):
                 linkage_num_correct += linkage_num
                 recovered_markers.add(match_split[0][12:])
 
-    marker_recovery = float("{0:.8f}".format(len(recovered_markers)/marker_num))
-    link_accuracy = float("{0:.8f}".format(linkage_num_correct/linkage_num_total))
+    marker_recovery = float("{0:.2f}".format(len(recovered_markers)*100/marker_num))
+    link_accuracy = float("{0:.2f}".format(linkage_num_correct*100/linkage_num_total))
 
-    return marker_recovery, link_accuracy
+    return marker_recovery, link_accuracy, recovered_markers
 
 
 def rename_seq(ctg_file_in, ctg_file_out, prefix):
@@ -404,6 +437,7 @@ def MarkerMAG(args, config_dict):
     mag_folder                          = args['mag']
     mag_file_extension                  = args['x']
     marker_gene_seqs                    = args['m']
+    multiple_placement                  = str(args['mp'])
     min_cigar_M                         = args['cigarM']
     min_cigar_S                         = args['cigarS']
     reads_iden_cutoff                   = args['ri']
@@ -441,7 +475,7 @@ def MarkerMAG(args, config_dict):
     ############################################# create working directory #############################################
 
     # create working directory
-    working_directory = '%s_MarkerMAG_M%s_S%s_ri%s_rc%s_mi%s_mc%s_ma%sbp_wd' % (output_prefix, min_cigar_M, min_cigar_S, reads_iden_cutoff, reads_cov_cutoff, iden16s, cov16s, aln16s)
+    working_directory = '%s_MarkerMAG_wd_M%s_S%s_ri%s_rc%s_mi%s_mc%s_ma%sbp' % (output_prefix, min_cigar_M, min_cigar_S, reads_iden_cutoff, reads_cov_cutoff, iden16s, cov16s, aln16s)
     if (os.path.isdir(working_directory) is True) and (force_overwrite is False):
         print('Working directory detected, program exited!')
         exit()
@@ -516,6 +550,7 @@ def MarkerMAG(args, config_dict):
     link_stats_paired_filtered                  = '%s/%s_stats_paired_filtered.txt'                 % (working_directory, output_prefix)
     link_stats_combined_table                   = '%s/%s_stats_combined_table.txt'                  % (working_directory, output_prefix)
     link_stats_intersection                     = '%s/%s_stats_intersection.txt'                    % (working_directory, output_prefix)
+    pairwise_marker_similarity                  = '%s/%s_pairwise_marker_similarity.txt'            % (working_directory, output_prefix)
 
     blast_parameters    = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
 
@@ -536,8 +571,21 @@ def MarkerMAG(args, config_dict):
     bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
     os.system(bowtie2_index_ref_cmd)
 
-    bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+    if multiple_placement == '0':
+        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+    elif multiple_placement == 'a':
+        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -a --quiet --threads %s'    % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+    else:
+        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -k %s --quiet --threads %s' % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, multiple_placement, num_threads)
     os.system(bowtie2_mapping_cmd)
+
+
+    #bbmap_index_ref_cmd = 'bbmap.sh ref=%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
+    #bbmap_mapping_cmd   = 'bbmap.sh in=%s in2=%s out=%s local=t' % (reads_file_r1, reads_file_r2, pwd_samfile)
+    #bbmap_index_and_mapping_cmd = 'bbmap.sh ref=%s/%s%s in=%s in2=%s out=%s local=t' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, reads_file_r1, reads_file_r2, pwd_samfile)
+    #os.system(bbmap_index_ref_cmd)
+    #os.system(bbmap_mapping_cmd)
+    #os.system(bbmap_index_and_mapping_cmd)
 
     sleep(1)
     report_and_log(('Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
@@ -546,13 +594,12 @@ def MarkerMAG(args, config_dict):
 
     ##################################################### extract reads ####################################################
 
-    report_and_log(('Extracting unmapped part of clipping mapped reads'), pwd_log_file, keep_quiet)
+    report_and_log(('Extracting unmapped part of clipping mapped reads from sam file'), pwd_log_file, keep_quiet)
 
     # export clipping mapped reads and perfectly mapped reads
     clipping_mapped_reads_list = set()
     clipping_reads_mapped_part_dict = {}
     perfectly_mapped_reads_dict = {}
-    clipping_reads_matched_part_handle = open(clipping_reads_matched_part, 'w')
     clipping_reads_not_matched_part_seq_handle = open(clipping_reads_not_matched_part_seq, 'w')
     for each_read in open(pwd_samfile):
 
@@ -567,6 +614,7 @@ def MarkerMAG(args, config_dict):
             cigar = each_read_split[5]
             read_seq = each_read_split[9]
             cigar_splitted  = cigar_splitter(cigar)
+            read_id_with_ref_pos = '%s__x__%s__x__%s' % (read_id, ref_id, ref_pos)
 
             # for perfectly mapped reads
             if ('M' in cigar) and (len(cigar_splitted) == 1):
@@ -597,22 +645,28 @@ def MarkerMAG(args, config_dict):
                     read_seq_right = read_seq[-int(cigar_splitted[1][:-1]):]
 
                     if cigar_splitted[0][-1] == 'M':
-                        clipping_reads_matched_part_handle.write('%s_l\t%s\t%s\n' % (read_id, ref_id, split_pos))
-                        clipping_reads_not_matched_part_seq_handle.write('>%s_r\n' % read_id)
+
+                        # write out the sequence of unmapped part
+                        clipping_reads_not_matched_part_seq_handle.write('>%s_r\n' % read_id_with_ref_pos)
                         clipping_reads_not_matched_part_seq_handle.write(read_seq_right + '\n')
-                        if ('%s_l' % read_id) not in clipping_reads_mapped_part_dict:
-                            clipping_reads_mapped_part_dict[('%s_l' % read_id)] = [ref_id_with_prefix]
+
+                        # store the match info of mapped part
+                        if ('%s_l' % read_id_with_ref_pos) not in clipping_reads_mapped_part_dict:
+                            clipping_reads_mapped_part_dict[('%s_l' % read_id_with_ref_pos)] = [ref_id_with_prefix]
                         else:
-                            clipping_reads_mapped_part_dict[('%s_l' % read_id)].append(ref_id_with_prefix)
+                            clipping_reads_mapped_part_dict[('%s_l' % read_id_with_ref_pos)].append(ref_id_with_prefix)
 
                     if cigar_splitted[1][-1] == 'M':
-                        clipping_reads_matched_part_handle.write('%s_r\t%s\t%s\n' % (read_id, ref_id, split_pos))
-                        clipping_reads_not_matched_part_seq_handle.write('>%s_l\n' % read_id)
+
+                        # write out the sequence of unmapped part
+                        clipping_reads_not_matched_part_seq_handle.write('>%s_l\n' % read_id_with_ref_pos)
                         clipping_reads_not_matched_part_seq_handle.write(read_seq_left + '\n')
-                        if ('%s_r' % read_id) not in clipping_reads_mapped_part_dict:
-                            clipping_reads_mapped_part_dict[('%s_r' % read_id)] = [ref_id_with_prefix]
+
+                        # store the match info of mapped part
+                        if ('%s_r' % read_id_with_ref_pos) not in clipping_reads_mapped_part_dict:
+                            clipping_reads_mapped_part_dict[('%s_r' % read_id_with_ref_pos)] = [ref_id_with_prefix]
                         else:
-                            clipping_reads_mapped_part_dict[('%s_r' % read_id)].append(ref_id_with_prefix)
+                            clipping_reads_mapped_part_dict[('%s_r' % read_id_with_ref_pos)].append(ref_id_with_prefix)
 
                     clipping_mapped_reads_list.add(read_id)
     clipping_reads_not_matched_part_seq_handle.close()
@@ -674,9 +728,10 @@ def MarkerMAG(args, config_dict):
 
     report_and_log(('Parsing blast results for paired reads'), pwd_log_file, keep_quiet)
 
-    # filter blast results for paired and clipping mapped reads
+    # filter blast results for paired reads
     unmapped_paired_reads_to_ctg_dict = blast_results_to_dict(unmapped_paired_reads_blastn, reads_iden_cutoff, reads_cov_cutoff)
-    clipping_parts_to_ctg_dict        = blast_results_to_dict(clipping_reads_not_matched_part_seq_blastn, reads_iden_cutoff, reads_cov_cutoff)
+    #unmapped_paired_reads_to_ctg_dict = blast_results_to_dict_by_bitscore(unmapped_paired_reads_blastn, reads_iden_cutoff)
+
     paired_stats_dict_num             = {}
     paired_reads_match_profile_handle = open(paired_reads_match_profile, 'w')
     paired_reads_match_profile_handle.write('ID\tR1\tR2\n')
@@ -719,24 +774,28 @@ def MarkerMAG(args, config_dict):
 
     report_and_log(('Parsing blast results for clipping mapped reads'), pwd_log_file, keep_quiet)
 
+    # filter blast results for clipping mapped reads
+    clipping_parts_to_ctg_dict        = blast_results_to_dict(clipping_reads_not_matched_part_seq_blastn, reads_iden_cutoff, reads_cov_cutoff)
+    #clipping_parts_to_ctg_dict        = blast_results_to_dict_by_bitscore(clipping_reads_not_matched_part_seq_blastn, reads_iden_cutoff)
     clipping_reads_match_profile_handle = open(clipping_reads_match_profile, 'w')
     clipping_reads_match_profile_handle.write('ID\tLeft\tRight\n')
     clipping_stats_dict_num = {}
     for clipping_mapped_read in clipping_reads_mapped_part_dict:
 
-        clipping_mapped_read_id = clipping_mapped_read[:-2]
+        #clipping_mapped_read_id = clipping_mapped_read[:-2]
+        clipping_mapped_read_id = clipping_mapped_read.split('__x__')[0]
         mapped_part = clipping_mapped_read[-1]
 
         clipping_mapped_read_matches_l = []
         clipping_mapped_read_matches_r = []
         if mapped_part == 'l':
             clipping_mapped_read_matches_l = clipping_reads_mapped_part_dict[clipping_mapped_read]
-            if ('%s_r' % clipping_mapped_read_id) in clipping_parts_to_ctg_dict:
-                clipping_mapped_read_matches_r = clipping_parts_to_ctg_dict[('%s_r' % clipping_mapped_read_id)]
+            if ('%s_r' % clipping_mapped_read[:-2]) in clipping_parts_to_ctg_dict:
+                clipping_mapped_read_matches_r = clipping_parts_to_ctg_dict[('%s_r' % clipping_mapped_read[:-2])]
         if mapped_part == 'r':
             clipping_mapped_read_matches_r = clipping_reads_mapped_part_dict[clipping_mapped_read]
-            if ('%s_l' % clipping_mapped_read_id) in clipping_parts_to_ctg_dict:
-                clipping_mapped_read_matches_l = clipping_parts_to_ctg_dict[('%s_l' % clipping_mapped_read_id)]
+            if ('%s_l' % clipping_mapped_read[:-2]) in clipping_parts_to_ctg_dict:
+                clipping_mapped_read_matches_l = clipping_parts_to_ctg_dict[('%s_l' % clipping_mapped_read[:-2])]
 
         if (clipping_mapped_read_matches_l != []) and (clipping_mapped_read_matches_r != []):
 
@@ -770,6 +829,13 @@ def MarkerMAG(args, config_dict):
     os.system(all_vs_all_16s_blastn_cmd)
 
     pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, aln16s, cov16s)
+
+    # write out to file
+    pairwise_marker_similarity_handle = open(pairwise_marker_similarity, 'w')
+    pairwise_marker_similarity_handle.write('Marker1\tMarker2\tSimilarity\n')
+    for marker_pair in pairwise_16s_iden_dict:
+        pairwise_marker_similarity_handle.write('%s\t%s\n' % ('\t'.join(marker_pair.split('__|__')), pairwise_16s_iden_dict[marker_pair]))
+    pairwise_marker_similarity_handle.close()
 
 
     ##################################################### get linkages #####################################################
@@ -834,23 +900,39 @@ def MarkerMAG(args, config_dict):
 
     ######################################## report assessment under test mode #########################################
 
+    def get_unrecovered_markers(marker_all, marker_recovered):
+        unrecovered_markers = []
+        for each_marker in marker_all:
+            if each_marker not in marker_recovered:
+                unrecovered_markers.append(each_marker)
+        return sorted(unrecovered_markers)
+
+
     if test_mode is True:
 
         report_and_log(('Test mode on, assessing linkages'), pwd_log_file, keep_quiet)
 
-        marker_num = 0
+        marker_id_set = set()
         for marker_seq_record in SeqIO.parse(marker_gene_seqs, 'fasta'):
-            marker_num += 1
+            marker_id_set.add(marker_seq_record.id)
 
         # get recovery and accuracy
-        marker_recovery_paired, link_accuracy_paired             = get_accuracy(link_stats_paired_filtered, marker_num)
-        marker_recovery_clipping, link_accuracy_clipping         = get_accuracy(link_stats_clipping_filtered, marker_num)
-        marker_recovery_intersection, link_accuracy_intersection = get_accuracy(link_stats_intersection, marker_num)
+        recovery_paired, accuracy_paired, recovered_paired       = get_accuracy(link_stats_paired_filtered, len(marker_id_set))
+        recovery_clipping, accuracy_clipping, recovered_clipping = get_accuracy(link_stats_clipping_filtered, len(marker_id_set))
+        recovery_intxn, accuracy_intxn, recovered_intxn          = get_accuracy(link_stats_intersection, len(marker_id_set))
 
-        report_and_log(('Type\tRecovery\tAccuracy'), pwd_log_file, keep_quiet)
-        report_and_log(('Paired:\t%s\t%s' % (marker_recovery_paired, link_accuracy_paired)), pwd_log_file, keep_quiet)
-        report_and_log(('Clipping:\t%s\t%s' % (marker_recovery_clipping, link_accuracy_clipping)), pwd_log_file, keep_quiet)
-        report_and_log(('Intxn:\t%s\t%s' % (marker_recovery_intersection, link_accuracy_intersection)), pwd_log_file, keep_quiet)
+        # get unrecovered markers
+        unrecovered_markers_paired       = get_unrecovered_markers(marker_id_set, recovered_paired)
+        unrecovered_markers_clipping     = get_unrecovered_markers(marker_id_set, recovered_clipping)
+        unrecovered_markers_intersection = get_unrecovered_markers(marker_id_set, recovered_intxn)
+
+        report_and_log(('%s\tRecovery\tAccuracy'    % output_prefix), pwd_log_file, keep_quiet)
+        report_and_log(('Paired:\t%s\t%s'           % (recovery_paired, accuracy_paired)), pwd_log_file, keep_quiet)
+        report_and_log(('Clipping:\t%s\t%s'         % (recovery_clipping, accuracy_clipping)), pwd_log_file, keep_quiet)
+        report_and_log(('Intxn:\t%s\t%s'            % (recovery_intxn, accuracy_intxn)), pwd_log_file, keep_quiet)
+        report_and_log(('Unrecovered Paired:\t%s'   % (','.join(unrecovered_markers_paired))), pwd_log_file, keep_quiet)
+        report_and_log(('Unrecovered Clipping:\t%s' % (','.join(unrecovered_markers_clipping))), pwd_log_file, keep_quiet)
+        report_and_log(('Unrecovered Intxn:\t%s'    % (','.join(unrecovered_markers_intersection))), pwd_log_file, keep_quiet)
 
 
     ################################################### remove tmp files ###################################################
@@ -879,13 +961,14 @@ if __name__ == '__main__':
     MarkerMAG_parser = argparse.ArgumentParser(description=('Link MAGs with marker genes, v%s' % version()), usage=MarkerMAG_usage)
 
     # arguments for link_16S_and_MAG
-    MarkerMAG_parser.add_argument('-p',         required=True,                                  help='Output prefix')
+    MarkerMAG_parser.add_argument('-p',         required=True,                                  help='output prefix')
     MarkerMAG_parser.add_argument('-r1',        required=True,                                  help='paired reads r1')
     MarkerMAG_parser.add_argument('-r2',        required=True,                                  help='paired reads r2')
     MarkerMAG_parser.add_argument('-m',         required=True,                                  help='marker gene sequences')
     MarkerMAG_parser.add_argument('-g',         required=False,             default=None,       help='genomic sequences')
     MarkerMAG_parser.add_argument('-mag',       required=False,             default=None,       help='metagenome-assembled-genome (MAG) folder')
     MarkerMAG_parser.add_argument('-x',         required=False,             default='fasta',    help='MAG file extension, default: fasta')
+    MarkerMAG_parser.add_argument('-mp',        required=False, type=str,   default=0,          help='multiple placement during bowtie mapping, default: 0. choose from a,1,2,3...')
     MarkerMAG_parser.add_argument('-cigarM',    required=False, type=int,   default=30,         help='cigarM cutoff, default: 30')
     MarkerMAG_parser.add_argument('-cigarS',    required=False, type=int,   default=30,         help='cigarS cutoff, default: 30')
     MarkerMAG_parser.add_argument('-ri',        required=False, type=float, default=100,        help='identity cutoff, default: 100')
@@ -928,11 +1011,43 @@ pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
 
 To_do = '''
 
-1. enable multiple placement for a read?
+1. enable multiple placement of a read during mapping
 2. where does the paired read of the clipping mapped read mapped to? (should take into consideration!!!)
 3. check whether the final output is blank
 4. how to incorporate the taxonomy of MAGs and 16S sequences
-7. the effect of sequencing depth, insert size and read length
-3. the depth of 16S sequences always not lower than the genome they come from
+5. the effect of sequencing depth, insert size and read length
+6. the depth of 16S sequences always not lower than the genome they come from
+7. split sam file
+
+export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH
+cd /Users/songweizhi/Desktop/MarkerMAG_wd/Mac_test
+~/PycharmProjects/MarkerMAG/bin/MarkerMAG -p EvenDepth_5x -r1 combined_5x_R1.fasta -r2 combined_5x_R2.fasta -m combined_16S.ffn -mag selected_genomes_renamed_no_plasmid -x fna -t 4 -tmp -force -test_mode
+
+
+
+module load python/3.7.3
+source ~/mypython3env/bin/activate
+module load R/4.0.2
+module load java/8u121
+module load bbmap/38.51
+module load blast+/2.9.0
+module load bowtie/2.3.5.1
+cd /srv/scratch/z5039045/Mac_test
+./MarkerMAG -p EvenDepth_5x_bbmap -r1 combined_5x_R1.fasta -r2 combined_5x_R2.fasta -m combined_16S.ffn -mag selected_genomes_renamed_no_plasmid -x fna -t 12 -tmp -force -test_mode
+
+
+s1_00644	s2_00537	99.282
+
+MarkerGene__s2_00537    GenomicSeq__s1,3
+MarkerGene__s1_00644    GenomicSeq__s2,1
+Unrecovered Clipping:	s1_00644,s2_00537
+
+p5_00515	p5_03129	99.934
+p5_00515	p5_02332	99.213
+p5_00515	p5_01648	99.213
+p5_00515	p5_01238	99.213
+p5_00515	p5_00656	99.082
+p5_00515	p5_00944	99.016
+
 
 '''
