@@ -26,7 +26,7 @@ def sep_path_basename_ext(file_in):
     # separate path and file name
     file_path, file_name = os.path.split(file_in)
     if file_path == '':
-        file_path = '.'
+        file_path = '../script_backup'
 
     # separate file basename and extension
     file_basename, file_extension = os.path.splitext(file_name)
@@ -38,7 +38,6 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-matam',   required=True,                              help='Matam assemblies')
 parser.add_argument('-barrnap', required=True,                              help='Barrnap predicted 16S rRNA gene sequences')
-parser.add_argument('-out',     required=True,                              help='Renamed Matam assemblies')
 parser.add_argument('-iden',    required=False, type=float, default=99.5,   help='Identity cutoff, default: 99.5')
 parser.add_argument('-aln',     required=False, type=int,   default=1500,   help='Alignment length cutoff, default: 1500')
 parser.add_argument('-noblast', required=False, action="store_true",        help='Skip blastn')
@@ -48,7 +47,6 @@ matam_16s_seqs   = args['matam']
 barrnap_16s_seqs = args['barrnap']
 iden_cutoff      = args['iden']
 aln_len_cutoff   = args['aln']
-output_file      = args['out']
 skip_blastn      = args['noblast']
 
 
@@ -152,6 +150,15 @@ else:
 
 '''
 cd /Users/songweizhi/Desktop/ttt
-python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam final_assembly.fa -barrnap combined_16S.ffn -out final_assembly_qualified.fa
+python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam final_assembly.fa -barrnap combined_16S.ffn
+
+cd /Users/songweizhi/Desktop/111
+python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam 5x_scaffolds.NR.min_500bp.fa -barrnap combined_16S.ffn
+
+
+cd /Users/songweizhi/Desktop/111
+python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam 10x_scaffolds.NR.min_500bp.fa  -barrnap combined_16S.ffn
+
+python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam 10x_scaffolds.NR.min_500bp.fa  -barrnap combined_16S.ffn -iden 99.5 -aln 1000
 
 '''

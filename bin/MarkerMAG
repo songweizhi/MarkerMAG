@@ -92,6 +92,40 @@ def sep_path_basename_ext(file_in):
     return file_path, file_basename, file_extension
 
 
+def remove_reads_with_multi_best_aln(sam_in, sam_out):
+
+    sam_out_tmp = '%s.tmp' % sam_out
+
+    multi_aligned_reads = set()
+    best_hit_cigar_dict = {}
+    sam_out_best_hits_handle = open(sam_out_tmp, 'w')
+    for each_line in open(sam_in):
+        if each_line.startswith('@'):
+            sam_out_best_hits_handle.write(each_line)
+        else:
+            each_line_split = each_line.strip().split('\t')
+            read_id = each_line_split[0]
+            cigar   = each_line_split[5]
+            if read_id not in best_hit_cigar_dict:
+                best_hit_cigar_dict[read_id] = cigar
+                sam_out_best_hits_handle.write(each_line)
+            else:
+                if cigar == best_hit_cigar_dict[read_id]:
+                    sam_out_best_hits_handle.write(each_line)
+                    multi_aligned_reads.add(read_id)
+    sam_out_best_hits_handle.close()
+
+    sam_out_no_ambiguous_handle = open(sam_out, 'w')
+    for best_aln in open(sam_out_tmp):
+        if best_aln.startswith('@'):
+            sam_out_no_ambiguous_handle.write(best_aln)
+        else:
+            read_id = best_aln.strip().split('\t')[0]
+            if read_id not in multi_aligned_reads:
+                sam_out_no_ambiguous_handle.write(best_aln)
+    sam_out_no_ambiguous_handle.close()
+
+
 def cigar_splitter(cigar):
 
     # get the position of letters
@@ -450,6 +484,9 @@ def MarkerMAG(args, config_dict):
     num_threads                         = args['t']
     keep_temp                           = args['tmp']
     test_mode                           = args['test_mode']
+    run_bbmap                           = args['bbmap']
+    no_ambiguous                        = args['no_ambiguous']
+
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_bowtie2_exe                     = config_dict['bowtie2']
@@ -535,6 +572,7 @@ def MarkerMAG(args, config_dict):
     pwd_log_file                                = '%s/%s_%s.log'                                    % (working_directory, output_prefix, datetime.now().strftime('%Y-%m-%d_%Hh-%Mm-%Ss_%f'))
     bowtie_index_dir                            = '%s/%s_%s_index'                                  % (working_directory, output_prefix, marker_gene_seqs_file_basename)
     pwd_samfile                                 = '%s/%s.sam'                                       % (working_directory, marker_gene_seqs_file_basename)
+    pwd_samfile_no_ambiguous                    = '%s/%s_no_ambiguous.sam'                          % (working_directory, marker_gene_seqs_file_basename)
     clipping_reads_matched_part                 = '%s/%s_clipping_matched_part.txt'                 % (working_directory, output_prefix)
     clipping_reads_not_matched_part_seq         = '%s/%s_clipping_not_matched_part_seq.fasta'       % (working_directory, output_prefix)
     clipping_reads_not_matched_part_seq_blastn  = '%s/%s_clipping_not_matched_part_seq_blast.txt'   % (working_directory, output_prefix)
@@ -569,39 +607,49 @@ def MarkerMAG(args, config_dict):
     sleep(1)
 
     bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
-    os.system(bowtie2_index_ref_cmd)
 
-    if multiple_placement == '0':
-        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
-    elif multiple_placement == 'a':
+    bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+    if no_ambiguous is True:
         bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -a --quiet --threads %s'    % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+
+    # if multiple_placement == '0':
+    #     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+    # elif multiple_placement == 'a':
+    #     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -a --quiet --threads %s'    % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+    # else:
+    #     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -k %s --quiet --threads %s' % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, multiple_placement, num_threads)
+
+    bbmap_index_and_mapping_cmd = 'bbmap.sh ref=%s/%s%s in=%s in2=%s outm=%s local=t ambig=toss' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, reads_file_r1, reads_file_r2, pwd_samfile)
+
+
+    if run_bbmap is True:
+        os.system(bbmap_index_and_mapping_cmd)
     else:
-        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -k %s --quiet --threads %s' % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, multiple_placement, num_threads)
-    os.system(bowtie2_mapping_cmd)
-
-
-    #bbmap_index_ref_cmd = 'bbmap.sh ref=%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
-    #bbmap_mapping_cmd   = 'bbmap.sh in=%s in2=%s out=%s local=t' % (reads_file_r1, reads_file_r2, pwd_samfile)
-    #bbmap_index_and_mapping_cmd = 'bbmap.sh ref=%s/%s%s in=%s in2=%s out=%s local=t' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, reads_file_r1, reads_file_r2, pwd_samfile)
-    #os.system(bbmap_index_ref_cmd)
-    #os.system(bbmap_mapping_cmd)
-    #os.system(bbmap_index_and_mapping_cmd)
+        os.system(bowtie2_index_ref_cmd)
+        os.system(bowtie2_mapping_cmd)
 
     sleep(1)
     report_and_log(('Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
     sleep(1)
+
+    if no_ambiguous is True:
+        remove_reads_with_multi_best_aln(pwd_samfile, pwd_samfile_no_ambiguous)
 
 
     ##################################################### extract reads ####################################################
 
     report_and_log(('Extracting unmapped part of clipping mapped reads from sam file'), pwd_log_file, keep_quiet)
 
+    sam_file_to_parse = pwd_samfile
+    if no_ambiguous is True:
+        sam_file_to_parse = pwd_samfile_no_ambiguous
+
     # export clipping mapped reads and perfectly mapped reads
     clipping_mapped_reads_list = set()
     clipping_reads_mapped_part_dict = {}
     perfectly_mapped_reads_dict = {}
     clipping_reads_not_matched_part_seq_handle = open(clipping_reads_not_matched_part_seq, 'w')
-    for each_read in open(pwd_samfile):
+    for each_read in open(sam_file_to_parse):
 
         if not each_read.startswith('@'):
             each_read_split = each_read.strip().split('\t')
@@ -893,9 +941,20 @@ def MarkerMAG(args, config_dict):
     cmd_sankey_intersection = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, link_stats_intersection,      600, plot_height_intersection)
 
     # plot
-    os.system(cmd_sankey_clipping)
-    os.system(cmd_sankey_paired)
-    os.system(cmd_sankey_intersection)
+    if len(open(link_stats_clipping_filtered).readlines()) == 1:
+        report_and_log(('No data in %s, plotting skipped' % (link_stats_clipping_filtered)), pwd_log_file, keep_quiet)
+    else:
+        os.system(cmd_sankey_clipping)
+
+    if len(open(link_stats_paired_filtered).readlines()) == 1:
+        report_and_log(('No data in %s, plotting skipped' % (link_stats_paired_filtered)), pwd_log_file, keep_quiet)
+    else:
+        os.system(cmd_sankey_paired)
+
+    if len(open(link_stats_intersection).readlines()) == 1:
+        report_and_log(('No data in %s, plotting skipped' % (link_stats_intersection)), pwd_log_file, keep_quiet)
+    else:
+        os.system(cmd_sankey_intersection)
 
 
     ######################################## report assessment under test mode #########################################
@@ -961,26 +1020,28 @@ if __name__ == '__main__':
     MarkerMAG_parser = argparse.ArgumentParser(description=('Link MAGs with marker genes, v%s' % version()), usage=MarkerMAG_usage)
 
     # arguments for link_16S_and_MAG
-    MarkerMAG_parser.add_argument('-p',         required=True,                                  help='output prefix')
-    MarkerMAG_parser.add_argument('-r1',        required=True,                                  help='paired reads r1')
-    MarkerMAG_parser.add_argument('-r2',        required=True,                                  help='paired reads r2')
-    MarkerMAG_parser.add_argument('-m',         required=True,                                  help='marker gene sequences')
-    MarkerMAG_parser.add_argument('-g',         required=False,             default=None,       help='genomic sequences')
-    MarkerMAG_parser.add_argument('-mag',       required=False,             default=None,       help='metagenome-assembled-genome (MAG) folder')
-    MarkerMAG_parser.add_argument('-x',         required=False,             default='fasta',    help='MAG file extension, default: fasta')
-    MarkerMAG_parser.add_argument('-mp',        required=False, type=str,   default=0,          help='multiple placement during bowtie mapping, default: 0. choose from a,1,2,3...')
-    MarkerMAG_parser.add_argument('-cigarM',    required=False, type=int,   default=30,         help='cigarM cutoff, default: 30')
-    MarkerMAG_parser.add_argument('-cigarS',    required=False, type=int,   default=30,         help='cigarS cutoff, default: 30')
-    MarkerMAG_parser.add_argument('-ri',        required=False, type=float, default=100,        help='identity cutoff, default: 100')
-    MarkerMAG_parser.add_argument('-rc',        required=False, type=float, default=100,        help='coverage cutoff, default: 100')
-    MarkerMAG_parser.add_argument('-mi',        required=False, type=float, default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
-    MarkerMAG_parser.add_argument('-mc',        required=False, type=float, default=90,         help='alignment coverage cutoff for calculating 16S identity, default: 90')
-    MarkerMAG_parser.add_argument('-ma',        required=False, type=int,   default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
-    MarkerMAG_parser.add_argument('-t',         required=False, type=int,   default=1,          help='number of threads, default: 1')
-    MarkerMAG_parser.add_argument('-quiet',     required=False, action="store_true",            help='not report progress')
-    MarkerMAG_parser.add_argument('-force',     required=False, action="store_true",            help='force overwrite existing results')
-    MarkerMAG_parser.add_argument('-tmp',       required=False, action="store_true",            help='keep temporary files')
-    MarkerMAG_parser.add_argument('-test_mode', required=False, action="store_true",            help='only for debugging, do not provide')
+    MarkerMAG_parser.add_argument('-p',             required=True,                                  help='output prefix')
+    MarkerMAG_parser.add_argument('-r1',            required=True,                                  help='paired reads r1')
+    MarkerMAG_parser.add_argument('-r2',            required=True,                                  help='paired reads r2')
+    MarkerMAG_parser.add_argument('-m',             required=True,                                  help='marker gene sequences')
+    MarkerMAG_parser.add_argument('-g',             required=False,             default=None,       help='genomic sequences')
+    MarkerMAG_parser.add_argument('-mag',           required=False,             default=None,       help='metagenome-assembled-genome (MAG) folder')
+    MarkerMAG_parser.add_argument('-x',             required=False,             default='fasta',    help='MAG file extension, default: fasta')
+    MarkerMAG_parser.add_argument('-mp',            required=False, type=str,   default=0,          help='multiple placement during bowtie mapping, default: 0. choose from a,1,2,3...')
+    MarkerMAG_parser.add_argument('-cigarM',        required=False, type=int,   default=30,         help='cigarM cutoff, default: 30')
+    MarkerMAG_parser.add_argument('-cigarS',        required=False, type=int,   default=30,         help='cigarS cutoff, default: 30')
+    MarkerMAG_parser.add_argument('-ri',            required=False, type=float, default=100,        help='identity cutoff, default: 100')
+    MarkerMAG_parser.add_argument('-rc',            required=False, type=float, default=100,        help='coverage cutoff, default: 100')
+    MarkerMAG_parser.add_argument('-mi',            required=False, type=float, default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
+    MarkerMAG_parser.add_argument('-mc',            required=False, type=float, default=90,         help='alignment coverage cutoff for calculating 16S identity, default: 90')
+    MarkerMAG_parser.add_argument('-ma',            required=False, type=int,   default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
+    MarkerMAG_parser.add_argument('-t',             required=False, type=int,   default=1,          help='number of threads, default: 1')
+    MarkerMAG_parser.add_argument('-quiet',         required=False, action="store_true",            help='not report progress')
+    MarkerMAG_parser.add_argument('-force',         required=False, action="store_true",            help='force overwrite existing results')
+    MarkerMAG_parser.add_argument('-tmp',           required=False, action="store_true",            help='keep temporary files')
+    MarkerMAG_parser.add_argument('-test_mode',     required=False, action="store_true",            help='only for debugging, do not provide')
+    MarkerMAG_parser.add_argument('-bbmap',         required=False, action="store_true",            help='run bbmap, instead of bowtie')
+    MarkerMAG_parser.add_argument('-no_ambiguous',  required=False, action="store_true",            help='ignore ambiguous reads')
 
     args = vars(MarkerMAG_parser.parse_args())
 
@@ -1013,16 +1074,16 @@ To_do = '''
 
 1. enable multiple placement of a read during mapping
 2. where does the paired read of the clipping mapped read mapped to? (should take into consideration!!!)
-3. check whether the final output is blank
 4. how to incorporate the taxonomy of MAGs and 16S sequences
 5. the effect of sequencing depth, insert size and read length
 6. the depth of 16S sequences always not lower than the genome they come from
 7. split sam file
+8. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
+
 
 export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH
 cd /Users/songweizhi/Desktop/MarkerMAG_wd/Mac_test
 ~/PycharmProjects/MarkerMAG/bin/MarkerMAG -p EvenDepth_5x -r1 combined_5x_R1.fasta -r2 combined_5x_R2.fasta -m combined_16S.ffn -mag selected_genomes_renamed_no_plasmid -x fna -t 4 -tmp -force -test_mode
-
 
 
 module load python/3.7.3
@@ -1037,11 +1098,6 @@ cd /srv/scratch/z5039045/Mac_test
 
 
 s1_00644	s2_00537	99.282
-
-MarkerGene__s2_00537    GenomicSeq__s1,3
-MarkerGene__s1_00644    GenomicSeq__s2,1
-Unrecovered Clipping:	s1_00644,s2_00537
-
 p5_00515	p5_03129	99.934
 p5_00515	p5_02332	99.213
 p5_00515	p5_01648	99.213
