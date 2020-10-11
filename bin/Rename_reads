@@ -22,13 +22,16 @@ from Bio import SeqIO
 
 
 Rename_reads_usage = '''
-===================== Rename_reads example commands =====================
+============================== Rename_reads example commands ==============================
 
-Rename_reads -r1 Soil_R1.fasta -r2 Soil_R2.fasta -p Soil
+Rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -r1_out R1_renamed.fa -r2_out R2_renamed.fa
 
 Note: The order of paired reads in the two files must be the same.
 
-=========================================================================
+renamed r1 reads: soil_1.1, soil_2.1, soil_3.1 ...
+renamed r2 reads: soil_1.2, soil_2.2, soil_3.2 ...
+
+===========================================================================================
 '''
 
 
@@ -47,12 +50,11 @@ def sep_path_basename_ext(file_in):
 
 def Rename_reads(args):
 
-    reads_r1 = args['r1']
-    reads_r2 = args['r2']
-    output_prefix = args['p']
-
-    output_file_r1 = '%s_R1_renamed.fasta' % output_prefix
-    output_file_r2 = '%s_R2_renamed.fasta' % output_prefix
+    reads_r1        = args['r1']
+    reads_r2        = args['r2']
+    output_prefix   = args['p']
+    output_file_r1  = args['r1_out']
+    output_file_r2  = args['r2_out']
 
     output_file_r1_handle = open(output_file_r1, 'w')
     r1_index = 1
@@ -75,10 +77,11 @@ if __name__ == '__main__':
 
     Rename_reads_parser = argparse.ArgumentParser(description='', usage=Rename_reads_usage)
 
-    Rename_reads_parser.add_argument('-r1', required=True, type=str, help='forward reads, in fasta format')
-    Rename_reads_parser.add_argument('-r2', required=True, type=str, help='reverse reads, in fasta format')
-    Rename_reads_parser.add_argument('-p',  required=True, type=str, help='output prefix')
-
+    Rename_reads_parser.add_argument('-r1',     required=True, type=str, help='forward reads, fasta format')
+    Rename_reads_parser.add_argument('-r2',     required=True, type=str, help='reverse reads, fasta format')
+    Rename_reads_parser.add_argument('-p',      required=True, type=str, help='prefix of read id')
+    Rename_reads_parser.add_argument('-r1_out', required=True, type=str, help='renamed forward reads')
+    Rename_reads_parser.add_argument('-r2_out', required=True, type=str, help='renamed reverse reads')
     args = vars(Rename_reads_parser.parse_args())
 
     Rename_reads(args)

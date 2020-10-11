@@ -1007,7 +1007,8 @@ def MarkerMAG(args, config_dict):
         os.remove(unmapped_paired_reads_blastn)
         os.remove(link_stats_clipping)
         os.remove(link_stats_paired)
-
+        if no_ambiguous is True:
+            os.remove(pwd_samfile_no_ambiguous)
 
     # Final report
     report_and_log(('Done!'), pwd_log_file, keep_quiet)
@@ -1041,7 +1042,7 @@ if __name__ == '__main__':
     MarkerMAG_parser.add_argument('-tmp',           required=False, action="store_true",            help='keep temporary files')
     MarkerMAG_parser.add_argument('-test_mode',     required=False, action="store_true",            help='only for debugging, do not provide')
     MarkerMAG_parser.add_argument('-bbmap',         required=False, action="store_true",            help='run bbmap, instead of bowtie')
-    MarkerMAG_parser.add_argument('-no_ambiguous',  required=False, action="store_true",            help='ignore ambiguous reads')
+    MarkerMAG_parser.add_argument('-no_ambiguous',  required=False, action="store_true",            help='ignore ambiguous mappings, specify with dereplicated marker genes')
 
     args = vars(MarkerMAG_parser.parse_args())
 
