@@ -370,6 +370,63 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
     # os.remove(file_in_sorted)
 
 
+# def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, file_out_summary, file_out_intersect_linkages):
+#
+#     # file in:   file_in_paired    and  file_in_clipping
+#     # file out:  file_out_summary  and  file_out_intersection
+#
+#     combined_paired_and_clipping_keys = set()
+#
+#     # read in paired linkages
+#     paired_linkages_dict = {}
+#     for paired_linkage in open(paired_linkages):
+#         if not paired_linkage.startswith('MarkerGene,GenomicSeq,Number'):
+#             paired_linkage_split = paired_linkage.strip().split(',')
+#             paired_key = '%s__|__%s' % (paired_linkage_split[0], paired_linkage_split[1])
+#             paired_value = int(paired_linkage_split[2])
+#             paired_linkages_dict[paired_key] = paired_value
+#             combined_paired_and_clipping_keys.add(paired_key)
+#
+#     # read in clipping linkages
+#     clipping_linkages_dict = {}
+#     for clipping_linkage in open(clipping_linkages):
+#         if not clipping_linkage.startswith('MarkerGene,GenomicSeq,Number'):
+#             clipping_linkage_split = clipping_linkage.strip().split(',')
+#             clipping_key = '%s__|__%s' % (clipping_linkage_split[0], clipping_linkage_split[1])
+#             clipping_value = int(clipping_linkage_split[2])
+#             clipping_linkages_dict[clipping_key] = clipping_value
+#             combined_paired_and_clipping_keys.add(clipping_key)
+#
+#     # combine paired and clipping linkages
+#     file_out_summary_handle = open(file_out_summary, 'w')
+#     file_out_intersect_linkages_handle = open(file_out_intersect_linkages, 'w')
+#     file_out_summary_handle.write('MarkerGene\tGenomicSeq\tPaired\tClipping\tIntersection\n')
+#     file_out_intersect_linkages_handle.write('MarkerGene,GenomicSeq,Number\n')
+#     for each_key in combined_paired_and_clipping_keys:
+#
+#         current_key_paired_value = 0
+#         if each_key in paired_linkages_dict:
+#             current_key_paired_value = paired_linkages_dict[each_key]
+#
+#         current_key_clipping_value = 0
+#         if each_key in clipping_linkages_dict:
+#             current_key_clipping_value = clipping_linkages_dict[each_key]
+#
+#         current_key_combined = 0
+#         intersection = 'no'
+#         if (current_key_paired_value > 0) and (current_key_clipping_value > 0):
+#             current_key_combined = current_key_paired_value + current_key_clipping_value
+#             intersection = 'yes'
+#
+#         # write out
+#         file_out_summary_handle.write('%s\t%s\t%s\t%s\n' % ('\t'.join(each_key.split('__|__')), current_key_paired_value, current_key_clipping_value, intersection))
+#         if current_key_combined > 0:
+#             file_out_intersect_linkages_handle.write('%s,%s\n' % (','.join(each_key.split('__|__')) , current_key_combined))
+#
+#     file_out_summary_handle.close()
+#     file_out_intersect_linkages_handle.close()
+
+
 def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, file_out_summary, file_out_intersect_linkages):
 
     # file in:   file_in_paired    and  file_in_clipping
@@ -397,12 +454,14 @@ def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, fil
             clipping_linkages_dict[clipping_key] = clipping_value
             combined_paired_and_clipping_keys.add(clipping_key)
 
+    combined_paired_and_clipping_keys_sorted = sorted([i for i in combined_paired_and_clipping_keys])
+
     # combine paired and clipping linkages
     file_out_summary_handle = open(file_out_summary, 'w')
     file_out_intersect_linkages_handle = open(file_out_intersect_linkages, 'w')
-    file_out_summary_handle.write('MarkerGene\tGenomicSeq\tPaired\tClipping\tIntersection\n')
+    file_out_summary_handle.write('MarkerGene\tGenomicSeq\tPaired\tClipping\n')
     file_out_intersect_linkages_handle.write('MarkerGene,GenomicSeq,Number\n')
-    for each_key in combined_paired_and_clipping_keys:
+    for each_key in combined_paired_and_clipping_keys_sorted:
 
         current_key_paired_value = 0
         if each_key in paired_linkages_dict:
@@ -412,16 +471,13 @@ def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, fil
         if each_key in clipping_linkages_dict:
             current_key_clipping_value = clipping_linkages_dict[each_key]
 
-        current_key_combined = 0
-        intersection = 'no'
-        if (current_key_paired_value > 0) and (current_key_clipping_value > 0):
-            current_key_combined = current_key_paired_value + current_key_clipping_value
-            intersection = 'yes'
+        if current_key_paired_value > 0:
 
-        # write out
-        file_out_summary_handle.write('%s\t%s\t%s\t%s\n' % ('\t'.join(each_key.split('__|__')), current_key_paired_value, current_key_clipping_value, intersection))
-        if current_key_combined > 0:
-            file_out_intersect_linkages_handle.write('%s,%s\n' % (','.join(each_key.split('__|__')) , current_key_combined))
+            current_key_combined = current_key_paired_value + current_key_clipping_value
+
+            # write out
+            file_out_summary_handle.write('%s\t%s\t%s\n' % ('\t'.join([i[12:] for i in each_key.split('__|__')]), current_key_paired_value, current_key_clipping_value))
+            file_out_intersect_linkages_handle.write('%s,%s\n' % (','.join(each_key.split('__|__')), current_key_combined))
 
     file_out_summary_handle.close()
     file_out_intersect_linkages_handle.close()
@@ -587,7 +643,7 @@ def MarkerMAG(args, config_dict):
     link_stats_paired                           = '%s/%s_stats_paired.txt'                          % (working_directory, output_prefix)
     link_stats_paired_filtered                  = '%s/%s_stats_paired_filtered.txt'                 % (working_directory, output_prefix)
     link_stats_combined_table                   = '%s/%s_stats_combined_table.txt'                  % (working_directory, output_prefix)
-    link_stats_intersection                     = '%s/%s_stats_intersection.txt'                    % (working_directory, output_prefix)
+    link_stats_combined                         = '%s/%s_stats_combined.txt'                        % (working_directory, output_prefix)
     pairwise_marker_similarity                  = '%s/%s_pairwise_marker_similarity.txt'            % (working_directory, output_prefix)
 
     blast_parameters    = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
@@ -898,7 +954,7 @@ def MarkerMAG(args, config_dict):
     filter_linkages_iteratively(link_stats_clipping, 'Number', pairwise_16s_iden_dict, iden16s, link_stats_clipping_filtered)
 
     # combine_paired_and_clipping_linkages and get summary table
-    combine_paired_and_clipping_linkages(link_stats_paired_filtered, link_stats_clipping_filtered, link_stats_combined_table, link_stats_intersection)
+    combine_paired_and_clipping_linkages(link_stats_paired_filtered, link_stats_clipping_filtered, link_stats_combined_table, link_stats_combined)
 
 
     ######################################################### plot #########################################################
@@ -922,23 +978,23 @@ def MarkerMAG(args, config_dict):
             MarkerGenes_paired.add(filtered_paired_split[0])
             GenomicSeqs_paired.add(filtered_paired_split[1])
 
-    MarkerGenes_intersection = set()
-    GenomicSeqs_intersection = set()
-    for filtered_intersection in open(link_stats_intersection):
-        if not filtered_intersection.startswith('MarkerGene,GenomicSeq,Number'):
-            filtered_intersection_split = filtered_intersection.strip().split(',')
-            MarkerGenes_intersection.add(filtered_intersection_split[0])
-            GenomicSeqs_intersection.add(filtered_intersection_split[1])
+    MarkerGenes_combined = set()
+    GenomicSeqs_combined = set()
+    for filtered_combined in open(link_stats_combined):
+        if not filtered_combined.startswith('MarkerGene,GenomicSeq,Number'):
+            filtered_combined_split = filtered_combined.strip().split(',')
+            MarkerGenes_combined.add(filtered_combined_split[0])
+            GenomicSeqs_combined.add(filtered_combined_split[1])
 
     # calculate plot height
     plot_height_clipping     = 500 if max([len(MarkerGenes_clipping), len(GenomicSeqs_clipping)]) <= 25 else max([len(MarkerGenes_clipping), len(GenomicSeqs_clipping)]) * 20
     plot_height_paired       = 500 if max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) <= 25 else max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) * 20
-    plot_height_intersection = 500 if max([len(MarkerGenes_intersection), len(GenomicSeqs_intersection)]) <= 25 else max([len(MarkerGenes_intersection), len(GenomicSeqs_intersection)]) * 20
+    plot_height_intersection = 500 if max([len(MarkerGenes_combined), len(GenomicSeqs_combined)]) <= 25 else max([len(MarkerGenes_combined), len(GenomicSeqs_combined)]) * 20
 
     # prepare commands
     cmd_sankey_clipping     = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, link_stats_clipping_filtered, 600, plot_height_clipping)
     cmd_sankey_paired       = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, link_stats_paired_filtered,   600, plot_height_paired)
-    cmd_sankey_intersection = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, link_stats_intersection,      600, plot_height_intersection)
+    cmd_sankey_intersection = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, link_stats_combined,          600, plot_height_intersection)
 
     # plot
     if len(open(link_stats_clipping_filtered).readlines()) == 1:
@@ -951,8 +1007,8 @@ def MarkerMAG(args, config_dict):
     else:
         os.system(cmd_sankey_paired)
 
-    if len(open(link_stats_intersection).readlines()) == 1:
-        report_and_log(('No data in %s, plotting skipped' % (link_stats_intersection)), pwd_log_file, keep_quiet)
+    if len(open(link_stats_combined).readlines()) == 1:
+        report_and_log(('No data in %s, plotting skipped' % (link_stats_combined)), pwd_log_file, keep_quiet)
     else:
         os.system(cmd_sankey_intersection)
 
@@ -978,20 +1034,14 @@ def MarkerMAG(args, config_dict):
         # get recovery and accuracy
         recovery_paired, accuracy_paired, recovered_paired       = get_accuracy(link_stats_paired_filtered, len(marker_id_set))
         recovery_clipping, accuracy_clipping, recovered_clipping = get_accuracy(link_stats_clipping_filtered, len(marker_id_set))
-        recovery_intxn, accuracy_intxn, recovered_intxn          = get_accuracy(link_stats_intersection, len(marker_id_set))
 
         # get unrecovered markers
         unrecovered_markers_paired       = get_unrecovered_markers(marker_id_set, recovered_paired)
         unrecovered_markers_clipping     = get_unrecovered_markers(marker_id_set, recovered_clipping)
-        unrecovered_markers_intersection = get_unrecovered_markers(marker_id_set, recovered_intxn)
-
-        report_and_log(('%s\tRecovery\tAccuracy'    % output_prefix), pwd_log_file, keep_quiet)
-        report_and_log(('Paired:\t%s\t%s'           % (recovery_paired, accuracy_paired)), pwd_log_file, keep_quiet)
-        report_and_log(('Clipping:\t%s\t%s'         % (recovery_clipping, accuracy_clipping)), pwd_log_file, keep_quiet)
-        report_and_log(('Intxn:\t%s\t%s'            % (recovery_intxn, accuracy_intxn)), pwd_log_file, keep_quiet)
-        report_and_log(('Unrecovered Paired:\t%s'   % (','.join(unrecovered_markers_paired))), pwd_log_file, keep_quiet)
-        report_and_log(('Unrecovered Clipping:\t%s' % (','.join(unrecovered_markers_clipping))), pwd_log_file, keep_quiet)
-        report_and_log(('Unrecovered Intxn:\t%s'    % (','.join(unrecovered_markers_intersection))), pwd_log_file, keep_quiet)
+        report_and_log(('Depth\tPaired_r\tPaired_a\tClip_r\tClip_a'), pwd_log_file, keep_quiet)
+        report_and_log(('%s\t%s\t%s\t%s\t%s' % (output_prefix, recovery_paired, accuracy_paired, recovery_clipping, accuracy_clipping)), pwd_log_file, keep_quiet)
+        report_and_log(('Unrecovered Paired:\t%s'    % (','.join(unrecovered_markers_paired))), pwd_log_file, keep_quiet)
+        report_and_log(('Unrecovered Clipping:\t%s'  % (','.join(unrecovered_markers_clipping))), pwd_log_file, keep_quiet)
 
 
     ################################################### remove tmp files ###################################################
@@ -1080,6 +1130,10 @@ To_do = '''
 6. the depth of 16S sequences always not lower than the genome they come from
 7. split sam file
 8. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
+
+
+Notes:
+linkages only supported by clipping reads were ignored !!!
 
 
 export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH

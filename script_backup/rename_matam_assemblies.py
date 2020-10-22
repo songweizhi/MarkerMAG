@@ -36,17 +36,17 @@ def sep_path_basename_ext(file_in):
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-matam',   required=True,                              help='Matam assemblies')
-parser.add_argument('-barrnap', required=True,                              help='Barrnap predicted 16S rRNA gene sequences')
-parser.add_argument('-iden',    required=False, type=float, default=99.5,   help='Identity cutoff, default: 99.5')
-parser.add_argument('-aln',     required=False, type=int,   default=1500,   help='Alignment length cutoff, default: 1500')
+parser.add_argument('-m',       required=True,                              help='Matam assemblies')
+parser.add_argument('-c',       required=True,                              help='Control, e.g. Barrnap predicted 16S rRNA gene sequences')
+parser.add_argument('-i',       required=False, type=float, default=99.5,   help='Identity cutoff, default: 99.5')
+parser.add_argument('-l',       required=False, type=int,   default=1500,   help='Alignment length cutoff, default: 1500')
 parser.add_argument('-noblast', required=False, action="store_true",        help='Skip blastn')
 
 args = vars(parser.parse_args())
-matam_16s_seqs   = args['matam']
-barrnap_16s_seqs = args['barrnap']
-iden_cutoff      = args['iden']
-aln_len_cutoff   = args['aln']
+matam_16s_seqs   = args['m']
+barrnap_16s_seqs = args['c']
+iden_cutoff      = args['i']
+aln_len_cutoff   = args['l']
 skip_blastn      = args['noblast']
 
 
@@ -60,10 +60,16 @@ if skip_blastn is False:
     os.system(blast_cmd)
 
 
+# get the number of control sequences
+control_seq_id_list = set()
+for seq_record in SeqIO.parse(barrnap_16s_seqs, 'fasta'):
+    control_seq_id_list.add(seq_record.id)
+
+
 query_to_subject_dict = {}
 subject_to_query_dict = {}
-query_set = set()
-subject_set = set()
+matched_matam_set = set()
+matched_control_set = set()
 for match in open(matam_16s_blastn):
     match_split = match.strip().split('\t')
     query = match_split[0]
@@ -88,8 +94,8 @@ for match in open(matam_16s_blastn):
         else:
             subject_to_query_dict[subject_genome].add(query)
 
-        query_set.add(query)
-        subject_set.add(subject)
+        matched_matam_set.add(query)
+        matched_control_set.add(subject)
 
 
 multiple_assign = False
@@ -123,42 +129,35 @@ output_file_handle.close()
 
 os.remove(matam_16s_blastn)
 
+######################################################## report ########################################################
 
-# report
-print('Identity cutoff: %s' % iden_cutoff)
-print('Alignment length cutoff: %s' % aln_len_cutoff)
-print('Matched Matam assemblies: %s' % len(query_set))
-print('Matched 16S sequences: %s' % len(subject_set))
+# get unrecovered control set
+unrecovered_control_set = set()
+for i in control_seq_id_list:
+    if i not in matched_control_set:
+        unrecovered_control_set.add(i)
+
+recovered_str = 'Recovered(%s):%s' % (len(matched_control_set), ','.join(sorted([i[:2] for i in matched_control_set])))
+unrecovered_str = 'Unrecovered(%s):%s' % (len(unrecovered_control_set), ','.join(sorted([i[:2] for i in unrecovered_control_set])))
+
+# print('Iden\tLen\tControl\tMatam')
+# print('%s%s\t%sbp\t%s/%s\t%s' % (iden_cutoff, '%', aln_len_cutoff, len(matched_control_set), len(control_seq_id_list), len(matched_matam_set)))
+print('Iden\tLen\tControl\tMatam\tRecovered\tUnrecovered')
+print('%s%s\t%sbp\t%s/%s\t%s\t%s\t%s' % (iden_cutoff, '%', aln_len_cutoff, len(matched_control_set), len(control_seq_id_list), len(matched_matam_set), recovered_str, unrecovered_str))
+
 if multiple_assign is True:
     print('Some/one Matam assembly matched to multiple genomes!')
 else:
     print('Good, no Matam assembly matched to multiple genomes!')
 
 
-#               query   subject
-# 1500, 100:    19      42
-# 1500, 99.9:   22      52
-# 1500, 99.5:   24      66
+########################################################################################################################
 
-# 1200, 100:    28      55
-# 1200, 99.9:   34      77
-# 1200, 99.5:   36      83
-
-# 1000, 100:    30      58
-# 1000, 99.9:   36      80
-# 1000, 99.5:   38      86
 
 '''
-cd /Users/songweizhi/Desktop/ttt
-python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam final_assembly.fa -barrnap combined_16S.ffn
-
 cd /Users/songweizhi/Desktop/111
-python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam 5x_scaffolds.NR.min_500bp.fa -barrnap combined_16S.ffn
+python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -c /srv/scratch/z5039045/MarkerMAG_wd/genome_selection_3/combined_16S.ffn -m scaffolds.NR.min_500bp.abd.fa -i 99.9 -a 1300
 
-
-cd /Users/songweizhi/Desktop/111
-python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam 10x_scaffolds.NR.min_500bp.fa  -barrnap combined_16S.ffn
-
-python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -matam 10x_scaffolds.NR.min_500bp.fa  -barrnap combined_16S.ffn -iden 99.5 -aln 1000
+python3 /srv/scratch/z5039045/MarkerMAG_wd/rename_matam_assemblies.py -c /srv/scratch/z5039045/MarkerMAG_wd/genome_selection_3/combined_16S.ffn -m scaffolds.NR.min_500bp.abd.fa -i 99.9 -a 1300
 
 '''
