@@ -4,10 +4,12 @@ setup.py
 MarkerMAG/MarkerMAG_config.py
 MarkerMAG/VERSION
 MarkerMAG/get_sankey_plot.R
+MarkerMAG/link_Marker_MAG.py
+MarkerMAG/rename_reads.py
+MarkerMAG/uclust_16S.py
 MarkerMAG.egg-info/PKG-INFO
 MarkerMAG.egg-info/SOURCES.txt
 MarkerMAG.egg-info/dependency_links.txt
 MarkerMAG.egg-info/requires.txt
 MarkerMAG.egg-info/top_level.txt
 bin/MarkerMAG
-bin/Rename_reads

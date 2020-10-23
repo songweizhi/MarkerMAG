@@ -32,4 +32,4 @@ setup(name="MarkerMAG",
       package_data={'': ['*.r', '*.R', '*.py', 'VERSION']},
       include_package_data=True,
       install_requires=['biopython', 'pandas'],
-      scripts=['bin/MarkerMAG', 'bin/Rename_reads'])
+      scripts=['bin/MarkerMAG'])

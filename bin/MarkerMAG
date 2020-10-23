@@ -30,12 +30,11 @@ def version(config_dict):
 def print_main_help():
 
     help_message = ''' 
-           ...::: MarkerMAG v%s :::...
+          ...::: MarkerMAG v%s :::...
 
-    link           ->   Wrapper for running Prodigal
-    rename_reads   ->   Prepare BLCA-compatible SILVA SSU database
-    uclust_16S     ->   Prepare BLCA-compatible GTDB SSU database
-    
+    link          ->  link MAGs with marker genes
+    rename_reads  ->  rename paired reads (in fasta format) 
+    uclust_16S    ->  cluster marker genes with Usearch
     ''' % version(config_dict)
 
     print(help_message)
@@ -107,3 +106,24 @@ if __name__ == '__main__':
     else:
         print('Unrecognized command: %s, program exited' % sys.argv[1])
         exit()
+
+
+upload_to_pypi_cmd = '''
+
+alias twine='/Users/songweizhi/Library/Python/3.7/bin/twine'
+cd /Users/songweizhi/PycharmProjects/MarkerMAG
+rm -r build
+rm -r dist
+rm -r MarkerMAG.egg-info
+python setup.py sdist bdist_wheel
+
+twine upload dist/*
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+songweizhi
+shan88
+
+pip3 install --upgrade MarkerMAG
+pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
+
+'''
