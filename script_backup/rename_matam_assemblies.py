@@ -53,6 +53,7 @@ skip_blastn      = args['noblast']
 matam_16s_seqs_file_path, matam_16s_seqs_file_basename, matam_16s_seqs_file_extension = sep_path_basename_ext(matam_16s_seqs)
 matam_16s_blastn = '%s/%s_%s_%sbp_blastn.tab' % (matam_16s_seqs_file_path, matam_16s_seqs_file_basename, iden_cutoff, aln_len_cutoff)
 output_file      = '%s/%s_%s_%sbp.fasta' % (matam_16s_seqs_file_path, matam_16s_seqs_file_basename, iden_cutoff, aln_len_cutoff)
+output_file_txt  = '%s/%s_%s_%sbp.txt'   % (matam_16s_seqs_file_path, matam_16s_seqs_file_basename, iden_cutoff, aln_len_cutoff)
 
 blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads 1'
 blast_cmd = 'blastn -query %s -subject %s -out %s %s' % (matam_16s_seqs, barrnap_16s_seqs, matam_16s_blastn, blast_parameters)
@@ -61,15 +62,19 @@ if skip_blastn is False:
 
 
 # get the number of control sequences
+genome_id_set = set()
 control_seq_id_list = set()
 for seq_record in SeqIO.parse(barrnap_16s_seqs, 'fasta'):
     control_seq_id_list.add(seq_record.id)
+    genome_id_set.add('_'.join(seq_record.id.split('_')[:-1]))
 
 
 query_to_subject_dict = {}
-subject_to_query_dict = {}
+query_to_subject_genome_dict = {}
+subject_genome_to_query_dict = {}
 matched_matam_set = set()
 matched_control_set = set()
+matched_control_set_genome_level = set()
 for match in open(matam_16s_blastn):
     match_split = match.strip().split('\t')
     query = match_split[0]
@@ -84,31 +89,40 @@ for match in open(matam_16s_blastn):
 
     if (iden >= iden_cutoff) and (aln_len > aln_len_cutoff):
 
+        # get query_to_subject_dict
         if query not in query_to_subject_dict:
-            query_to_subject_dict[query] = {subject_genome}
+            query_to_subject_dict[query] = {subject}
         else:
-            query_to_subject_dict[query].add(subject_genome)
+            query_to_subject_dict[query].add(subject)
 
-        if subject_genome not in subject_to_query_dict:
-            subject_to_query_dict[subject_genome] = {query}
+        # get query_to_subject_genome_dict
+        if query not in query_to_subject_genome_dict:
+            query_to_subject_genome_dict[query] = {subject_genome}
         else:
-            subject_to_query_dict[subject_genome].add(query)
+            query_to_subject_genome_dict[query].add(subject_genome)
+
+        # get subject_genome_to_query_dict
+        if subject_genome not in subject_genome_to_query_dict:
+            subject_genome_to_query_dict[subject_genome] = {query}
+        else:
+            subject_genome_to_query_dict[subject_genome].add(query)
 
         matched_matam_set.add(query)
         matched_control_set.add(subject)
+        matched_control_set_genome_level.add(subject_genome)
 
 
 multiple_assign = False
-for i in query_to_subject_dict:
-    if len(query_to_subject_dict[i]) > 1:
+for i in query_to_subject_genome_dict:
+    if len(query_to_subject_genome_dict[i]) > 1:
         multiple_assign = True
 
 
 # get rename dict
 rename_dict = {}
-for genome in subject_to_query_dict:
+for genome in subject_genome_to_query_dict:
     n = 1
-    for m16s in subject_to_query_dict[genome]:
+    for m16s in subject_genome_to_query_dict[genome]:
         if m16s not in rename_dict:
             rename_dict[m16s] = {'%s_m%s' % (genome, n)}
         else:
@@ -129,7 +143,23 @@ output_file_handle.close()
 
 os.remove(matam_16s_blastn)
 
+
+output_file_txt_handle = open(output_file_txt, 'w')
+for matched_assembly in rename_dict:
+    new_names = rename_dict[matched_assembly]
+    matched_to_list = query_to_subject_dict[matched_assembly]
+    for new_name in new_names:
+        output_file_txt_handle.write('%s\t%s\n' % (new_name, ','.join(matched_to_list)))
+output_file_txt_handle.close()
+
+
 ######################################################## report ########################################################
+
+# get unrecovered genome
+unrecovered_genome_list = []
+for genome_id in genome_id_set:
+    if genome_id not in matched_control_set_genome_level:
+        unrecovered_genome_list.append(genome_id)
 
 # get unrecovered control set
 unrecovered_control_set = set()
@@ -137,13 +167,12 @@ for i in control_seq_id_list:
     if i not in matched_control_set:
         unrecovered_control_set.add(i)
 
-recovered_str = 'Recovered(%s):%s' % (len(matched_control_set), ','.join(sorted([i[:2] for i in matched_control_set])))
-unrecovered_str = 'Unrecovered(%s):%s' % (len(unrecovered_control_set), ','.join(sorted([i[:2] for i in unrecovered_control_set])))
+unrecovered_str = 'Unrecovered(%s):%s' % (len(unrecovered_control_set), ','.join(sorted([i for i in unrecovered_control_set])))
+unrecovered_str_genome_level = 'Unrecovered(%s):%s' % (len(unrecovered_genome_list), ','.join(sorted(unrecovered_genome_list)))
 
-# print('Iden\tLen\tControl\tMatam')
-# print('%s%s\t%sbp\t%s/%s\t%s' % (iden_cutoff, '%', aln_len_cutoff, len(matched_control_set), len(control_seq_id_list), len(matched_matam_set)))
-print('Iden\tLen\tControl\tMatam\tRecovered\tUnrecovered')
-print('%s%s\t%sbp\t%s/%s\t%s\t%s\t%s' % (iden_cutoff, '%', aln_len_cutoff, len(matched_control_set), len(control_seq_id_list), len(matched_matam_set), recovered_str, unrecovered_str))
+print('Iden\tLen\tControl\tMatam\tUnrecovered')
+print('Marker\t%s%s\t%sbp\t%s/%s\t%s\t%s' % (iden_cutoff, '%', aln_len_cutoff, len(matched_control_set), len(control_seq_id_list), len(matched_matam_set), unrecovered_str))
+print('Genome\t%s%s\t%sbp\t%s/%s\t%s\t%s' % (iden_cutoff, '%', aln_len_cutoff, len(matched_control_set_genome_level), len(genome_id_set), len(matched_matam_set), unrecovered_str_genome_level))
 
 if multiple_assign is True:
     print('Some/one Matam assembly matched to multiple genomes!')
@@ -159,5 +188,8 @@ cd /Users/songweizhi/Desktop/111
 python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -c /srv/scratch/z5039045/MarkerMAG_wd/genome_selection_3/combined_16S.ffn -m scaffolds.NR.min_500bp.abd.fa -i 99.9 -a 1300
 
 python3 /srv/scratch/z5039045/MarkerMAG_wd/rename_matam_assemblies.py -c /srv/scratch/z5039045/MarkerMAG_wd/genome_selection_3/combined_16S.ffn -m scaffolds.NR.min_500bp.abd.fa -i 99.9 -a 1300
+
+cd /Users/songweizhi/Desktop/999
+python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/rename_matam_assemblies.py -c combined_16S.ffn -m combined_all_depth_assemblies_iden99.5_uniq.fasta -i 99.5 -l 1300
 
 '''

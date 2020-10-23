@@ -45,11 +45,11 @@ How to run:
  
 
 1. MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference is the last character.
-You can rename your reads with "Rename_reads", which is part of MarkerMAG. 
+You can rename your reads with "MarkerMAG rename_reads". 
 
    Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the two files must be the same.
 
-       Rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -r1_out R1_renamed.fa -r2_out R2_renamed.fa
+       MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -r1_out R1_renamed.fa -r2_out R2_renamed.fa
     
        # renamed r1 reads: soil_1.1, soil_2.1, soil_3.1 ...
        # renamed r2 reads: soil_1.2, soil_2.2, soil_3.2 ...
@@ -57,12 +57,12 @@ You can rename your reads with "Rename_reads", which is part of MarkerMAG.
 
 1. Link 16S rRNA gene sequences with metagenomic assemblies: 
 
-       MarkerMAG -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
+       MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
     
     
 1. Link 16S rRNA gene sequences with MAGs: 
 
-       MarkerMAG -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAGs -x fa -t 4
+       MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAGs -x fa -t 4
 
 
 Output files:
