@@ -30,7 +30,7 @@ def version(config_dict):
 def print_main_help():
 
     help_message = ''' 
-          ...::: MarkerMAG v%s :::...
+            ...::: MarkerMAG v%s :::...
 
     link          ->  link MAGs with marker genes
     rename_reads  ->  rename paired reads (in fasta format) 
@@ -89,8 +89,6 @@ if __name__ == '__main__':
         rename_reads_parser.add_argument('-r1',     required=True, type=str, help='forward reads, fasta format')
         rename_reads_parser.add_argument('-r2',     required=True, type=str, help='reverse reads, fasta format')
         rename_reads_parser.add_argument('-p',      required=True, type=str, help='prefix of read id')
-        rename_reads_parser.add_argument('-r1_out', required=True, type=str, help='renamed forward reads')
-        rename_reads_parser.add_argument('-r2_out', required=True, type=str, help='renamed reverse reads')
         args = vars(parser.parse_args())
         rename_reads.rename_reads(args)
 

@@ -39,32 +39,27 @@ MarkerMAG can be installed via `pip3`:
     # for upgrade
     pip3 install --upgrade MarkerMAG
 
-
 How to run:
 ---
  
-
 1. MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference is the last character.
 You can rename your reads with "MarkerMAG rename_reads". 
+Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the files must be the same.
 
-   Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the two files must be the same.
-
-       MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -r1_out R1_renamed.fa -r2_out R2_renamed.fa
+       MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p Soil
+        
+       # output files name and renamed reads id:
+       # Soil_R1.fasta: soil_1.1, soil_2.1, soil_3.1 ...
+       # Soil_R2.fasta: soil_1.2, soil_2.2, soil_3.2 ...
     
-       # renamed r1 reads: soil_1.1, soil_2.1, soil_3.1 ...
-       # renamed r2 reads: soil_1.2, soil_2.2, soil_3.2 ...
+1. Link 16S rRNA gene sequences with MAGs: 
 
+       MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAG_filess -x fa -t 4
 
 1. Link 16S rRNA gene sequences with metagenomic assemblies: 
 
        MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
     
-    
-1. Link 16S rRNA gene sequences with MAGs: 
-
-       MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAGs -x fa -t 4
-
-
 Output files:
 ---
 
@@ -77,11 +72,8 @@ Output files:
     MarkerGene__g4_00414	GenomicSeq__g4	196	139	yes
     MarkerGene__o3_02626	GenomicSeq__o3	100	81	yes
 
-
 Reference: intra-genome 16S rRNA gene divergence [[ref.]](https://doi.org/10.1371/journal.pone.0057923)
 ---
 
 ![end_match](images/Intra_genome_16S_divergence.png) 
-
-
 

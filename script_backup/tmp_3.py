@@ -1,22 +1,22 @@
-from Bio import SeqIO
+max_inter_genome = 0
+min_intra_genome = 100
+for line in open('/Users/songweizhi/Desktop/combined_16S_all_vs_all.txt'):
 
-file_1         = '/Users/songweizhi/Desktop/combined_all_depth_assemblies_iden99.5_uniq_default_centroids..fasta'
-file_2         = '/Users/songweizhi/Desktop/combined_all_depth_assemblies_iden99.5_uniq.fasta'
+    line_split = line.strip().split('\t')
+    query_genome    = line_split[0].split('_')[0]
+    subject_genome  = line_split[1].split('_')[0]
+    iden            = float(line_split[2])
+    aln_len         = int(line_split[3])
 
+    if aln_len >= 1300:
+        if query_genome != subject_genome:
+            if iden > max_inter_genome:
+                max_inter_genome = iden
+        if query_genome == subject_genome:
+            if iden < min_intra_genome:
+                min_intra_genome = iden
 
-file_1_id_list = []
-for seq in SeqIO.parse(file_1, 'fasta'):
-    file_1_id_list.append(seq.id)
-
-file_2_id_list = []
-for seq in SeqIO.parse(file_2, 'fasta'):
-    file_2_id_list.append(seq.id)
-
-
-c = set(file_1_id_list).intersection(file_2_id_list)
-
-
-
-print(len(file_1_id_list))
-print(len(file_2_id_list))
-print(len(c))
+print('max_inter_genome: %s' % max_inter_genome)
+print('min_intra_genome: %s' % min_intra_genome)
+# max_inter_genome: 99.282
+# min_intra_genome: 99.016
