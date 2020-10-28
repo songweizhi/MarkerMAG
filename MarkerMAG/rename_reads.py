@@ -24,12 +24,9 @@ from Bio import SeqIO
 rename_reads_usage = '''
 ============================== rename_reads example commands ==============================
 
-MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -r1_out R1_renamed.fa -r2_out R2_renamed.fa
+MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p Soil
 
 Note: The order of paired reads in the two files must be the same.
-
-renamed r1 reads: soil_1.1, soil_2.1, soil_3.1 ...
-renamed r2 reads: soil_1.2, soil_2.2, soil_3.2 ...
 
 ===========================================================================================
 '''
@@ -83,7 +80,6 @@ def rename_reads(args):
 if __name__ == '__main__':
 
     rename_reads_parser = argparse.ArgumentParser(description='', usage=rename_reads_usage)
-
     rename_reads_parser.add_argument('-r1', required=True, type=str, help='forward reads, fasta format')
     rename_reads_parser.add_argument('-r2', required=True, type=str, help='reverse reads, fasta format')
     rename_reads_parser.add_argument('-p',  required=True, type=str, help='prefix of output file and read id')

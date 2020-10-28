@@ -30,7 +30,7 @@ def version(config_dict):
 def print_main_help():
 
     help_message = ''' 
-          ...::: MarkerMAG v%s :::...
+            ...::: MarkerMAG v%s :::...
 
     link          ->  link MAGs with marker genes
     rename_reads  ->  rename paired reads (in fasta format) 
@@ -82,16 +82,13 @@ if __name__ == '__main__':
         args = vars(link_Marker_MAG_parser.parse_args())
         link_Marker_MAG.link_Marker_MAG(args, config_dict)
 
-
     elif sys.argv[1] == 'rename_reads':
         from MarkerMAG import rename_reads
-        rename_reads_parser = argparse.ArgumentParser(description='', usage=rename_reads.rename_reads_usage)
+        rename_reads_parser = argparse.ArgumentParser(description='Rename reads', usage=rename_reads.rename_reads_usage)
         rename_reads_parser.add_argument('-r1',     required=True, type=str, help='forward reads, fasta format')
         rename_reads_parser.add_argument('-r2',     required=True, type=str, help='reverse reads, fasta format')
         rename_reads_parser.add_argument('-p',      required=True, type=str, help='prefix of read id')
-        rename_reads_parser.add_argument('-r1_out', required=True, type=str, help='renamed forward reads')
-        rename_reads_parser.add_argument('-r2_out', required=True, type=str, help='renamed reverse reads')
-        args = vars(parser.parse_args())
+        args = vars(rename_reads_parser.parse_args())
         rename_reads.rename_reads(args)
 
     elif sys.argv[1] == 'uclust_16S':
@@ -119,7 +116,7 @@ python setup.py sdist bdist_wheel
 twine upload dist/*
 songweizhi
 
-
+alias twine='/Users/songweizhi/Library/Python/3.7/bin/twine'
 cd /Users/songweizhi/PycharmProjects/MarkerMAG
 rm -r build
 rm -r dist
@@ -132,4 +129,5 @@ shan88
 
 pip3 install --upgrade MarkerMAG
 pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
+
 '''

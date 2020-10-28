@@ -1111,21 +1111,19 @@ def link_Marker_MAG(args, config_dict):
         # get unrecovered markers
         unrecovered_markers_paired       = get_unrecovered_markers(marker_id_set, recovered_paired)
         unrecovered_markers_clipping     = get_unrecovered_markers(marker_id_set, recovered_clipping)
-        report_and_log(('Prefix\tPaired_r\tPaired_a\tClip_r\tClip_a'), pwd_log_file, keep_quiet)
-        report_and_log(('%s\t%s\t%s\t%s\t%s' % (output_prefix, recovery_paired, accuracy_paired, recovery_clipping, accuracy_clipping)), pwd_log_file, keep_quiet)
-        report_and_log(('Unrecovered Paired:\t%s'    % (','.join(unrecovered_markers_paired))), pwd_log_file, keep_quiet)
-        report_and_log(('Unrecovered Clipping:\t%s'  % (','.join(unrecovered_markers_clipping))), pwd_log_file, keep_quiet)
+        unrecovered_markers_paired_str   = 'Unrecovered_Paired(%s):%s'   % (len(unrecovered_markers_paired), ','.join(sorted([i for i in unrecovered_markers_paired])))
+        unrecovered_markers_clipping_str = 'Unrecovered_Clipping(%s):%s' % (len(unrecovered_markers_clipping), ','.join(sorted([i for i in unrecovered_markers_clipping])))
 
         # assessment by genome
         assign_rate_paired, assign_accuracy_paired, right_assign_paired, wrong_assign_paired         = get_accuracy_by_genome(link_stats_paired_filtered, mag_folder, mag_file_extension)
         assign_rate_clipping, assign_accuracy_clipping, right_assign_clipping, wrong_assign_clipping = get_accuracy_by_genome(link_stats_clipping_filtered, mag_folder, mag_file_extension)
-
         unrecovered_paired_report_str   = 'Unrecovered_Paired(%s):%s'   % (len(wrong_assign_paired), ','.join(sorted([i for i in wrong_assign_paired])))
         unrecovered_clipping_report_str = 'Unrecovered_Clipping(%s):%s' % (len(wrong_assign_clipping), ','.join(sorted([i for i in wrong_assign_clipping])))
 
-        report_and_log(('\nAssessment by genome'), pwd_log_file, keep_quiet)
-        report_and_log(('Prefix\tPaired_r\tPaired_a\tClip_r\tClip_a\tUnrecovered_Paired\tUnrecovered_Clipping'), pwd_log_file, keep_quiet)
-        report_and_log(('%s\t%s\t%s\t%s\t%s\t%s\t%s' % (output_prefix, assign_rate_paired, assign_accuracy_paired, assign_rate_clipping, assign_accuracy_clipping, unrecovered_paired_report_str, unrecovered_clipping_report_str)), pwd_log_file, keep_quiet)
+        # report
+        report_and_log(('Prefix\tBy\tPaired_r\tPaired_a\tClip_r\tClip_a\tUnrecovered_Paired\tUnrecovered_Clipping'), pwd_log_file, keep_quiet)
+        report_and_log(('%s\tMarker\t%s\t%s\t%s\t%s\t%s\t%s' % (output_prefix, recovery_paired, accuracy_paired, recovery_clipping, accuracy_clipping, unrecovered_markers_paired_str, unrecovered_markers_clipping_str)), pwd_log_file, keep_quiet)
+        report_and_log(('%s\tGenome\t%s\t%s\t%s\t%s\t%s\t%s' % (output_prefix, assign_rate_paired, assign_accuracy_paired, assign_rate_clipping, assign_accuracy_clipping, unrecovered_paired_report_str, unrecovered_clipping_report_str)), pwd_log_file, keep_quiet)
 
 
     ################################################### remove tmp files ###################################################
@@ -1213,7 +1211,7 @@ To_do = '''
 6. the depth of 16S sequences always not lower than the genome they come from
 7. split sam file
 8. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
-
+9.check whether input file exist!
 
 Notes:
 linkages only supported by clipping reads were ignored !!!

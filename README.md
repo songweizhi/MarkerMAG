@@ -63,14 +63,13 @@ Please note that all reads in R1.fasta and R2.fasta must be in pair and their or
 Output files:
 ---
 
-    MarkerGene	GenomicSeq	Paired	Clipping	Intersection
-    MarkerGene__s4_02579	GenomicSeq__s4	40	27	yes
-    MarkerGene__s4_04216	GenomicSeq__s4	97	39	yes
-    MarkerGene__o2_01394	GenomicSeq__o2	18	0	no
-    MarkerGene__s4_00580	GenomicSeq__s4	84	41	yes
-    MarkerGene__p4_02304	GenomicSeq__p4	0	43	no
-    MarkerGene__g4_00414	GenomicSeq__g4	196	139	yes
-    MarkerGene__o3_02626	GenomicSeq__o3	100	81	yes
+    MarkerGene	GenomicSeq	Paired	Clipping
+    MarkerGene__s4_02579	GenomicSeq__s4	40	27
+    MarkerGene__s4_04216	GenomicSeq__s4	97	39
+    MarkerGene__o2_01394	GenomicSeq__o2	18	0
+    MarkerGene__s4_00580	GenomicSeq__s4	84	41
+    MarkerGene__g4_00414	GenomicSeq__g4	196	139
+    MarkerGene__o3_02626	GenomicSeq__o3	100	81
 
 Reference: intra-genome 16S rRNA gene divergence [[ref.]](https://doi.org/10.1371/journal.pone.0057923)
 ---

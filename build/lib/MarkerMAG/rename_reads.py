@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (C) 2020, Weizhi Song, Torsten Thomas.
 # songwz03@gmail.com or t.thomas@unsw.edu.au
 
@@ -24,12 +22,9 @@ from Bio import SeqIO
 rename_reads_usage = '''
 ============================== rename_reads example commands ==============================
 
-MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -r1_out R1_renamed.fa -r2_out R2_renamed.fa
+MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p Soil
 
 Note: The order of paired reads in the two files must be the same.
-
-renamed r1 reads: soil_1.1, soil_2.1, soil_3.1 ...
-renamed r2 reads: soil_1.2, soil_2.2, soil_3.2 ...
 
 ===========================================================================================
 '''
@@ -37,12 +32,10 @@ renamed r2 reads: soil_1.2, soil_2.2, soil_3.2 ...
 
 def sep_path_basename_ext(file_in):
 
-    # separate path and file name
     file_path, file_name = os.path.split(file_in)
     if file_path == '':
         file_path = '.'
 
-    # separate file basename and extension
     file_basename, file_extension = os.path.splitext(file_name)
 
     return file_path, file_basename, file_extension
@@ -53,8 +46,17 @@ def rename_reads(args):
     reads_r1        = args['r1']
     reads_r2        = args['r2']
     output_prefix   = args['p']
-    output_file_r1  = args['r1_out']
-    output_file_r2  = args['r2_out']
+
+    output_file_r1 = '%s_R1.fasta' % output_prefix
+    output_file_r2 = '%s_R2.fasta' % output_prefix
+
+    if os.path.isfile(output_file_r1) is True:
+        print('%s detected, please remove your existing file or specify a different prefix' % output_file_r1)
+        exit()
+
+    if os.path.isfile(output_file_r2) is True:
+        print('%s detected, please remove your existing file or specify a different prefix' % output_file_r2)
+        exit()
 
     output_file_r1_handle = open(output_file_r1, 'w')
     r1_index = 1
@@ -76,12 +78,9 @@ def rename_reads(args):
 if __name__ == '__main__':
 
     rename_reads_parser = argparse.ArgumentParser(description='', usage=rename_reads_usage)
-
-    rename_reads_parser.add_argument('-r1',     required=True, type=str, help='forward reads, fasta format')
-    rename_reads_parser.add_argument('-r2',     required=True, type=str, help='reverse reads, fasta format')
-    rename_reads_parser.add_argument('-p',      required=True, type=str, help='prefix of read id')
-    rename_reads_parser.add_argument('-r1_out', required=True, type=str, help='renamed forward reads')
-    rename_reads_parser.add_argument('-r2_out', required=True, type=str, help='renamed reverse reads')
+    rename_reads_parser.add_argument('-r1', required=True, type=str, help='forward reads, fasta format')
+    rename_reads_parser.add_argument('-r2', required=True, type=str, help='reverse reads, fasta format')
+    rename_reads_parser.add_argument('-p',  required=True, type=str, help='prefix of output file and read id')
     args = vars(rename_reads_parser.parse_args())
 
     rename_reads(args)
