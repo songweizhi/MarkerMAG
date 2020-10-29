@@ -47,8 +47,8 @@ How to run:
             ...::: MarkerMAG v1.0.9 :::...
 
         link             ->  link MAGs with marker genes
-        subsample_reads  ->  subsample reads with Usearch
         rename_reads     ->  rename paired reads (in fasta format) 
+        subsample_reads  ->  subsample reads
         uclust_16S       ->  cluster marker genes with Usearch
 
 1. MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference is the last character.

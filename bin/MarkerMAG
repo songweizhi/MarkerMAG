@@ -33,8 +33,8 @@ def print_main_help():
          ...::: MarkerMAG v%s :::...
 
     link             ->  link MAGs with marker genes
-    subsample_reads  ->  subsample reads with Usearch
     rename_reads     ->  rename paired reads (in fasta format) 
+    subsample_reads  ->  subsample reads
     uclust_16S       ->  cluster marker genes with Usearch
     
     ''' % version(config_dict)
