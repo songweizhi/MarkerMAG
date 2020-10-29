@@ -24,8 +24,9 @@ Dependencies
 [googleVis](https://cran.r-project.org/web/packages/googleVis/index.html)
 
 + Third-party software: 
-[BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download), 
-[Bowtie](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+  + [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download), 
+    [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+  + [Usearch](https://www.drive5.com/usearch/) (required by uclust_16S module)
 
 
 How to install:
@@ -36,12 +37,20 @@ MarkerMAG can be installed via `pip3`:
     # First-time installation
     pip3 install MarkerMAG
         
-    # for upgrade
+    # upgrade
     pip3 install --upgrade MarkerMAG
 
 How to run:
 ---
+1. MarkerMAG modules
  
+            ...::: MarkerMAG v1.0.9 :::...
+
+        link          ->  link MAGs with marker genes
+        rename_reads  ->  rename paired reads (in fasta format) 
+        uclust_16S    ->  cluster marker genes with Usearch
+    
+
 1. MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference is the last character.
 You can rename your reads with "MarkerMAG rename_reads". 
 Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the files must be the same.
@@ -63,16 +72,22 @@ Please note that all reads in R1.fasta and R2.fasta must be in pair and their or
 Output files:
 ---
 
-    MarkerGene	GenomicSeq	Paired	Clipping
-    MarkerGene__s4_02579	GenomicSeq__s4	40	27
-    MarkerGene__s4_04216	GenomicSeq__s4	97	39
-    MarkerGene__o2_01394	GenomicSeq__o2	18	0
-    MarkerGene__s4_00580	GenomicSeq__s4	84	41
-    MarkerGene__g4_00414	GenomicSeq__g4	196	139
-    MarkerGene__o3_02626	GenomicSeq__o3	100	81
+1. output table
 
-Reference: intra-genome 16S rRNA gene divergence [[ref.]](https://doi.org/10.1371/journal.pone.0057923)
+       Marker	Genome	Paired	Clipping
+       s4_04216	bin_s4	97	39
+       o2_01394	bin_o2	18	0
+       s4_00580	bin_s4	84	41
+       g4_00414	bin_g4	196	139
+       o3_02626	bin_o3	100	81
+
+
+Reference: 
 ---
 
-![end_match](images/Intra_genome_16S_divergence.png) 
+1. Intra-genome 16S rRNA gene divergence [[ref.](https://doi.org/10.1371/journal.pone.0057923)]
+![Intra_genome_16S_divergence](images/Intra_genome_16S_divergence.png) 
+
+1. Other handy tools/scripts
+   + [seqtk](https://github.com/lh3/seqtk): tool for processing sequences in the FASTA or FASTQ format.
 
