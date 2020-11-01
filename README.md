@@ -59,8 +59,8 @@ How to run:
         subsample_reads  ->  subsample reads with Usearch
         uclust_16s       ->  cluster marker genes with Usearch
 
-+ MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference is the last character.
-You can rename your reads with "MarkerMAG rename_reads". 
++ MarkerMAG assumes the id of paired reads in the format of XXXX.1 and XXXX.2. The only difference is the last character.
+You can rename your reads with MarkerMAG's `rename_reads` module. 
 Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the files must be the same.
 
        MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p Soil
@@ -75,7 +75,7 @@ Please note that all reads in R1.fasta and R2.fasta must be in pair and their or
     16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.5%`.
     The longest sequence from each cluster will be kept.  
     
-       MarkerMAG matam_16s -p Test -in combined_paired_reads.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py -sortmerna /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/opt/matam-v1.5.3/sortmerna/sortmerna
+       MarkerMAG matam_16s -p Test -in combined_paired_reads.fasta -pct 1,5,10,25,50,75 -i 0.995 -t 12 -force -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py -sortmerna /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/opt/matam-v1.5.3/sortmerna/sortmerna
 
 + Link 16S rRNA gene sequences with MAGs: 
 
