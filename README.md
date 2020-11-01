@@ -86,7 +86,7 @@ Output files:
 1. Linkage table
 
     | Marker | Genome | Paired | Clipping |
-    | --- | --- | --- | --- |
+    |:---:|:---:|:---:|:--- :|
     | g4_00414 | bin_g4 | 196 | 139 |
     | o3_02626 | bin_o3 | 100 | 81 |
     | s4_04216 | bin_s4 | 97 | 39 |
