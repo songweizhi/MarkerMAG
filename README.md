@@ -103,7 +103,7 @@ Output files:
        o3_02626	bin_o3	100	81
 
 1. Visualization of linkages with Sankey plot
-![linkages](images/linkages.png) 
+![linkages](images/linkage_plot.png) 
 
 
 Reference: 
