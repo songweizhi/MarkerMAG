@@ -72,7 +72,7 @@ Please note that all reads in R1.fasta and R2.fasta must be in pair and their or
 1. Assemble 16S rRNA gene sequences with Matam.
  
     The following command will extract 16S rRNA reads from `combined_paired_reads.fasta` and subsample at percentage of `1, 5, 10, 25, 50 and 75`.
-    16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.5%`.  
+    16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.5%`.
     The longest one from each cluster will be kept.  
     
        MarkerMAG matam_16s -p Test -in combined_paired_reads.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py -sortmerna /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/opt/matam-v1.5.3/sortmerna/sortmerna
