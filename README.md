@@ -60,7 +60,7 @@ Important Notes !!!
        # Soil_R2.fasta: soil_1.2, soil_2.2, soil_3.2 ...
 
 1. The reconstruction of 16S rRNA genes by Matam is highly affected by sequencing depth ([ref](to/be/added)), we thus recommend to 
-   run Matam on reads subsets subsample at different percentage.
+   run Matam on reads subsets subsampled at different percentage and combine assemblies at all depth, followed by dereplication.
 
    The following command extracts 16S rRNA reads from `combined_paired_reads.fasta` and subsample at percentage of `1, 5, 10, 25, 50 and 75`.
    16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.5%`.
