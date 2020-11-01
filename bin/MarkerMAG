@@ -34,7 +34,7 @@ def print_main_help():
 
     link             ->  link MAGs with marker genes
     rename_reads     ->  rename paired reads (in fasta format) 
-    matam_16s        ->  including extract, subsample, assembly, merge and dereplication
+    matam_16s        ->  including reads extraction, subsample, assembly and dereplication
     subsample_reads  ->  subsample reads with Usearch
     uclust_16s       ->  cluster marker genes with Usearch
 
