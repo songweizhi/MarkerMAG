@@ -85,13 +85,13 @@ Output files:
 
 1. Linkage table
 
-    |Marker|Genome|Paired|Clipping|
-    |---|---|---|---|
-    |s4_04216|bin_s4| 97 | 39 |
-    |o2_01394|bin_o2|58|0|
-    |s4_00580|bin_s4|84|41|
-    |g4_00414|bin_g4|196|139|
-    |o3_02626|bin_o3|100|81|
+    | Marker | Genome | Paired | Clipping |
+    | --- | --- | --- | --- |
+    | g4_00414 | bin_g4 | 196 | 139 |
+    | o3_02626 | bin_o3 | 100 | 81 |
+    | s4_04216 | bin_s4 | 97 | 39 |
+    | s4_00580 | bin_s4 | 84 | 41 |
+    | o2_01394 | bin_o2 | 58 | 0 |
 
 
 1. Visualization of linkages with Sankey plot
