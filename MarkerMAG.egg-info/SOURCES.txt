@@ -5,7 +5,9 @@ MarkerMAG/MarkerMAG_config.py
 MarkerMAG/VERSION
 MarkerMAG/get_sankey_plot.R
 MarkerMAG/link_Marker_MAG.py
+MarkerMAG/matam_16s.py
 MarkerMAG/rename_reads.py
+MarkerMAG/subsample_reads.py
 MarkerMAG/uclust_16S.py
 MarkerMAG.egg-info/PKG-INFO
 MarkerMAG.egg-info/SOURCES.txt

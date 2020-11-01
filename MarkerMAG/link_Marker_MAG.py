@@ -437,7 +437,10 @@ def get_accuracy(file_in, marker_num):
                 recovered_markers.add(match_split[0][12:])
 
     marker_recovery = float("{0:.2f}".format(len(recovered_markers)*100/marker_num))
-    link_accuracy = float("{0:.2f}".format(linkage_num_correct*100/linkage_num_total))
+
+    link_accuracy = 0
+    if linkage_num_total > 0:
+        link_accuracy = float("{0:.2f}".format(linkage_num_correct*100/linkage_num_total))
 
     marker_recovery = '%s/%s(%s)' % (len(recovered_markers), marker_num, marker_recovery)
 
@@ -475,8 +478,11 @@ def get_accuracy_by_genome(file_in, mag_folder, mag_file_extension):
             genome_without_right_16s_assignment.append(input_genome)
 
 
-    marker_gene_assignment_rate         = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/len(mag_file_list_no_ext)))
-    marker_gene_assignment_accuracy     = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/(len(genome_with_right_16s_assignment_always) + len(genome_with_wrong_16s_assignment))))
+    marker_gene_assignment_rate = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/len(mag_file_list_no_ext)))
+
+    marker_gene_assignment_accuracy = 0
+    if (len(genome_with_right_16s_assignment_always) + len(genome_with_wrong_16s_assignment)) > 0:
+        marker_gene_assignment_accuracy = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/(len(genome_with_right_16s_assignment_always) + len(genome_with_wrong_16s_assignment))))
     marker_gene_assignment_rate = '%s/%s(%s)' % (len(genome_with_right_16s_assignment_always), len(mag_file_list_no_ext), marker_gene_assignment_rate)
 
     return marker_gene_assignment_rate, marker_gene_assignment_accuracy, genome_with_right_16s_assignment_always, genome_without_right_16s_assignment
@@ -516,8 +522,6 @@ def link_Marker_MAG(args, config_dict):
     keep_temp                           = args['tmp']
     test_mode                           = args['test_mode']
     run_bbmap                           = args['bbmap']
-    no_ambiguous                        = args['no_ambiguous']
-
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_bowtie2_exe                     = config_dict['bowtie2']
@@ -603,7 +607,6 @@ def link_Marker_MAG(args, config_dict):
     pwd_log_file                                = '%s/%s_%s.log'                                    % (working_directory, output_prefix, datetime.now().strftime('%Y-%m-%d_%Hh-%Mm-%Ss_%f'))
     bowtie_index_dir                            = '%s/%s_%s_index'                                  % (working_directory, output_prefix, marker_gene_seqs_file_basename)
     pwd_samfile                                 = '%s/%s.sam'                                       % (working_directory, marker_gene_seqs_file_basename)
-    pwd_samfile_no_ambiguous                    = '%s/%s_no_ambiguous.sam'                          % (working_directory, marker_gene_seqs_file_basename)
     clipping_reads_matched_part                 = '%s/%s_clipping_matched_part.txt'                 % (working_directory, output_prefix)
     clipping_reads_not_matched_part_seq         = '%s/%s_clipping_not_matched_part_seq.fasta'       % (working_directory, output_prefix)
     clipping_reads_not_matched_part_seq_blastn  = '%s/%s_clipping_not_matched_part_seq_blast.txt'   % (working_directory, output_prefix)
@@ -640,8 +643,6 @@ def link_Marker_MAG(args, config_dict):
     bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
 
     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
-    if no_ambiguous is True:
-        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -a --quiet --threads %s'    % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
 
     # if multiple_placement == '0':
     #     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
@@ -663,17 +664,13 @@ def link_Marker_MAG(args, config_dict):
     report_and_log(('Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
     sleep(1)
 
-    if no_ambiguous is True:
-        remove_reads_with_multi_best_aln(pwd_samfile, pwd_samfile_no_ambiguous)
-
 
     ##################################################### extract reads ####################################################
 
     report_and_log(('Extracting unmapped part of clipping mapped reads from sam file'), pwd_log_file, keep_quiet)
 
     sam_file_to_parse = pwd_samfile
-    if no_ambiguous is True:
-        sam_file_to_parse = pwd_samfile_no_ambiguous
+
 
     # export clipping mapped reads and perfectly mapped reads
     clipping_mapped_reads_list = set()
@@ -1041,8 +1038,7 @@ def link_Marker_MAG(args, config_dict):
         os.remove(unmapped_paired_reads_blastn)
         os.remove(link_stats_clipping)
         os.remove(link_stats_paired)
-        if no_ambiguous is True:
-            os.remove(pwd_samfile_no_ambiguous)
+
 
     # Final report
     report_and_log(('Done!'), pwd_log_file, keep_quiet)

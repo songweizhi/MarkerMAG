@@ -363,63 +363,6 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
     # os.remove(file_in_sorted)
 
 
-# def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, file_out_summary, file_out_intersect_linkages):
-#
-#     # file in:   file_in_paired    and  file_in_clipping
-#     # file out:  file_out_summary  and  file_out_intersection
-#
-#     combined_paired_and_clipping_keys = set()
-#
-#     # read in paired linkages
-#     paired_linkages_dict = {}
-#     for paired_linkage in open(paired_linkages):
-#         if not paired_linkage.startswith('MarkerGene,GenomicSeq,Number'):
-#             paired_linkage_split = paired_linkage.strip().split(',')
-#             paired_key = '%s__|__%s' % (paired_linkage_split[0], paired_linkage_split[1])
-#             paired_value = int(paired_linkage_split[2])
-#             paired_linkages_dict[paired_key] = paired_value
-#             combined_paired_and_clipping_keys.add(paired_key)
-#
-#     # read in clipping linkages
-#     clipping_linkages_dict = {}
-#     for clipping_linkage in open(clipping_linkages):
-#         if not clipping_linkage.startswith('MarkerGene,GenomicSeq,Number'):
-#             clipping_linkage_split = clipping_linkage.strip().split(',')
-#             clipping_key = '%s__|__%s' % (clipping_linkage_split[0], clipping_linkage_split[1])
-#             clipping_value = int(clipping_linkage_split[2])
-#             clipping_linkages_dict[clipping_key] = clipping_value
-#             combined_paired_and_clipping_keys.add(clipping_key)
-#
-#     # combine paired and clipping linkages
-#     file_out_summary_handle = open(file_out_summary, 'w')
-#     file_out_intersect_linkages_handle = open(file_out_intersect_linkages, 'w')
-#     file_out_summary_handle.write('MarkerGene\tGenomicSeq\tPaired\tClipping\tIntersection\n')
-#     file_out_intersect_linkages_handle.write('MarkerGene,GenomicSeq,Number\n')
-#     for each_key in combined_paired_and_clipping_keys:
-#
-#         current_key_paired_value = 0
-#         if each_key in paired_linkages_dict:
-#             current_key_paired_value = paired_linkages_dict[each_key]
-#
-#         current_key_clipping_value = 0
-#         if each_key in clipping_linkages_dict:
-#             current_key_clipping_value = clipping_linkages_dict[each_key]
-#
-#         current_key_combined = 0
-#         intersection = 'no'
-#         if (current_key_paired_value > 0) and (current_key_clipping_value > 0):
-#             current_key_combined = current_key_paired_value + current_key_clipping_value
-#             intersection = 'yes'
-#
-#         # write out
-#         file_out_summary_handle.write('%s\t%s\t%s\t%s\n' % ('\t'.join(each_key.split('__|__')), current_key_paired_value, current_key_clipping_value, intersection))
-#         if current_key_combined > 0:
-#             file_out_intersect_linkages_handle.write('%s,%s\n' % (','.join(each_key.split('__|__')) , current_key_combined))
-#
-#     file_out_summary_handle.close()
-#     file_out_intersect_linkages_handle.close()
-
-
 def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, file_out_summary, file_out_intersect_linkages):
 
     # file in:   file_in_paired    and  file_in_clipping
@@ -494,51 +437,14 @@ def get_accuracy(file_in, marker_num):
                 recovered_markers.add(match_split[0][12:])
 
     marker_recovery = float("{0:.2f}".format(len(recovered_markers)*100/marker_num))
-    link_accuracy = float("{0:.2f}".format(linkage_num_correct*100/linkage_num_total))
+
+    link_accuracy = 0
+    if linkage_num_total > 0:
+        link_accuracy = float("{0:.2f}".format(linkage_num_correct*100/linkage_num_total))
+
+    marker_recovery = '%s/%s(%s)' % (len(recovered_markers), marker_num, marker_recovery)
 
     return marker_recovery, link_accuracy, recovered_markers
-
-
-def get_accuracy_s2s(file_in, s2s_file, marker_num):
-
-    # get aessemblie_to_16s_dict
-    aessemblie_to_16s_dict = {}
-    for each_assembly in open(s2s_file):
-        each_assembly_split = each_assembly.strip().split('\t')
-        aessemblie_to_16s_dict[each_assembly_split[0]] = each_assembly_split[1].split(',')
-
-    # read in linkage
-    recovered_markers_right = set()
-    recovered_markers_wrong = set()
-    for each_match in open(file_in):
-        if not each_match.startswith('MarkerGene,GenomicSeq,Number'):
-            match_split = each_match.strip().split(',')
-            MarkerGene        = match_split[0][12:]
-            MarkerGene_genome = match_split[0][12:][:2]
-            GenomicSeq_genome = match_split[1][12:]
-            MarkerGene_to_16s = aessemblie_to_16s_dict[MarkerGene]
-
-            if MarkerGene_genome == GenomicSeq_genome:
-                for matched_16s in MarkerGene_to_16s:
-                    matched_16s_genome = matched_16s[:2]
-                    if matched_16s_genome == GenomicSeq_genome:
-                        recovered_markers_right.add(matched_16s)
-                    else:
-                        recovered_markers_wrong.add(matched_16s)
-            else:
-                [recovered_markers_wrong.add(i) for i in MarkerGene_to_16s]
-
-
-    recovered_markers_right_always = set()
-    for each_right in recovered_markers_right:
-        if each_right not in recovered_markers_wrong:
-            recovered_markers_right_always.add(each_right)
-
-    # get recovery and accuracy
-    marker_recovery = float("{0:.2f}".format(len(recovered_markers_right_always)*100/marker_num))
-    link_accuracy   = float("{0:.2f}".format(len(recovered_markers_right_always)*100/(len(recovered_markers_right) + len(recovered_markers_wrong))))
-
-    return marker_recovery, link_accuracy, recovered_markers_right_always
 
 
 def get_accuracy_by_genome(file_in, mag_folder, mag_file_extension):
@@ -572,9 +478,12 @@ def get_accuracy_by_genome(file_in, mag_folder, mag_file_extension):
             genome_without_right_16s_assignment.append(input_genome)
 
 
-    marker_gene_assignment_rate         = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/len(mag_file_list_no_ext)))
-    marker_gene_assignment_accuracy     = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/(len(genome_with_right_16s_assignment_always) + len(genome_with_wrong_16s_assignment))))
+    marker_gene_assignment_rate = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/len(mag_file_list_no_ext)))
 
+    marker_gene_assignment_accuracy = 0
+    if (len(genome_with_right_16s_assignment_always) + len(genome_with_wrong_16s_assignment)) > 0:
+        marker_gene_assignment_accuracy = float("{0:.2f}".format(len(genome_with_right_16s_assignment_always)*100/(len(genome_with_right_16s_assignment_always) + len(genome_with_wrong_16s_assignment))))
+    marker_gene_assignment_rate = '%s/%s(%s)' % (len(genome_with_right_16s_assignment_always), len(mag_file_list_no_ext), marker_gene_assignment_rate)
 
     return marker_gene_assignment_rate, marker_gene_assignment_accuracy, genome_with_right_16s_assignment_always, genome_without_right_16s_assignment
 
@@ -600,7 +509,6 @@ def link_Marker_MAG(args, config_dict):
     mag_folder                          = args['mag']
     mag_file_extension                  = args['x']
     marker_gene_seqs                    = args['m']
-    multiple_placement                  = str(args['mp'])
     min_cigar_M                         = args['cigarM']
     min_cigar_S                         = args['cigarS']
     reads_iden_cutoff                   = args['ri']
@@ -614,8 +522,6 @@ def link_Marker_MAG(args, config_dict):
     keep_temp                           = args['tmp']
     test_mode                           = args['test_mode']
     run_bbmap                           = args['bbmap']
-    no_ambiguous                        = args['no_ambiguous']
-
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_bowtie2_exe                     = config_dict['bowtie2']
@@ -701,7 +607,6 @@ def link_Marker_MAG(args, config_dict):
     pwd_log_file                                = '%s/%s_%s.log'                                    % (working_directory, output_prefix, datetime.now().strftime('%Y-%m-%d_%Hh-%Mm-%Ss_%f'))
     bowtie_index_dir                            = '%s/%s_%s_index'                                  % (working_directory, output_prefix, marker_gene_seqs_file_basename)
     pwd_samfile                                 = '%s/%s.sam'                                       % (working_directory, marker_gene_seqs_file_basename)
-    pwd_samfile_no_ambiguous                    = '%s/%s_no_ambiguous.sam'                          % (working_directory, marker_gene_seqs_file_basename)
     clipping_reads_matched_part                 = '%s/%s_clipping_matched_part.txt'                 % (working_directory, output_prefix)
     clipping_reads_not_matched_part_seq         = '%s/%s_clipping_not_matched_part_seq.fasta'       % (working_directory, output_prefix)
     clipping_reads_not_matched_part_seq_blastn  = '%s/%s_clipping_not_matched_part_seq_blast.txt'   % (working_directory, output_prefix)
@@ -738,8 +643,6 @@ def link_Marker_MAG(args, config_dict):
     bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
 
     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
-    if no_ambiguous is True:
-        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal -a --quiet --threads %s'    % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
 
     # if multiple_placement == '0':
     #     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
@@ -761,17 +664,13 @@ def link_Marker_MAG(args, config_dict):
     report_and_log(('Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
     sleep(1)
 
-    if no_ambiguous is True:
-        remove_reads_with_multi_best_aln(pwd_samfile, pwd_samfile_no_ambiguous)
-
 
     ##################################################### extract reads ####################################################
 
     report_and_log(('Extracting unmapped part of clipping mapped reads from sam file'), pwd_log_file, keep_quiet)
 
     sam_file_to_parse = pwd_samfile
-    if no_ambiguous is True:
-        sam_file_to_parse = pwd_samfile_no_ambiguous
+
 
     # export clipping mapped reads and perfectly mapped reads
     clipping_mapped_reads_list = set()
@@ -1139,8 +1038,7 @@ def link_Marker_MAG(args, config_dict):
         os.remove(unmapped_paired_reads_blastn)
         os.remove(link_stats_clipping)
         os.remove(link_stats_paired)
-        if no_ambiguous is True:
-            os.remove(pwd_samfile_no_ambiguous)
+
 
     # Final report
     report_and_log(('Done!'), pwd_log_file, keep_quiet)
@@ -1173,7 +1071,6 @@ if __name__ == '__main__':
     link_Marker_MAG_parser.add_argument('-tmp',             required=False, action="store_true",        help='keep temporary files')
     link_Marker_MAG_parser.add_argument('-test_mode',       required=False, action="store_true",        help='only for debugging, do not provide')
     link_Marker_MAG_parser.add_argument('-bbmap',           required=False, action="store_true",        help='run bbmap, instead of bowtie')
-    link_Marker_MAG_parser.add_argument('-no_ambiguous',    required=False, action="store_true",        help='ignore ambiguous mappings, specify with dereplicated marker genes')
 
     args = vars(link_Marker_MAG_parser.parse_args())
 
