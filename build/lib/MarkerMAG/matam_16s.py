@@ -8,7 +8,7 @@ from distutils.spawn import find_executable
 
 
 matam_16s_usage = '''
-================== matam_16s example commands ==================
+========================= matam_16s example commands =========================
 
 module load python/3.6.5
 module load java/7u51
@@ -24,7 +24,7 @@ export PATH=/home/z5039045/anaconda3/bin:$PATH
 cd /srv/scratch/z5039045/MarkerMAG_wd/simulation_diff_depth_InSilicoSeq
 python3 matam_16s.py -p Test -in combined_rep123.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py -sortmerna /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/opt/matam-v1.5.3/sortmerna/sortmerna
 
-======================================================================
+==============================================================================
 '''
 
 
@@ -405,3 +405,5 @@ cd /srv/scratch/z5039045/MarkerMAG_wd/simulation_diff_depth_InSilicoSeq
 python3 matam_16s.py -p Test -in combined_rep123_0.5.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py
 
 '''
+
+

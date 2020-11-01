@@ -405,3 +405,5 @@ cd /srv/scratch/z5039045/MarkerMAG_wd/simulation_diff_depth_InSilicoSeq
 python3 matam_16s.py -p Test -in combined_rep123_0.5.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py
 
 '''
+
+

@@ -13,8 +13,11 @@ def version():
 __long_description__ = '''
 
 MarkerMAG: link MAGs with marker genes
+
 Weizhi Song (songwz03@gmail.com)
+
 Center for Marine Science & Innovation (CMSI)
+
 University of New South Wales, Sydney, Australia
 
 '''

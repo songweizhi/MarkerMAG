@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     elif sys.argv[1] == 'link':
         from MarkerMAG import link_Marker_MAG
-        link_Marker_MAG_parser = argparse.ArgumentParser(description='Link MAGs with marker genes', usage=link_Marker_MAG.link_Marker_MAG_usage)
+        link_Marker_MAG_parser = subparsers.add_parser('link', description='Link MAGs with marker genes', usage=link_Marker_MAG.link_Marker_MAG_usage)
         link_Marker_MAG_parser.add_argument('-p',               required=True,                              help='output prefix')
         link_Marker_MAG_parser.add_argument('-r1',              required=True,                              help='paired reads r1')
         link_Marker_MAG_parser.add_argument('-r2',              required=True,                              help='paired reads r2')
@@ -82,21 +82,21 @@ if __name__ == '__main__':
         link_Marker_MAG_parser.add_argument('-test_mode',       required=False, action="store_true",        help='only for debugging, do not provide')
         link_Marker_MAG_parser.add_argument('-bbmap',           required=False, action="store_true",        help='run bbmap, instead of bowtie')
         link_Marker_MAG_parser.add_argument('-no_ambiguous',    required=False, action="store_true",        help='ignore ambiguous mappings, specify with dereplicated marker genes')
-        args = vars(link_Marker_MAG_parser.parse_args())
+        args = vars(parser.parse_args())
         link_Marker_MAG.link_Marker_MAG(args, config_dict)
 
     elif sys.argv[1] == 'rename_reads':
         from MarkerMAG import rename_reads
-        rename_reads_parser = argparse.ArgumentParser(description='Rename reads', usage=rename_reads.rename_reads_usage)
+        rename_reads_parser = subparsers.add_parser('rename_reads', description='Rename reads', usage=rename_reads.rename_reads_usage)
         rename_reads_parser.add_argument('-r1', required=True, type=str, help='forward reads, fasta format')
         rename_reads_parser.add_argument('-r2', required=True, type=str, help='reverse reads, fasta format')
         rename_reads_parser.add_argument('-p',  required=True, type=str, help='prefix of read id')
-        args = vars(rename_reads_parser.parse_args())
+        args = vars(parser.parse_args())
         rename_reads.rename_reads(args)
 
     elif sys.argv[1] == 'matam_16s':
         from MarkerMAG import matam_16s
-        matam_16s_parser = argparse.ArgumentParser(description='Assemble 16S rRNA genes with Matam', usage=matam_16s.matam_16s_usage)
+        matam_16s_parser = subparsers.add_parser('matam_16s', description='Assemble 16S rRNA genes with Matam', usage=matam_16s.matam_16s_usage)
         matam_16s_parser.add_argument('-p',                 required=True,                                       help='output prefix')
         matam_16s_parser.add_argument('-in',                required=True,                                       help='combined reads file')
         matam_16s_parser.add_argument('-pct',               required=True,  type=str, default='1,5,10,25,50,75', help='subsample percentage, deafault: 1,5,10,25,50,75')
@@ -108,16 +108,16 @@ if __name__ == '__main__':
         matam_16s_parser.add_argument('-sortmerna',         required=False, type=str, default='sortmerna',       help='path to sortmerna executable file, default: sortmerna')
         matam_16s_parser.add_argument('-seqtk',             required=False, type=str, default='seqtk',           help='path to seqtk executable file, default: seqtk')
         matam_16s_parser.add_argument('-usearch',           required=False, type=str, default='usearch',         help='path to usearch executable file, default: usearch')
-        args = vars(matam_16s_parser.parse_args())
+        args = vars(parser.parse_args())
         matam_16s.matam_16s(args)
 
     elif sys.argv[1] == 'uclust_16s':
         from MarkerMAG import uclust_16S
-        uclust_16S_parser = argparse.ArgumentParser(description='', usage=uclust_16S.uclust_16S_usage)
+        uclust_16S_parser = subparsers.add_parser('uclust_16s', description='Cluster 16S with Usearch', usage=uclust_16S.uclust_16S_usage)
         uclust_16S_parser.add_argument('-in',           required=True,                          help='fasta file')
         uclust_16S_parser.add_argument('-i',            required=False, type=float, default=1,  help='Identity cutoff (0-1), default: 1')
         uclust_16S_parser.add_argument('-out',          required=True,                          help='file out')
-        args = vars(uclust_16S_parser.parse_args())
+        args = vars(parser.parse_args())
         uclust_16S.uclust_16S(args)
 
     else:
