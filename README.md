@@ -1,6 +1,8 @@
 
 ## MarkerMAG (link MAGs with marker genes)
 
+![logo](images/MarkerMAG_logo.jpg) 
+
 [![pypi licence](https://img.shields.io/pypi/l/MarkerMAG.svg)](https://opensource.org/licenses/gpl-3.0.html)
 [![pypi version](https://img.shields.io/pypi/v/MarkerMAG.svg)](https://pypi.python.org/pypi/MarkerMAG) 
 
@@ -46,6 +48,7 @@ MarkerMAG can be installed via `pip3`:
     # upgrade
     pip3 install --upgrade MarkerMAG
 
+
 Important Notes !!!
 ---
 
@@ -66,7 +69,7 @@ Important Notes !!!
    16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.5%`.
    The longest sequence from each cluster will be kept.  
     
-       MarkerMAG matam_16s -p Test -in combined_paired_reads.fasta -pct 1,5,10,25,50,75 -i 0.995 -t 12 -force -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py -sortmerna /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/opt/matam-v1.5.3/sortmerna/sortmerna
+       MarkerMAG matam_16s -p Soil -in combined_paired_reads.fasta -pct 1,5,10,25,50,75 -i 0.995 -t 12 -force -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py -sortmerna /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/opt/matam-v1.5.3/sortmerna/sortmerna
 
 
 How to run:
@@ -74,11 +77,12 @@ How to run:
 
 + Link 16S rRNA gene sequences with MAGs: 
 
-       MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAG_filess -x fa -t 4
+       MarkerMAG link -p Soil -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAG_filess -x fa -t 4
 
 + Link 16S rRNA gene sequences with metagenomic assemblies: 
 
-       MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
+       MarkerMAG link -p Soil -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
+
 
 Output files:
 ---
