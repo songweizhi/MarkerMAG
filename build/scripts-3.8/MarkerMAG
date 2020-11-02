@@ -34,7 +34,7 @@ def print_main_help():
 
     link             ->  link MAGs with marker genes
     rename_reads     ->  rename paired reads (in fasta format) 
-    matam_16s        ->  including extract, subsample, assembly, merge and dereplication
+    matam_16s        ->  including reads extraction, subsample, assembly and dereplication
     subsample_reads  ->  subsample reads with Usearch
     uclust_16s       ->  cluster marker genes with Usearch
 
@@ -102,8 +102,9 @@ if __name__ == '__main__':
         matam_16s_parser.add_argument('-pct',               required=True,  type=str, default='1,5,10,25,50,75', help='subsample percentage, deafault: 1,5,10,25,50,75')
         matam_16s_parser.add_argument('-ref',               required=False, type=str,                            help='Path to Matam reference database')
         matam_16s_parser.add_argument('-i',                 required=False, type=float, default=0.995,           help='cluster identity cutoff (0-1), default: 0.995')
-        matam_16s_parser.add_argument('-force',             required=False, action="store_true",                 help='force overwrite existing results')
         matam_16s_parser.add_argument('-t',                 required=False, type=int, default=1,                 help='number of threads, default: 1')
+        matam_16s_parser.add_argument('-force',             required=False, action="store_true",                 help='force overwrite existing results')
+        matam_16s_parser.add_argument('-quiet',             required=False, action="store_true",                 help='not report progress')
         matam_16s_parser.add_argument('-matam_assembly',    required=False, type=str,                            help='path to matam_assembly.py')
         matam_16s_parser.add_argument('-sortmerna',         required=False, type=str, default='sortmerna',       help='path to sortmerna executable file, default: sortmerna')
         matam_16s_parser.add_argument('-seqtk',             required=False, type=str, default='seqtk',           help='path to seqtk executable file, default: seqtk')
@@ -136,6 +137,7 @@ python setup.py sdist bdist_wheel
 twine upload dist/*
 songweizhi
 
+
 alias twine='/Users/songweizhi/Library/Python/3.7/bin/twine'
 cd /Users/songweizhi/PycharmProjects/MarkerMAG
 rm -r build
@@ -145,7 +147,9 @@ python setup.py sdist bdist_wheel
 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 songweizhi
 
+
 shan88
+
 
 pip3 install --upgrade MarkerMAG
 pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG

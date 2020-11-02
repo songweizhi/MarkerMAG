@@ -4,6 +4,7 @@ import os
 import shutil
 import argparse
 from Bio import SeqIO
+from datetime import datetime
 from distutils.spawn import find_executable
 
 
@@ -26,6 +27,16 @@ python3 matam_16s.py -p Test -in combined_rep123.fasta -pct 1,5,10,25,50,75 -ref
 
 ==============================================================================
 '''
+
+
+def report_and_log(message_for_report, log_file, keep_quiet):
+
+    time_format = '[%Y-%m-%d %H:%M:%S]'
+    with open(log_file, 'a') as log_handle:
+        log_handle.write('%s %s\n' % ((datetime.now().strftime(time_format)), message_for_report))
+
+    if keep_quiet is False:
+        print('%s %s' % ((datetime.now().strftime(time_format)), message_for_report))
 
 
 def force_create_folder(folder_to_create):
@@ -255,9 +266,10 @@ def matam_16s(args):
     sortmerna_exe                   = args['sortmerna']
     usearch_exe                     = args['usearch']
     seqtk_exe                       = args['seqtk']
+    keep_quiet                      = args['quiet']
+
 
     ################################################ check dependencies ################################################
-
 
     program_list = [usearch_exe, seqtk_exe, sortmerna_exe, matam_assembly_script]
 
@@ -276,6 +288,7 @@ def matam_16s(args):
     subsample_pct_list  = str_to_num_list(subsample_pcts)
     sortmerna_ref       = '%s.clustered.fasta,%s.clustered' % (matam_ref, matam_ref)
     matam16s_wd         = '%s_Matam16S_wd'                  % (output_prefix)
+    log_file            = '%s/%s_matam_16s.log'              % (matam16s_wd, output_prefix)
     sortmerna_op_fasta  = '%s/%s.fasta'                     % (matam16s_wd, output_prefix)
     sortmerna_stdout    = '%s/%s.SortMeRNA_stdout.txt'      % (matam16s_wd, output_prefix)
 
@@ -289,9 +302,10 @@ def matam_16s(args):
 
 
     # run SortMeRNA
-    print('Extracting rRNA reads with SortMeRNA from %s' % metagenomic_reads_paired)
+    report_and_log(('Extracting rRNA reads with SortMeRNA from %s' % metagenomic_reads_paired), log_file, keep_quiet)
+
     sortmerna_cmd = '%s --ref %s --reads %s --aligned %s/%s --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a %s -v > %s' % (sortmerna_exe, sortmerna_ref, metagenomic_reads_paired, matam16s_wd, output_prefix, num_threads, sortmerna_stdout)
-    print(sortmerna_cmd)
+    report_and_log(sortmerna_cmd, log_file, True)
     os.system(sortmerna_cmd)
 
 
@@ -299,7 +313,7 @@ def matam_16s(args):
     renamed_matam_assembly_list = []
     for subsample_pct in subsample_pct_list:
 
-        print('Subsample RNA reads at %s percent' % subsample_pct)
+        report_and_log(('Subsample RNA reads at %s percent' % subsample_pct), log_file, keep_quiet)
 
         subsample_reads_file = '%s/%s_subsample_%s.fasta'    % (matam16s_wd, output_prefix, subsample_pct)
         matam_output_folder  = '%s/%s_subsample_%s_Matam_wd' % (matam16s_wd, output_prefix, subsample_pct)
@@ -308,9 +322,10 @@ def matam_16s(args):
         subsample_sortmerna_output(sortmerna_op_fasta, subsample_pct, subsample_reads_file, usearch_exe, seqtk_exe)
 
         # assemble with Matam
-        print('Assembling subsampled reads with Matam')
+        report_and_log(('Assembling subsampled reads with Matam'), log_file, keep_quiet)
+
         matam_cmd = 'python3 %s -d %s -i %s --cpu %s --max_memory 100000 -v -o %s' % (matam_assembly_script, matam_ref, subsample_reads_file, num_threads, matam_output_folder)
-        print(matam_cmd)
+        report_and_log(matam_cmd, log_file, True)
         os.system(matam_cmd)
 
         matam_assemblies          = '%s/workdir/scaffolds.NR.min_500bp.fa'          % (matam_output_folder)
@@ -319,19 +334,21 @@ def matam_16s(args):
 
         if os.path.isfile(matam_assemblies) is True:
 
-            print('Adding prefix to Matam assemblies')
+            report_and_log(('Adding prefix to Matam assemblies'), log_file, keep_quiet)
+
             prefix_seq(matam_assemblies, seq_prefix, matam_assemblies_prefixed)
 
             renamed_matam_assembly_list.append(matam_assemblies_prefixed)
         else:
-            print('No assemblies obtained at current depth!')
+            report_and_log(('No 16S rRNA gene sequence reconstructed at current depth!'), log_file, keep_quiet)
 
 
     # assemble with Matam without subsample
-    print('Assembling nonsubsampled RNA reads')
+    report_and_log(('Assembling nonsubsampled RNA reads'), log_file, keep_quiet)
+
     matam_output_folder_no_subsample   = '%s/%s_nonsubsampled_Matam_wd'                                 % (matam16s_wd, output_prefix)
     matam_cmd_no_subsample             = 'python3 %s -d %s -i %s --cpu %s --max_memory 100000 -v -o %s' % (matam_assembly_script, matam_ref, sortmerna_op_fasta, num_threads, matam_output_folder_no_subsample)
-    print(matam_cmd_no_subsample)
+    report_and_log(matam_cmd_no_subsample, log_file, True)
     os.system(matam_cmd_no_subsample)
 
 
@@ -344,18 +361,21 @@ def matam_16s(args):
 
 
     # combine Matam outputs
+    report_and_log(('Combine Matam assemblies at all depth'), log_file, keep_quiet)
     combined_all_depth_matam_assemblies    = '%s/%s_all_depth_assemblies.fasta' % (matam16s_wd, output_prefix)
     combine_cmd = 'cat %s > %s' % (' '.join(renamed_matam_assembly_list), combined_all_depth_matam_assemblies)
+    report_and_log(combine_cmd, log_file, True)
     os.system(combine_cmd)
 
 
     # dereplicate combined assemblies with Usearch
+    report_and_log(('Dereplicate combined Matam assemblies at %s identity cutoff' % uclust_iden_cutoff), log_file, keep_quiet)
     uclust_output_fasta             = '%s/%s_all_depth_assemblies.dereplicated.fasta'                       % (matam16s_wd, output_prefix)
     uclust_output_table             = '%s/%s_all_depth_assemblies.uc'                                       % (matam16s_wd, output_prefix)
     cluster_to_member_file          = '%s/%s_all_depth_assemblies.uc.reorganised.txt'                       % (matam16s_wd, output_prefix)
     default_centroids_to_be_ignored = '%s/%s_all_depth_assemblies_default_centroids.fasta'                  % (matam16s_wd, output_prefix)
     uclust_cmd                      = '%s -cluster_fast %s -id %s -centroids %s -uc %s -sort length -quiet' % (usearch_exe, combined_all_depth_matam_assemblies, uclust_iden_cutoff, default_centroids_to_be_ignored, uclust_output_table)
-    print(uclust_cmd)
+    report_and_log(uclust_cmd, log_file, True)
     os.system(uclust_cmd)
 
 
@@ -364,7 +384,7 @@ def matam_16s(args):
 
 
     # report
-    print('Dereplicated Matam assemblies exported to %s' % uclust_output_fasta)
+    report_and_log(('Dereplicated Matam assemblies exported to %s' % uclust_output_fasta), log_file, keep_quiet)
 
 
 if __name__ == '__main__':
@@ -376,8 +396,9 @@ if __name__ == '__main__':
     matam_16s_parser.add_argument('-pct',               required=True,  type=str, default='1,5,10,25,50,75', help='subsample percentage, deafault: 1,5,10,25,50,75')
     matam_16s_parser.add_argument('-ref',               required=False, type=str,                            help='Path to Matam reference database')
     matam_16s_parser.add_argument('-i',                 required=False, type=float, default=0.995,           help='cluster identity cutoff (0-1), default: 0.995')
-    matam_16s_parser.add_argument('-force',             required=False, action="store_true",                 help='force overwrite existing results')
     matam_16s_parser.add_argument('-t',                 required=False, type=int, default=1,                 help='number of threads, default: 1')
+    matam_16s_parser.add_argument('-force',             required=False, action="store_true",                 help='force overwrite existing results')
+    matam_16s_parser.add_argument('-quiet',             required=False, action="store_true",                 help='not report progress')
     matam_16s_parser.add_argument('-matam_assembly',    required=False, type=str,                            help='path to matam_assembly.py')
     matam_16s_parser.add_argument('-sortmerna',         required=False, type=str, default='sortmerna',       help='path to sortmerna executable file, default: sortmerna')
     matam_16s_parser.add_argument('-seqtk',             required=False, type=str, default='seqtk',           help='path to seqtk executable file, default: seqtk')
@@ -405,5 +426,4 @@ cd /srv/scratch/z5039045/MarkerMAG_wd/simulation_diff_depth_InSilicoSeq
 python3 matam_16s.py -p Test -in combined_rep123_0.5.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py
 
 '''
-
 
