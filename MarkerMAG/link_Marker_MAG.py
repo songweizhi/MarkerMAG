@@ -1101,7 +1101,6 @@ pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
 
 To_do = '''
 
-1. enable multiple placement of a read during mapping
 2. where does the paired read of the clipping mapped read mapped to? (should take into consideration!!!)
 4. how to incorporate the taxonomy of MAGs and 16S sequences
 5. the effect of sequencing depth, insert size and read length

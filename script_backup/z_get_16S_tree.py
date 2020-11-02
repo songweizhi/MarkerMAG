@@ -27,6 +27,10 @@ os.system(fasttree_cmd)
 
 ################################################## get 16S divergence ##################################################
 
+blastn_cmd = 'blastn -query %s -subject %s -out %s -outfmt 6' % (seq_file_out, seq_file_out, all_vs_all_16s)
+os.system(blastn_cmd)
+
+
 max_inter_genome = 0
 min_intra_genome = 100
 for line in open(all_vs_all_16s):
@@ -47,5 +51,10 @@ for line in open(all_vs_all_16s):
 
 print('max_inter_genome: %s' % max_inter_genome)
 print('min_intra_genome: %s' % min_intra_genome)
+
 # max_inter_genome: 99.282
 # min_intra_genome: 99.016
+
+# MBARC26
+# max_inter_genome: 98.765
+# min_intra_genome: 98.04

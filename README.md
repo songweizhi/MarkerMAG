@@ -99,7 +99,7 @@ Output files:
 
 
 1. Visualization of linkages with Sankey plot
-![linkages](images/linkage_plot.png) 
+![linkages](images/linkage_plot2.png) 
 
 
 Reference: 
@@ -107,4 +107,3 @@ Reference:
 
 1. Intra-genome 16S rRNA gene divergence [[ref.](https://doi.org/10.1371/journal.pone.0057923)]
 ![Intra_genome_16S_divergence](images/Intra_genome_16S_divergence.png) 
-
