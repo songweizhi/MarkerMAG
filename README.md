@@ -102,8 +102,6 @@ Output files:
 ![linkages](images/linkage.png) 
 
 
-Reference: 
----
 
-1. Intra-genome 16S rRNA gene divergence [[ref.](https://doi.org/10.1371/journal.pone.0057923)]
-![Intra_genome_16S_divergence](images/Intra_genome_16S_divergence.png) 
+
+
