@@ -99,7 +99,7 @@ Output files:
 
 
 1. Visualization of linkages with Sankey plot
-![linkages](images/linkage_plot.png) 
+![linkages](images/linkage.png) 
 
 
 Reference: 
