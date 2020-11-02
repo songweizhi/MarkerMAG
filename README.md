@@ -18,22 +18,22 @@ Contact
 Dependencies
 ---
  
-+ link: 
++ `link`: 
   [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml),
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download),
   [optparse](https://cran.r-project.org/web/packages/optparse/index.html) (R) and 
   [googleVis](https://cran.r-project.org/web/packages/googleVis/index.html) (R)
 
-+ matam_16s: 
++ `matam_16s`: 
   [SortMeRNA](https://github.com/biocore/sortmerna), 
   [MATAM](https://github.com/bonsai-team/matam),
   [Usearch](https://www.drive5.com/usearch/) and 
   [seqtk](https://github.com/lh3/seqtk)
 
-+ uclust_16S: 
++ `uclust_16S`: 
   [Usearch](https://www.drive5.com/usearch/)
 
-+ subsample_reads: 
++ `subsample_reads`: 
   [Usearch](https://www.drive5.com/usearch/)
 
 
