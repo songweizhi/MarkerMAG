@@ -75,6 +75,7 @@ if __name__ == '__main__':
         link_Marker_MAG_parser.add_argument('-mi',              required=False, type=float, default=99.5,   help='within genome 16S identity cutoff, default: 99.5')
         link_Marker_MAG_parser.add_argument('-mc',              required=False, type=float, default=90,     help='alignment coverage cutoff for calculating 16S identity, default: 90')
         link_Marker_MAG_parser.add_argument('-ma',              required=False, type=int, default=500,      help='alignment length cutoff for calculating 16S identity, default: 500')
+        link_Marker_MAG_parser.add_argument('-mpl',             required=False, type=int, default=3,        help='minimum number of paired reads provided linkages to report, default: 3')
         link_Marker_MAG_parser.add_argument('-t',               required=False, type=int, default=1,        help='number of threads, default: 1')
         link_Marker_MAG_parser.add_argument('-quiet',           required=False, action="store_true",        help='not report progress')
         link_Marker_MAG_parser.add_argument('-force',           required=False, action="store_true",        help='force overwrite existing results')

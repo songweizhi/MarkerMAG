@@ -320,7 +320,7 @@ def blast_results_to_pairwise_16s_iden_dict(blastn_output, align_len_cutoff, cov
     return pairwise_iden_dict
 
 
-def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, within_genome_16s_divergence_cutoff, file_out):
+def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, within_genome_16s_divergence_cutoff, min_linkages, file_out):
 
     file_in_path, file_in_basename, file_in_extension = sep_path_basename_ext(file_in)
     file_in_sorted = '%s/%s_sorted%s' % (file_in_path, file_in_basename, file_in_extension)
@@ -339,23 +339,25 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
             match_split = each_match.strip().split(',')
             MarkerGene = match_split[0][12:]
             GenomicSeq = match_split[1][12:]
-            if MarkerGene not in MarkerGene_with_assignment:
+            linkage_num = int(match_split[2])
+            if linkage_num >= min_linkages:
+                if MarkerGene not in MarkerGene_with_assignment:
 
-                if GenomicSeq not in GenomicSeq_best_marker_dict:
-                    GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
-                    file_out_handle.write(each_match)
-                    MarkerGene_with_assignment.add(MarkerGene)
-                else:
-                    current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
-                    key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
-
-                    iden_with_best_marker = 0
-                    if key_str in pairwise_16s_iden_dict:
-                        iden_with_best_marker = pairwise_16s_iden_dict[key_str]
-
-                    if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                    if GenomicSeq not in GenomicSeq_best_marker_dict:
+                        GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
                         file_out_handle.write(each_match)
                         MarkerGene_with_assignment.add(MarkerGene)
+                    else:
+                        current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                        key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+
+                        iden_with_best_marker = 0
+                        if key_str in pairwise_16s_iden_dict:
+                            iden_with_best_marker = pairwise_16s_iden_dict[key_str]
+
+                        if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                            file_out_handle.write(each_match)
+                            MarkerGene_with_assignment.add(MarkerGene)
 
     file_out_handle.close()
 
@@ -513,9 +515,10 @@ def link_Marker_MAG(args, config_dict):
     min_cigar_S                         = args['cigarS']
     reads_iden_cutoff                   = args['ri']
     reads_cov_cutoff                    = args['rc']
-    iden16s                             = args['mi']
+    within_genome_minimum_iden16s       = args['mi']
     cov16s                              = args['mc']
     aln16s                              = args['ma']
+    min_paired_linkages                 = args['mpl']
     force_overwrite                     = args['force']
     keep_quiet                          = args['quiet']
     num_threads                         = args['t']
@@ -547,7 +550,7 @@ def link_Marker_MAG(args, config_dict):
     ############################################# create working directory #############################################
 
     # create working directory
-    working_directory = '%s_MarkerMAG_wd_M%s_S%s_ri%s_rc%s_mi%s_mc%s_ma%sbp' % (output_prefix, min_cigar_M, min_cigar_S, reads_iden_cutoff, reads_cov_cutoff, iden16s, cov16s, aln16s)
+    working_directory = '%s_MarkerMAG_wd_M%s_S%s_ri%s_rc%s_mi%s_mc%s_ma%sbp' % (output_prefix, min_cigar_M, min_cigar_S, reads_iden_cutoff, reads_cov_cutoff, within_genome_minimum_iden16s, cov16s, aln16s)
     if (os.path.isdir(working_directory) is True) and (force_overwrite is False):
         print('Working directory detected, program exited!')
         exit()
@@ -640,9 +643,8 @@ def link_Marker_MAG(args, config_dict):
     report_and_log(('Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
     sleep(1)
 
-    bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
-
-    bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
+    bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s'                                % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
+    bowtie2_mapping_cmd   = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
 
     # if multiple_placement == '0':
     #     bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s'       % (pwd_bowtie2_exe,  bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1, reads_file_r2, pwd_samfile, num_threads)
@@ -922,8 +924,8 @@ def link_Marker_MAG(args, config_dict):
     stats_dict_to_sankey_file_in(clipping_stats_dict_num, paired_stats_dict_num, link_stats_clipping, link_stats_paired)
 
     # filter paired and clipping linkages
-    filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict, iden16s, link_stats_paired_filtered)
-    filter_linkages_iteratively(link_stats_clipping, 'Number', pairwise_16s_iden_dict, iden16s, link_stats_clipping_filtered)
+    filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict, within_genome_minimum_iden16s, min_paired_linkages, link_stats_paired_filtered)
+    filter_linkages_iteratively(link_stats_clipping, 'Number', pairwise_16s_iden_dict, within_genome_minimum_iden16s, 0, link_stats_clipping_filtered)
 
     # combine_paired_and_clipping_linkages and get summary table
     combine_paired_and_clipping_linkages(link_stats_paired_filtered, link_stats_clipping_filtered, link_stats_combined_table, link_stats_combined)
@@ -1065,6 +1067,7 @@ if __name__ == '__main__':
     link_Marker_MAG_parser.add_argument('-mi',              required=False, type=float, default=99.5,   help='within genome 16S identity cutoff, default: 99.5')
     link_Marker_MAG_parser.add_argument('-mc',              required=False, type=float, default=90,     help='alignment coverage cutoff for calculating 16S identity, default: 90')
     link_Marker_MAG_parser.add_argument('-ma',              required=False, type=int, default=500,      help='alignment length cutoff for calculating 16S identity, default: 500')
+    link_Marker_MAG_parser.add_argument('-mpl',             required=False, type=int, default=3,        help='minimum number of paired reads provided linkages to report, default: 3')
     link_Marker_MAG_parser.add_argument('-t',               required=False, type=int, default=1,        help='number of threads, default: 1')
     link_Marker_MAG_parser.add_argument('-quiet',           required=False, action="store_true",        help='not report progress')
     link_Marker_MAG_parser.add_argument('-force',           required=False, action="store_true",        help='force overwrite existing results')
@@ -1108,6 +1111,8 @@ To_do = '''
 7. split sam file
 8. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
 9.check whether input file exist!
+10. minimum number of linkages to report?
+
 
 Notes:
 linkages only supported by clipping reads were ignored !!!

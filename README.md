@@ -54,11 +54,11 @@ Important Notes !!!
 
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module. 
-   Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the files must be the same.
+   Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the two files must be the same.
 
        MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p Soil
         
-       # output files name and renamed reads id:
+       # output files and format of renamed reads id:
        # Soil_R1.fasta: soil_1.1, soil_2.1, soil_3.1 ...
        # Soil_R2.fasta: soil_1.2, soil_2.2, soil_3.2 ...
 
@@ -98,10 +98,5 @@ Output files:
     | o2_01394 | bin_o2 | 58 | 0 |
 
 
-1. Visualization of linkages with Sankey plot
+1. Visualization of linkages
 ![linkages](images/linkage.png) 
-
-
-
-
-

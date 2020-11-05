@@ -9,23 +9,11 @@ from distutils.spawn import find_executable
 
 
 matam_16s_usage = '''
-========================= matam_16s example commands =========================
+=================================== matam_16s example commands ===================================
 
-module load python/3.6.5
-module load java/7u51
-module unload gcc
-module load gcc/8.4.0
-module load sparsehash/2.0.3
-module load matam/1.5.3
-module load samtools/1.9
-module load usearch/11.0.667
-module load seqtk/20190219
-export PATH=/home/z5039045/anaconda3/bin:$PATH
+MarkerMAG matam_16s -p Test -in combined_R1_R2.fasta -pct 0.1,0.5,1,5,10,25,50,75 -i 0.995 -t 12 -force -ref path/to/SILVA_128_SSURef_NR95 -matam_assembly path/to/matam_assembly.py -sortmerna /path/to/sortmerna
 
-cd /srv/scratch/z5039045/MarkerMAG_wd/simulation_diff_depth_InSilicoSeq
-python3 matam_16s.py -p Test -in combined_rep123.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py -sortmerna /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/opt/matam-v1.5.3/sortmerna/sortmerna
-
-==============================================================================
+==================================================================================================
 '''
 
 
@@ -288,7 +276,7 @@ def matam_16s(args):
     subsample_pct_list  = str_to_num_list(subsample_pcts)
     sortmerna_ref       = '%s.clustered.fasta,%s.clustered' % (matam_ref, matam_ref)
     matam16s_wd         = '%s_Matam16S_wd'                  % (output_prefix)
-    log_file            = '%s/%s_matam_16s.log'              % (matam16s_wd, output_prefix)
+    log_file            = '%s/%s_matam_16s.log'             % (matam16s_wd, output_prefix)
     sortmerna_op_fasta  = '%s/%s.fasta'                     % (matam16s_wd, output_prefix)
     sortmerna_stdout    = '%s/%s.SortMeRNA_stdout.txt'      % (matam16s_wd, output_prefix)
 
@@ -345,7 +333,6 @@ def matam_16s(args):
 
     # assemble with Matam without subsample
     report_and_log(('Assembling nonsubsampled RNA reads'), log_file, keep_quiet)
-
     matam_output_folder_no_subsample   = '%s/%s_nonsubsampled_Matam_wd'                                 % (matam16s_wd, output_prefix)
     matam_cmd_no_subsample             = 'python3 %s -d %s -i %s --cpu %s --max_memory 100000 -v -o %s' % (matam_assembly_script, matam_ref, sortmerna_op_fasta, num_threads, matam_output_folder_no_subsample)
     report_and_log(matam_cmd_no_subsample, log_file, True)
@@ -410,20 +397,8 @@ if __name__ == '__main__':
 
 '''
 
-module load python/3.6.5
-source ~/mypython3env/bin/activate
-module load java/7u51
-module load gcc/7.3.0
-module load sparsehash/2.0.3
-module load matam/1.5.3
-module load samtools/1.10
-module load usearch/11.0.667
-module load seqtk/20190219
-module load sortmerna/3.0.3 
-export PATH=/home/z5039045/anaconda3/bin:$PATH
-
-cd /srv/scratch/z5039045/MarkerMAG_wd/simulation_diff_depth_InSilicoSeq
-python3 matam_16s.py -p Test -in combined_rep123_0.5.fasta -pct 1,5,10,25,50,75 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 12 -force -matam_assembly /home/z5039045/anaconda3/pkgs/matam-v1.5.3-0/bin/matam_assembly.py
+To do:
+1. support to customize parameters for Matam
+2. silent Matam
 
 '''
-
