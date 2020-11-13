@@ -7,9 +7,9 @@ import argparse
 subsample_reads_usage = '''
 ================== subsample_reads example commands ==================
 
-MarkerMAG subsample_reads -r1 R1.fasta -r2 R2.fasta -pct 0.1
-MarkerMAG subsample_reads -r1 R1.fasta -r2 R2.fasta -pct 0.1,0.3,0.5
-MarkerMAG subsample_reads -r1 R1.fastq -r2 R2.fastq -pct 0.1,0.3,0.5
+MarkerMAG subsample_reads -r1 R1.fasta -r2 R2.fasta -ratio 0.1
+MarkerMAG subsample_reads -r1 R1.fasta -r2 R2.fasta -ratio 0.1,0.3,0.5
+MarkerMAG subsample_reads -r1 R1.fastq -r2 R2.fastq -ratio 0.1,0.3,0.5
 
 ======================================================================
 '''
@@ -31,15 +31,15 @@ def sep_path_basename_ext(file_in):
 def subsample_reads(args):
 
 
-    r1_file        = args['r1']
-    r2_file        = args['r2']
-    subsample_pcts = args['pct']
-    usearch_exe    = args['usearch']
+    r1_file         = args['r1']
+    r2_file         = args['r2']
+    subsample_ratio = args['ratio']
+    usearch_exe     = args['usearch']
 
     r1_file_path, r1_file_basename, r1_file_extension = sep_path_basename_ext(r1_file)
     r2_file_path, r2_file_basename, r2_file_extension = sep_path_basename_ext(r2_file)
 
-    subsample_step_list = [float(i) for i in subsample_pcts.split(',')]
+    subsample_step_list = [float(i) for i in subsample_ratio.split(',')]
 
     for subsample_step in subsample_step_list:
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     subsample_reads_parser.add_argument('-r1',      required=True, type=str,            help='forward reads')
     subsample_reads_parser.add_argument('-r2',      required=True, type=str,            help='reverse reads')
-    subsample_reads_parser.add_argument('-pct',     required=True, type=str,            help='subsample percentage')
+    subsample_reads_parser.add_argument('-ratio',   required=True, type=str,            help='subsample ratio, 0-1')
     subsample_reads_parser.add_argument('-usearch', required=False, default='usearch',  help='path to usearch executable file, default: usearch')
 
     args = vars(subsample_reads_parser.parse_args())

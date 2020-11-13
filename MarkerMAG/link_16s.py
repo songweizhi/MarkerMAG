@@ -31,6 +31,7 @@ from distutils.spawn import find_executable
 config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split('/')[:-1]),
                'bowtie2'            : 'bowtie2',
                'bowtie2_build'      : 'bowtie2-build',
+               'samtools'           : 'samtools',
                'blastn'             : 'blastn',
                'makeblastdb'        : 'makeblastdb',
                'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
@@ -83,6 +84,99 @@ def sep_path_basename_ext(file_in):
     file_basename, file_extension = os.path.splitext(file_name)
 
     return file_path, file_basename, file_extension
+
+
+def sep_paired_and_singleton_reads(fasta_in, fasta_out_r1, fasta_out_r2, fasta_out_singleton):
+    reads_pair_dict = {}
+    for read_record in SeqIO.parse(fasta_in, 'fasta'):
+        read_id_base = '.'.join(read_record.id.split('.')[:-1])
+        read_strand = read_record.id.split('.')[-1]
+        if read_id_base not in reads_pair_dict:
+            reads_pair_dict[read_id_base] = {read_strand}
+        else:
+            reads_pair_dict[read_id_base].add(read_strand)
+
+    read_list_paired = set()
+    read_list_singleton = set()
+    for read_base in reads_pair_dict:
+        if len(reads_pair_dict[read_base]) == 1:
+            read_list_singleton.add(read_base)
+        if len(reads_pair_dict[read_base]) == 2:
+            read_list_paired.add(read_base)
+
+    fasta_out_r1_handle = open(fasta_out_r1, 'w')
+    fasta_out_r2_handle = open(fasta_out_r2, 'w')
+    fasta_out_singleton_handle = open(fasta_out_singleton, 'w')
+
+    for read_record in SeqIO.parse(fasta_in, 'fasta'):
+
+        read_id_base = '.'.join(read_record.id.split('.')[:-1])
+        read_strand = read_record.id.split('.')[-1]
+
+        if read_id_base in read_list_singleton:
+            fasta_out_singleton_handle.write('>%s\n' % read_record.id)
+            fasta_out_singleton_handle.write('%s\n' % str(read_record.seq))
+
+        if read_id_base in read_list_paired:
+
+            if read_strand == '1':
+                fasta_out_r1_handle.write('>%s\n' % read_record.id)
+                fasta_out_r1_handle.write('%s\n' % str(read_record.seq))
+
+            if read_strand == '2':
+                fasta_out_r2_handle.write('>%s\n' % read_record.id)
+                fasta_out_r2_handle.write('%s\n' % str(read_record.seq))
+
+    fasta_out_r1_handle.close()
+    fasta_out_r2_handle.close()
+    fasta_out_singleton_handle.close()
+
+
+def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_r2, reads_unpaired, num_threads):
+
+    ref_seq_file_path, ref_seq_file_basename, ref_seq_file_extension = sep_path_basename_ext(ref_seq)
+
+    sam_file        = '%s/%s.sam'          % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_sorted = '%s/%s_sorted.sam'   % (ref_seq_file_path, ref_seq_file_basename)
+    coverage_file   = '%s/%s_cov.txt'      % (ref_seq_file_path, ref_seq_file_basename)
+
+    # build reference index
+    cmd_bowtie2_build   = 'bowtie2-build -f %s %s/%s --quiet --threads %s' % (ref_seq, ref_seq_file_path, ref_seq_file_basename, num_threads)
+    if index_ref is True:
+        os.system(cmd_bowtie2_build)
+
+    # mapping
+    if reads_unpaired == '':
+        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
+    else:
+        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -U %s -S %s -p %s -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, reads_unpaired, sam_file, num_threads)
+    os.system(cmd_bowtie2_mapping)
+
+    # sort mapping
+    cmd_samtools_sort = 'samtools sort %s -o %s' % (sam_file, sam_file_sorted)
+    os.system(cmd_samtools_sort)
+
+    # get mean depth
+    cmd_samtools_coverage = 'samtools coverage %s -o %s' % (sam_file_sorted, coverage_file)
+    os.system(cmd_samtools_coverage)
+
+    # remove sam files
+    os.system('rm %s' % sam_file)
+    os.system('rm %s' % sam_file_sorted)
+
+    # store mean depth into dict
+    mean_depth_dict_ctg = {}
+    ctg_len_dict = {}
+    for each_ctg_depth in open(coverage_file):
+        if not each_ctg_depth.startswith('#'):
+            ctg_depth_split = each_ctg_depth.strip().split('\t')
+            ctg_id = ctg_depth_split[0]
+            ctg_len = int(ctg_depth_split[2])
+            ctg_depth = float(ctg_depth_split[6])
+            mean_depth_dict_ctg[ctg_id] = ctg_depth
+            ctg_len_dict[ctg_id] = ctg_len
+
+    return mean_depth_dict_ctg, ctg_len_dict
 
 
 def remove_reads_with_multi_best_aln(sam_in, sam_out):
@@ -140,21 +234,6 @@ def cigar_splitter(cigar):
         index += 1
 
     return cigar_splitted
-
-
-def remove_unmapped_reads(sam_file, sam_file_only_mapped):
-
-    sam_file_only_mapped_handle = open(sam_file_only_mapped, 'w')
-
-    for each_read in open(sam_file):
-        if not each_read.startswith('@'):
-            ref_id = each_read.strip().split('\t')[2]
-            cigar = each_read.strip().split('\t')[5]
-
-            if (ref_id != '*') and (cigar != '*'):
-                sam_file_only_mapped_handle.write(each_read)
-
-    sam_file_only_mapped_handle.close()
 
 
 def split_list(list_in, subset_num):
@@ -239,39 +318,6 @@ def blast_results_to_dict(blastn_results, iden_cutoff, query_cov_cutoff):
     return query_to_subject_list_dict
 
 
-def blast_results_to_dict_by_bitscore(blastn_results, iden_cutoff):
-    # get query_to_best_bitscore_dict
-    query_to_best_bitscore_dict = {}
-    for blast_hit in open(blastn_results):
-        blast_hit_split = blast_hit.strip().split('\t')
-        query = blast_hit_split[0]
-        bitscore = float(blast_hit_split[11])
-
-        if query not in query_to_best_bitscore_dict:
-            query_to_best_bitscore_dict[query] = bitscore
-        else:
-            if bitscore > query_to_best_bitscore_dict[query]:
-                query_to_best_bitscore_dict[query] = bitscore
-
-    # filter balst results
-    query_to_subject_list_dict = {}
-    for blast_hit in open(blastn_results):
-        blast_hit_split = blast_hit.strip().split('\t')
-        query = blast_hit_split[0]
-        subject = blast_hit_split[1]
-        subject_with_prefix = 'GenomicSeq__%s' % subject
-        iden = float(blast_hit_split[2])
-        bitscore = float(blast_hit_split[11])
-        current_query_best_bitscore = query_to_best_bitscore_dict[query]
-        if (iden >= iden_cutoff) and (bitscore == current_query_best_bitscore):
-            if query not in query_to_subject_list_dict:
-                query_to_subject_list_dict[query] = [subject_with_prefix]
-            else:
-                query_to_subject_list_dict[query].append(subject_with_prefix)
-
-    return query_to_subject_list_dict
-
-
 def stats_dict_to_sankey_file_in(clipping_stats_dict, paired_stats_dict, sankey_file_in_clipping, sankey_file_in_paired):
 
     # prepare input file for plot of clipping mapped reads
@@ -320,7 +366,7 @@ def blast_results_to_pairwise_16s_iden_dict(blastn_output, align_len_cutoff, cov
     return pairwise_iden_dict
 
 
-def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, within_genome_16s_divergence_cutoff, min_linkages, file_out):
+def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, genomic_seq_depth_dict, marker_gene_depth_dict, min_16s_gnm_multiple, within_genome_16s_divergence_cutoff, min_linkages, file_out):
 
     file_in_path, file_in_basename, file_in_extension = sep_path_basename_ext(file_in)
     file_in_sorted = '%s/%s_sorted%s' % (file_in_path, file_in_basename, file_in_extension)
@@ -340,24 +386,49 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
             MarkerGene = match_split[0][12:]
             GenomicSeq = match_split[1][12:]
             linkage_num = int(match_split[2])
+
             if linkage_num >= min_linkages:
-                if MarkerGene not in MarkerGene_with_assignment:
 
-                    if GenomicSeq not in GenomicSeq_best_marker_dict:
-                        GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
-                        file_out_handle.write(each_match)
-                        MarkerGene_with_assignment.add(MarkerGene)
-                    else:
-                        current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
-                        key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+                # consider depth
+                if min_16s_gnm_multiple > 0:
+                    MarkerGene_depth = marker_gene_depth_dict[MarkerGene]
+                    GenomicSeq_depth = genomic_seq_depth_dict[GenomicSeq]
+                    if (MarkerGene_depth/GenomicSeq_depth) >= min_16s_gnm_multiple:
+                        if MarkerGene not in MarkerGene_with_assignment:
 
-                        iden_with_best_marker = 0
-                        if key_str in pairwise_16s_iden_dict:
-                            iden_with_best_marker = pairwise_16s_iden_dict[key_str]
+                            if GenomicSeq not in GenomicSeq_best_marker_dict:
+                                GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
+                                file_out_handle.write(each_match)
+                                MarkerGene_with_assignment.add(MarkerGene)
+                            else:
+                                current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                                key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
 
-                        if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                                iden_with_best_marker = 0
+                                if key_str in pairwise_16s_iden_dict:
+                                    iden_with_best_marker = pairwise_16s_iden_dict[key_str]
+
+                                if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                                    file_out_handle.write(each_match)
+                                    MarkerGene_with_assignment.add(MarkerGene)
+                # ignore depth
+                else:
+                    if MarkerGene not in MarkerGene_with_assignment:
+                        if GenomicSeq not in GenomicSeq_best_marker_dict:
+                            GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
                             file_out_handle.write(each_match)
                             MarkerGene_with_assignment.add(MarkerGene)
+                        else:
+                            current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                            key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+
+                            iden_with_best_marker = 0
+                            if key_str in pairwise_16s_iden_dict:
+                                iden_with_best_marker = pairwise_16s_iden_dict[key_str]
+
+                            if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                                file_out_handle.write(each_match)
+                                MarkerGene_with_assignment.add(MarkerGene)
 
     file_out_handle.close()
 
@@ -490,16 +561,16 @@ def get_accuracy_by_genome(file_in, mag_folder, mag_file_extension):
     return marker_gene_assignment_rate, marker_gene_assignment_accuracy, genome_with_right_16s_assignment_always, genome_without_right_16s_assignment
 
 
-def rename_seq(ctg_file_in, ctg_file_out, prefix):
+def rename_seq(ctg_file_in, ctg_file_out, prefix, str_connector):
 
     ctg_file_out_handle = open(ctg_file_out, 'w')
     for Seq_record in SeqIO.parse(ctg_file_in, 'fasta'):
-        Seq_record.id = '%s___%s' % (prefix, Seq_record.id)
+        Seq_record.id = '%s%s%s' % (prefix, str_connector, Seq_record.id)
         SeqIO.write(Seq_record, ctg_file_out_handle, 'fasta')
     ctg_file_out_handle.close()
 
 
-def link_Marker_MAG(args, config_dict):
+def link_16s(args, config_dict):
 
     ###################################################### file in/out #####################################################
 
@@ -507,6 +578,7 @@ def link_Marker_MAG(args, config_dict):
     output_prefix                       = args['p']
     reads_file_r1                       = args['r1']
     reads_file_r2                       = args['r2']
+    reads_file_16s                      = args['r16s']
     genomic_assemblies                  = args['g']
     mag_folder                          = args['mag']
     mag_file_extension                  = args['x']
@@ -525,18 +597,21 @@ def link_Marker_MAG(args, config_dict):
     keep_temp                           = args['tmp']
     test_mode                           = args['test_mode']
     run_bbmap                           = args['bbmap']
+    min_16s_gnm_multiple                = args['depth']
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
-    pwd_bowtie2_exe                     = config_dict['bowtie2']
-    pwd_bowtie2_build_exe               = config_dict['bowtie2_build']
     pwd_makeblastdb_exe                 = config_dict['makeblastdb']
     pwd_blastn_exe                      = config_dict['blastn']
+    pwd_bowtie2_build_exe               = config_dict['bowtie2_build']
+    pwd_bowtie2_exe                     = config_dict['bowtie2']
+    pwd_samtools_exe                    = config_dict['samtools']
 
+    str_connector = '___'
 
     ################################################ check dependencies ################################################
 
     # check whether executables exist
-    program_list = [pwd_makeblastdb_exe, pwd_blastn_exe, pwd_bowtie2_build_exe, pwd_bowtie2_exe]
+    program_list = [pwd_makeblastdb_exe, pwd_blastn_exe, pwd_bowtie2_build_exe, pwd_bowtie2_exe, pwd_samtools_exe]
     not_detected_programs = []
     for needed_program in program_list:
         if find_executable(needed_program) is None:
@@ -550,7 +625,7 @@ def link_Marker_MAG(args, config_dict):
     ############################################# create working directory #############################################
 
     # create working directory
-    working_directory = '%s_MarkerMAG_wd_M%s_S%s_ri%s_rc%s_mi%s_mc%s_ma%sbp' % (output_prefix, min_cigar_M, min_cigar_S, reads_iden_cutoff, reads_cov_cutoff, within_genome_minimum_iden16s, cov16s, aln16s)
+    working_directory = '%s_MarkerMAG_wd' % output_prefix
     if (os.path.isdir(working_directory) is True) and (force_overwrite is False):
         print('Working directory detected, program exited!')
         exit()
@@ -567,16 +642,16 @@ def link_Marker_MAG(args, config_dict):
     if (genomic_assemblies is not None) and (mag_folder is None):
         genomic_seq_type = 'ctg'
         metagenomic_assemblies_file_path, metagenomic_assemblies_file_basename, metagenomic_assemblies_file_extension = sep_path_basename_ext(genomic_assemblies)
-        blast_db_dir = '%s/%s_%s_blast_db' % (working_directory, output_prefix, metagenomic_assemblies_file_basename)
-        blast_db     = '%s/%s%s'           % (blast_db_dir, metagenomic_assemblies_file_basename, metagenomic_assemblies_file_extension)
+        blast_db_dir = '%s/%s_%s_db' % (working_directory, output_prefix, metagenomic_assemblies_file_basename)
+        blast_db     = '%s/%s%s'     % (blast_db_dir, metagenomic_assemblies_file_basename, metagenomic_assemblies_file_extension)
         os.mkdir(blast_db_dir)
         os.system('cp %s %s/' % (genomic_assemblies, blast_db_dir))
 
     elif (genomic_assemblies is None) and (mag_folder is not None):
         genomic_seq_type = 'mag'
         mag_folder_name     = mag_folder.split('/')[-1]
-        blast_db_dir        = '%s/%s_blast_db'            % (working_directory, mag_folder_name)
-        renamed_mag_folder  = '%s/%s_blast_db/%s_renamed' % (working_directory, mag_folder_name, mag_folder_name)
+        blast_db_dir        = '%s/%s_db'            % (working_directory, mag_folder_name)
+        renamed_mag_folder  = '%s/%s_db/%s_renamed' % (working_directory, mag_folder_name, mag_folder_name)
         os.mkdir(blast_db_dir)
         os.mkdir(renamed_mag_folder)
 
@@ -592,7 +667,7 @@ def link_Marker_MAG(args, config_dict):
             pwd_mag_in      = '%s/%s' % (mag_folder, mag_in)
             pwd_mag_renamed = '%s/%s' % (renamed_mag_folder, mag_in)
             mag_basename    = '.'.join(mag_in.split('.')[:-1])
-            rename_seq(pwd_mag_in, pwd_mag_renamed, mag_basename)
+            rename_seq(pwd_mag_in, pwd_mag_renamed, mag_basename, str_connector)
 
         # combine renamed MAGs
         blast_db = '%s/%s_combined.fa' % (blast_db_dir, mag_folder_name)
@@ -607,7 +682,7 @@ def link_Marker_MAG(args, config_dict):
 
     marker_gene_seqs_file_path, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension = sep_path_basename_ext(marker_gene_seqs)
 
-    pwd_log_file                                = '%s/%s_%s.log'                                    % (working_directory, output_prefix, datetime.now().strftime('%Y-%m-%d_%Hh-%Mm-%Ss_%f'))
+    pwd_log_file                                = '%s/%s.log'                                       % (working_directory, output_prefix)
     bowtie_index_dir                            = '%s/%s_%s_index'                                  % (working_directory, output_prefix, marker_gene_seqs_file_basename)
     pwd_samfile                                 = '%s/%s.sam'                                       % (working_directory, marker_gene_seqs_file_basename)
     clipping_reads_matched_part                 = '%s/%s_clipping_matched_part.txt'                 % (working_directory, output_prefix)
@@ -626,16 +701,104 @@ def link_Marker_MAG(args, config_dict):
     link_stats_combined_table                   = '%s/%s_stats_combined_table.txt'                  % (working_directory, output_prefix)
     link_stats_combined                         = '%s/%s_stats_combined.txt'                        % (working_directory, output_prefix)
     pairwise_marker_similarity                  = '%s/%s_pairwise_marker_similarity.txt'            % (working_directory, output_prefix)
+    depth_file_ctg                              = '%s/%s_mean_depth_ctg.txt'                        % (working_directory, output_prefix)
+    depth_file_gnm                              = '%s/%s_mean_depth_gnm.txt'                        % (working_directory, output_prefix)
+    depth_file_16s                              = '%s/%s_mean_depth_16s.txt'                        % (working_directory, output_prefix)
 
-    blast_parameters    = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
+    blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
+
+
+    #################################### calculate mean depth for genome/assemblies ####################################
+
+    mean_depth_dict_ctg = {}
+    mean_depth_dict_gnm = {}
+    if min_16s_gnm_multiple > 0:
+
+        if genomic_seq_type == 'ctg':
+            report_and_log(('calculating depth for %s' % genomic_assemblies), pwd_log_file, keep_quiet)
+        if genomic_seq_type == 'mag':
+            report_and_log(('calculating depth for genomes in %s' % mag_folder), pwd_log_file, keep_quiet)
+
+        # get mean depth for contig
+        mean_depth_dict_ctg, ctg_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, blast_db, reads_file_r1, reads_file_r2, '', num_threads)
+
+        # write out ctg depth
+        depth_file_ctg_handle = open(depth_file_ctg, 'w')
+        for ctg in mean_depth_dict_ctg:
+            depth_file_ctg_handle.write('%s\t%s\n' % (ctg, mean_depth_dict_ctg[ctg]))
+        depth_file_ctg_handle.close()
+
+        # get mean_depth_dict_gnm
+        if genomic_seq_type == 'mag':
+
+            gnm_ctg_connector = '___'
+
+            gnm_len_total_depth_dict = {}
+            for ctg in mean_depth_dict_ctg:
+                ctg_genome = ctg.split(gnm_ctg_connector)[0]
+                ctg_len = ctg_len_dict[ctg]
+                ctg_depth = mean_depth_dict_ctg[ctg]
+                ctg_total_depth = ctg_depth * ctg_len
+                if ctg_genome not in gnm_len_total_depth_dict:
+                    gnm_len_total_depth_dict[ctg_genome] = [ctg_len, ctg_total_depth]
+                else:
+                    gnm_len_total_depth_dict[ctg_genome][0] += ctg_len
+                    gnm_len_total_depth_dict[ctg_genome][1] += ctg_total_depth
+
+            for each_gnm in gnm_len_total_depth_dict:
+                gnm_len = gnm_len_total_depth_dict[each_gnm][0]
+                gnm_total_depth = gnm_len_total_depth_dict[each_gnm][1]
+                gnm_mean_depth = float("{0:.6f}".format(gnm_total_depth / gnm_len))
+                mean_depth_dict_gnm[each_gnm] = gnm_mean_depth
+
+            # write out gnm depth
+            depth_file_gnm_handle = open(depth_file_gnm, 'w')
+            for gnm in mean_depth_dict_gnm:
+                depth_file_gnm_handle.write('%s\t%s\n' % (gnm, mean_depth_dict_gnm[gnm]))
+            depth_file_gnm_handle.close()
+
+
+    ###################################### calculate mean depth for 16S sequences ######################################
+
+    os.mkdir(bowtie_index_dir)
+    os.system('cp %s %s/' % (marker_gene_seqs, bowtie_index_dir))
+
+    mean_depth_dict_16s = {}
+    if min_16s_gnm_multiple > 0:
+
+        report_and_log(('calculating depth for %s' % marker_gene_seqs), pwd_log_file, keep_quiet)
+
+        marker_gene_seqs_path, marker_gene_seqs_basename, marker_gene_seqs_extension = sep_path_basename_ext(marker_gene_seqs)
+        pwd_16s = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_basename, marker_gene_seqs_extension)
+
+        sortmerna_exe = 'sortmerna'
+        if reads_file_16s is None:
+            print('Run SortMeRNA, be patient')
+            sortmerna_cmd = '%s --ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered.fasta,/srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered --reads MBARC26_R1_R2.fasta --aligned MBARC26_Matam16S_wd/MBARC26 --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a 16 -v > MBARC26_Matam16S_wd/MBARC26.SortMeRNA_stdout.txt' % (sortmerna_exe)
+            # os.system(sortmerna_cmd)
+            print(sortmerna_cmd)
+
+        # separate paired and singleton reads
+        reads_file_16s_path, reads_file_16s_basename, reads_file_16s_extension = sep_path_basename_ext(reads_file_16s)
+        reads_file_16s_r1           = '%s/%s_r1.fasta'          % (working_directory, reads_file_16s_basename)
+        reads_file_16s_r2           = '%s/%s_r2.fasta'          % (working_directory, reads_file_16s_basename)
+        reads_file_16s_singleton    = '%s/%s_singleton.fasta'   % (working_directory, reads_file_16s_basename)
+        sep_paired_and_singleton_reads(reads_file_16s, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton)
+
+        # get mean depth for 16S sequences
+        mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, pwd_16s, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton, num_threads)
+
+        # write out 16s depth
+        depth_file_16s_handle = open(depth_file_16s, 'w')
+        for s16 in mean_depth_dict_16s:
+            depth_file_16s_handle.write('%s\t%s\n' % (s16, mean_depth_dict_16s[s16]))
+        depth_file_16s_handle.close()
 
 
     ######################################## map reads to marker gene sequences ########################################
 
     # copy marker gene sequence file to index folder
     report_and_log(('Indexing marker gene sequences for mapping'), pwd_log_file, keep_quiet)
-    os.mkdir(bowtie_index_dir)
-    os.system('cp %s %s/' % (marker_gene_seqs, bowtie_index_dir))
 
     # run mapping
     report_and_log(('Mapping reads to marker gene sequences'), pwd_log_file, keep_quiet)
@@ -671,15 +834,12 @@ def link_Marker_MAG(args, config_dict):
 
     report_and_log(('Extracting unmapped part of clipping mapped reads from sam file'), pwd_log_file, keep_quiet)
 
-    sam_file_to_parse = pwd_samfile
-
-
     # export clipping mapped reads and perfectly mapped reads
     clipping_mapped_reads_list = set()
     clipping_reads_mapped_part_dict = {}
     perfectly_mapped_reads_dict = {}
     clipping_reads_not_matched_part_seq_handle = open(clipping_reads_not_matched_part_seq, 'w')
-    for each_read in open(sam_file_to_parse):
+    for each_read in open(pwd_samfile):
 
         if not each_read.startswith('@'):
             each_read_split = each_read.strip().split('\t')
@@ -808,7 +968,6 @@ def link_Marker_MAG(args, config_dict):
 
     # filter blast results for paired reads
     unmapped_paired_reads_to_ctg_dict = blast_results_to_dict(unmapped_paired_reads_blastn, reads_iden_cutoff, reads_cov_cutoff)
-    #unmapped_paired_reads_to_ctg_dict = blast_results_to_dict_by_bitscore(unmapped_paired_reads_blastn, reads_iden_cutoff)
 
     paired_stats_dict_num             = {}
     paired_reads_match_profile_handle = open(paired_reads_match_profile, 'w')
@@ -853,8 +1012,7 @@ def link_Marker_MAG(args, config_dict):
     report_and_log(('Parsing blast results for clipping mapped reads'), pwd_log_file, keep_quiet)
 
     # filter blast results for clipping mapped reads
-    clipping_parts_to_ctg_dict        = blast_results_to_dict(clipping_reads_not_matched_part_seq_blastn, reads_iden_cutoff, reads_cov_cutoff)
-    #clipping_parts_to_ctg_dict        = blast_results_to_dict_by_bitscore(clipping_reads_not_matched_part_seq_blastn, reads_iden_cutoff)
+    clipping_parts_to_ctg_dict  = blast_results_to_dict(clipping_reads_not_matched_part_seq_blastn, reads_iden_cutoff, reads_cov_cutoff)
     clipping_reads_match_profile_handle = open(clipping_reads_match_profile, 'w')
     clipping_reads_match_profile_handle.write('ID\tLeft\tRight\n')
     clipping_stats_dict_num = {}
@@ -903,7 +1061,7 @@ def link_Marker_MAG(args, config_dict):
     makeblastdb_16s_cmd = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, blastdb_16s)
     os.system(makeblastdb_16s_cmd)
 
-    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s'          % (pwd_blastn_exe, blastdb_16s, blastdb_16s, blast_results_all_vs_all_16s, blast_parameters)
+    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, blastdb_16s, blastdb_16s, blast_results_all_vs_all_16s, blast_parameters)
     os.system(all_vs_all_16s_blastn_cmd)
 
     pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, aln16s, cov16s)
@@ -920,12 +1078,24 @@ def link_Marker_MAG(args, config_dict):
 
     report_and_log(('Parsing linkages'), pwd_log_file, keep_quiet)
 
+    print()
+    print('clipping_stats_dict_num')
+    print(clipping_stats_dict_num)
+    print()
+    print('paired_stats_dict_num')
+    print(paired_stats_dict_num)
+    print()
+
     # prepare input file for sankey plot
     stats_dict_to_sankey_file_in(clipping_stats_dict_num, paired_stats_dict_num, link_stats_clipping, link_stats_paired)
 
     # filter paired and clipping linkages
-    filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict, within_genome_minimum_iden16s, min_paired_linkages, link_stats_paired_filtered)
-    filter_linkages_iteratively(link_stats_clipping, 'Number', pairwise_16s_iden_dict, within_genome_minimum_iden16s, 0, link_stats_clipping_filtered)
+    if genomic_seq_type == 'mag':
+        filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_paired_linkages, link_stats_paired_filtered)
+        filter_linkages_iteratively(link_stats_clipping, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, 0, link_stats_clipping_filtered)
+    if genomic_seq_type == 'ctg':
+        filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict, mean_depth_dict_ctg, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_paired_linkages, link_stats_paired_filtered)
+        filter_linkages_iteratively(link_stats_clipping, 'Number', pairwise_16s_iden_dict, mean_depth_dict_ctg, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, 0, link_stats_clipping_filtered)
 
     # combine_paired_and_clipping_linkages and get summary table
     combine_paired_and_clipping_linkages(link_stats_paired_filtered, link_stats_clipping_filtered, link_stats_combined_table, link_stats_combined)
@@ -1050,57 +1220,37 @@ def link_Marker_MAG(args, config_dict):
 
 if __name__ == '__main__':
 
-    link_Marker_MAG_parser = argparse.ArgumentParser(description='Link MAGs with marker genes', usage=link_Marker_MAG_usage)
+    link_16s_parser = argparse.ArgumentParser(description='Link MAGs with marker genes', usage=link_Marker_MAG_usage)
 
-    link_Marker_MAG_parser.add_argument('-p',               required=True,                              help='output prefix')
-    link_Marker_MAG_parser.add_argument('-r1',              required=True,                              help='paired reads r1')
-    link_Marker_MAG_parser.add_argument('-r2',              required=True,                              help='paired reads r2')
-    link_Marker_MAG_parser.add_argument('-m',               required=True,                              help='marker gene sequences')
-    link_Marker_MAG_parser.add_argument('-g',               required=False, default=None,               help='genomic sequences')
-    link_Marker_MAG_parser.add_argument('-mag',             required=False, default=None,               help='metagenome-assembled-genome (MAG) folder')
-    link_Marker_MAG_parser.add_argument('-x',               required=False, default='fasta',            help='MAG file extension, default: fasta')
-    link_Marker_MAG_parser.add_argument('-mp',              required=False, type=str, default=0,        help='multiple placement during bowtie mapping, default: 0. choose from a,1,2,3...')
-    link_Marker_MAG_parser.add_argument('-cigarM',          required=False, type=int, default=30,       help='cigarM cutoff, default: 30')
-    link_Marker_MAG_parser.add_argument('-cigarS',          required=False, type=int, default=30,       help='cigarS cutoff, default: 30')
-    link_Marker_MAG_parser.add_argument('-ri',              required=False, type=float, default=100,    help='identity cutoff, default: 100')
-    link_Marker_MAG_parser.add_argument('-rc',              required=False, type=float, default=100,    help='coverage cutoff, default: 100')
-    link_Marker_MAG_parser.add_argument('-mi',              required=False, type=float, default=99.5,   help='within genome 16S identity cutoff, default: 99.5')
-    link_Marker_MAG_parser.add_argument('-mc',              required=False, type=float, default=90,     help='alignment coverage cutoff for calculating 16S identity, default: 90')
-    link_Marker_MAG_parser.add_argument('-ma',              required=False, type=int, default=500,      help='alignment length cutoff for calculating 16S identity, default: 500')
-    link_Marker_MAG_parser.add_argument('-mpl',             required=False, type=int, default=3,        help='minimum number of paired reads provided linkages to report, default: 3')
-    link_Marker_MAG_parser.add_argument('-t',               required=False, type=int, default=1,        help='number of threads, default: 1')
-    link_Marker_MAG_parser.add_argument('-quiet',           required=False, action="store_true",        help='not report progress')
-    link_Marker_MAG_parser.add_argument('-force',           required=False, action="store_true",        help='force overwrite existing results')
-    link_Marker_MAG_parser.add_argument('-tmp',             required=False, action="store_true",        help='keep temporary files')
-    link_Marker_MAG_parser.add_argument('-test_mode',       required=False, action="store_true",        help='only for debugging, do not provide')
-    link_Marker_MAG_parser.add_argument('-bbmap',           required=False, action="store_true",        help='run bbmap, instead of bowtie')
+    link_16s_parser.add_argument('-p',               required=True,                                     help='output prefix')
+    link_16s_parser.add_argument('-r1',              required=True,                                     help='paired reads r1')
+    link_16s_parser.add_argument('-r2',              required=True,                                     help='paired reads r2')
+    link_16s_parser.add_argument('-r16s',            required=False,                                    help='16S reads')
+    link_16s_parser.add_argument('-m',               required=True,                                     help='marker gene sequences')
+    link_16s_parser.add_argument('-g',               required=False,                default=None,       help='genomic sequences')
+    link_16s_parser.add_argument('-mag',             required=False,                default=None,       help='metagenome-assembled-genome (MAG) folder')
+    link_16s_parser.add_argument('-x',               required=False,                default='fasta',    help='MAG file extension, default: fasta')
+    link_16s_parser.add_argument('-mp',              required=False, type=str,      default=0,          help='multiple placement during bowtie mapping, default: 0. choose from a,1,2,3...')
+    link_16s_parser.add_argument('-cigarM',          required=False, type=int,      default=30,         help='cigarM cutoff, default: 30')
+    link_16s_parser.add_argument('-cigarS',          required=False, type=int,      default=30,         help='cigarS cutoff, default: 30')
+    link_16s_parser.add_argument('-ri',              required=False, type=float,    default=100,        help='identity cutoff, default: 100')
+    link_16s_parser.add_argument('-rc',              required=False, type=float,    default=100,        help='coverage cutoff, default: 100')
+    link_16s_parser.add_argument('-mi',              required=False, type=float,    default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
+    link_16s_parser.add_argument('-mc',              required=False, type=float,    default=90,         help='alignment coverage cutoff for calculating 16S identity, default: 90')
+    link_16s_parser.add_argument('-ma',              required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
+    link_16s_parser.add_argument('-mpl',             required=False, type=int,      default=5,          help='minimum number of paired reads provided linkages to report, default: 5')
+    link_16s_parser.add_argument('-depth',           required=False, type=float,    default=0,          help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, default: 0')
+    link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
+    link_16s_parser.add_argument('-quiet',           required=False, action="store_true",               help='not report progress')
+    link_16s_parser.add_argument('-force',           required=False, action="store_true",               help='force overwrite existing results')
+    link_16s_parser.add_argument('-tmp',             required=False, action="store_true",               help='keep temporary files')
+    link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",               help='only for debugging, do not provide')
+    link_16s_parser.add_argument('-bbmap',           required=False, action="store_true",               help='run bbmap, instead of bowtie')
 
-    args = vars(link_Marker_MAG_parser.parse_args())
+    args = vars(link_16s_parser.parse_args())
 
-    link_Marker_MAG(args, config_dict)
+    link_16s(args, config_dict)
 
-
-Notes = '''
-
-alias twine='/Users/songweizhi/Library/Python/3.7/bin/twine'
-cd /Users/songweizhi/PycharmProjects/MarkerMAG
-rm -r build
-rm -r dist
-rm -r MarkerMAG.egg-info
-python setup.py sdist bdist_wheel
-
-twine upload dist/*
-songweizhi
-
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-songweizhi
-
-shan88
-
-pip3 install --upgrade MarkerMAG
-pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
-
-'''
 
 To_do = '''
 
@@ -1114,14 +1264,18 @@ To_do = '''
 10. minimum number of linkages to report?
 11. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
 12. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
+13. add "16S_reads" to SortMeRNA's output prefix
+14. which depth to use, genome level or contig level
+15. also at ctg level
 
-Notes:
-linkages only supported by clipping reads were ignored !!!
 
-
+# on Mac
 export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH
+export PATH=/Users/songweizhi/Softwares/usearch:$PATH
+export PATH=/Users/songweizhi/Softwares/samtools-1.11/bin:$PATH
 cd /Users/songweizhi/Desktop/MarkerMAG_wd/Mac_test
-~/PycharmProjects/MarkerMAG/bin/MarkerMAG -p EvenDepth_5x -r1 combined_5x_R1.fasta -r2 combined_5x_R2.fasta -m combined_16S.ffn -mag selected_genomes_renamed_no_plasmid -x fna -t 4 -tmp -force -test_mode
+~/PycharmProjects/MarkerMAG/MarkerMAG/link_16s.py -p Test_0.1 -r1 combined_5x_R1_0.1.fasta -r2 combined_5x_R2_0.1.fasta -r16s ISS_2x_even_16S_reads.fasta -m combined_16S.ffn -mag ref_genomes -x fna -t 4 -tmp -force -test_mode
+~/PycharmProjects/MarkerMAG/MarkerMAG/link_16s.py -p Test -r1 combined_5x_R1.fasta -r2 combined_5x_R2.fasta -r16s ISS_5x_even.fasta -m combined_16S.ffn -mag ref_genomes -x fna -t 4 -tmp -force -test_mode
 
 
 module load python/3.7.3
@@ -1142,5 +1296,27 @@ p5_00515	p5_01648	99.213
 p5_00515	p5_01238	99.213
 p5_00515	p5_00656	99.082
 p5_00515	p5_00944	99.016
+
+
+samtools view -f 8 -F 4 -b foo.bam > foo.filtered.bam
+
+-f 8 -F 4   :   yield reads that are mapped with unmapped mates.
+-F 8 -f 4   :   yield unmapped reads with mapped mates, but flagstat doesn't count mapped mates unless the read being looked at is also mapped (thus, the singleton metric with -f 8 -F 4).
+
+-f INT   only include reads with all  of the FLAGs in INT present [0]
+-F INT   only include reads with none of the FLAGS in INT present [0]
+4   segment unmapped
+8   next segment in the template unmapped
+
+-f 4
+-f 8
+-F 4
+-F 8
+
+
+samtools view -f 8 -F 4 -b MBARC26_fake_bins_combined_sorted.bam > MBARC26_fake_bins_combined_sorted.f8.F4.bam
+samtools view -F 8 -f 4 -b MBARC26_fake_bins_combined_sorted.bam > MBARC26_fake_bins_combined_sorted.F8.f4.bam
+
+
 
 '''

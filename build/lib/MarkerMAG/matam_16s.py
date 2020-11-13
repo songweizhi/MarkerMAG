@@ -244,7 +244,8 @@ def matam_16s(args):
 
     # file in
     output_prefix                   = args['p']
-    metagenomic_reads_paired        = args['in']
+    reads_file_r1                   = args['r1']
+    reads_file_r2                   = args['r2']
     subsample_pcts                  = args['pct']
     matam_ref                       = args['ref']
     uclust_iden_cutoff              = args['i']
@@ -277,6 +278,7 @@ def matam_16s(args):
     sortmerna_ref       = '%s.clustered.fasta,%s.clustered' % (matam_ref, matam_ref)
     matam16s_wd         = '%s_Matam16S_wd'                  % (output_prefix)
     log_file            = '%s/%s_matam_16s.log'             % (matam16s_wd, output_prefix)
+    combined_r1_r2      = '%s/%s_combined_R1_R2.fasta'      % (matam16s_wd, output_prefix)
     sortmerna_op_fasta  = '%s/%s.fasta'                     % (matam16s_wd, output_prefix)
     sortmerna_stdout    = '%s/%s.SortMeRNA_stdout.txt'      % (matam16s_wd, output_prefix)
 
@@ -288,14 +290,17 @@ def matam_16s(args):
     else:
         force_create_folder(matam16s_wd)
 
+    # combine R1 and R2
+    report_and_log(('Combining the forward and reverse reads'), log_file, keep_quiet)
+    combined_r1_r2_cmd = '%s mergepe %s %s > %s' % (seqtk_exe, reads_file_r1, reads_file_r2, combined_r1_r2)
+    os.system(combined_r1_r2_cmd)
 
     # run SortMeRNA
-    report_and_log(('Extracting rRNA reads with SortMeRNA from %s' % metagenomic_reads_paired), log_file, keep_quiet)
+    report_and_log(('Extracting rRNA reads with SortMeRNA from %s' % combined_r1_r2), log_file, keep_quiet)
 
-    sortmerna_cmd = '%s --ref %s --reads %s --aligned %s/%s --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a %s -v > %s' % (sortmerna_exe, sortmerna_ref, metagenomic_reads_paired, matam16s_wd, output_prefix, num_threads, sortmerna_stdout)
+    sortmerna_cmd = '%s --ref %s --reads %s --aligned %s/%s --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a %s -v > %s' % (sortmerna_exe, sortmerna_ref, combined_r1_r2, matam16s_wd, output_prefix, num_threads, sortmerna_stdout)
     report_and_log(sortmerna_cmd, log_file, True)
     os.system(sortmerna_cmd)
-
 
     # subsample SortMeRNA output and assemble
     renamed_matam_assembly_list = []
@@ -378,18 +383,19 @@ if __name__ == '__main__':
 
     matam_16s_parser = argparse.ArgumentParser()
 
-    matam_16s_parser.add_argument('-p',                 required=True,                                       help='output prefix')
-    matam_16s_parser.add_argument('-in',                required=True,                                       help='combined reads file')
-    matam_16s_parser.add_argument('-pct',               required=True,  type=str, default='1,5,10,25,50,75', help='subsample percentage, deafault: 1,5,10,25,50,75')
-    matam_16s_parser.add_argument('-ref',               required=False, type=str,                            help='Path to Matam reference database')
-    matam_16s_parser.add_argument('-i',                 required=False, type=float, default=0.995,           help='cluster identity cutoff (0-1), default: 0.995')
-    matam_16s_parser.add_argument('-t',                 required=False, type=int, default=1,                 help='number of threads, default: 1')
-    matam_16s_parser.add_argument('-force',             required=False, action="store_true",                 help='force overwrite existing results')
-    matam_16s_parser.add_argument('-quiet',             required=False, action="store_true",                 help='not report progress')
-    matam_16s_parser.add_argument('-matam_assembly',    required=False, type=str,                            help='path to matam_assembly.py')
-    matam_16s_parser.add_argument('-sortmerna',         required=False, type=str, default='sortmerna',       help='path to sortmerna executable file, default: sortmerna')
-    matam_16s_parser.add_argument('-seqtk',             required=False, type=str, default='seqtk',           help='path to seqtk executable file, default: seqtk')
-    matam_16s_parser.add_argument('-usearch',           required=False, type=str, default='usearch',         help='path to usearch executable file, default: usearch')
+    matam_16s_parser.add_argument('-p',                 required=True,                                          help='output prefix')
+    matam_16s_parser.add_argument('-r1',                required=True,                                          help='paired reads r1')
+    matam_16s_parser.add_argument('-r2',                required=True,                                          help='paired reads r2')
+    matam_16s_parser.add_argument('-pct',               required=True,  type=str, default='1,5,10,25,50,75',    help='subsample percentage, deafault: 1,5,10,25,50,75')
+    matam_16s_parser.add_argument('-ref',               required=False, type=str,                               help='Path to Matam reference database')
+    matam_16s_parser.add_argument('-i',                 required=False, type=float, default=0.995,              help='cluster identity cutoff (0-1), default: 0.995')
+    matam_16s_parser.add_argument('-t',                 required=False, type=int, default=1,                    help='number of threads, default: 1')
+    matam_16s_parser.add_argument('-force',             required=False, action="store_true",                    help='force overwrite existing results')
+    matam_16s_parser.add_argument('-quiet',             required=False, action="store_true",                    help='not report progress')
+    matam_16s_parser.add_argument('-matam_assembly',    required=False, type=str, default='matam_assembly.py',  help='path to matam_assembly.py, default: matam_assembly.py')
+    matam_16s_parser.add_argument('-sortmerna',         required=False, type=str, default='sortmerna',          help='path to sortmerna executable file, default: sortmerna')
+    matam_16s_parser.add_argument('-seqtk',             required=False, type=str, default='seqtk',              help='path to seqtk executable file, default: seqtk')
+    matam_16s_parser.add_argument('-usearch',           required=False, type=str, default='usearch',            help='path to usearch executable file, default: usearch')
 
     args = vars(matam_16s_parser.parse_args())
 
