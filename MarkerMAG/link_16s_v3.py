@@ -34,6 +34,7 @@ config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split(
                'samtools'           : 'samtools',
                'blastn'             : 'blastn',
                'makeblastdb'        : 'makeblastdb',
+               'spades'             : 'spades.py',
                'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
 
 
@@ -763,6 +764,10 @@ def link_16s(args, config_dict):
     test_mode                           = args['test_mode']
     run_bbmap                           = args['bbmap']
     min_16s_gnm_multiple                = args['depth']
+    end_seq_len                         = args['s2e']
+    minCigarM                           = args['s2m']
+    max_gap_to_end                      = args['s2g']
+    min_read_num                        = args['s2r']
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_makeblastdb_exe                 = config_dict['makeblastdb']
@@ -770,7 +775,7 @@ def link_16s(args, config_dict):
     pwd_bowtie2_build_exe               = config_dict['bowtie2_build']
     pwd_bowtie2_exe                     = config_dict['bowtie2']
     pwd_samtools_exe                    = config_dict['samtools']
-    pwd_spades_exe = 'spades.py'
+    pwd_spades_exe                      = config_dict['spades']
 
 
     str_connector = '___'
@@ -850,32 +855,62 @@ def link_16s(args, config_dict):
     marker_gene_seqs_file_path, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension = sep_path_basename_ext(marker_gene_seqs)
 
     pwd_log_file                                = '%s/%s.log'                                       % (working_directory, output_prefix)
-    bowtie_index_dir                            = '%s/%s_%s_index'                                  % (working_directory, output_prefix, marker_gene_seqs_file_basename)
-    pwd_samfile                                 = '%s/%s.sam'                                       % (working_directory, marker_gene_seqs_file_basename)
-    clipping_reads_matched_part                 = '%s/%s_clipping_matched_part.txt'                 % (working_directory, output_prefix)
-    clipping_reads_not_matched_part_seq         = '%s/%s_clipping_not_matched_part_seq.fasta'       % (working_directory, output_prefix)
-    clipping_reads_not_matched_part_seq_blastn  = '%s/%s_clipping_not_matched_part_seq_blast.txt'   % (working_directory, output_prefix)
-    clipping_reads_match_profile                = '%s/%s_match_profile_clipping.txt'                % (working_directory, output_prefix)
-    unmapped_paired_reads_folder                = '%s/%s_unmapped_paired_reads'                     % (working_directory, output_prefix)
-    unmapped_paired_reads_file                  = '%s/%s_unmapped_paired_reads.fasta'               % (working_directory, output_prefix)
-    unmapped_paired_reads_blastn                = '%s/%s_unmapped_paired_reads_blast.txt'           % (working_directory, output_prefix)
-    paired_reads_match_profile                  = '%s/%s_match_profile_paired.txt'                  % (working_directory, output_prefix)
-    blast_results_all_vs_all_16s                = '%s/%s_16S_all_vs_all_blastn.tab'                 % (working_directory, output_prefix)
-    link_stats_clipping                         = '%s/%s_stats_clipping.txt'                        % (working_directory, output_prefix)
-    link_stats_clipping_filtered                = '%s/%s_stats_clipping_filtered.txt'               % (working_directory, output_prefix)
-    link_stats_paired                           = '%s/%s_stats_paired.txt'                          % (working_directory, output_prefix)
-    link_stats_paired_filtered                  = '%s/%s_stats_paired_filtered.txt'                 % (working_directory, output_prefix)
-    link_stats_combined_table                   = '%s/%s_stats_combined_table.txt'                  % (working_directory, output_prefix)
-    link_stats_combined                         = '%s/%s_stats_combined.txt'                        % (working_directory, output_prefix)
-    pairwise_marker_similarity                  = '%s/%s_pairwise_marker_similarity.txt'            % (working_directory, output_prefix)
-    depth_file_ctg                              = '%s/%s_mean_depth_ctg.txt'                        % (working_directory, output_prefix)
-    depth_file_gnm                              = '%s/%s_mean_depth_gnm.txt'                        % (working_directory, output_prefix)
-    depth_file_16s                              = '%s/%s_mean_depth_16s.txt'                        % (working_directory, output_prefix)
+
+    step_1_wd = '%s/%s_step_1_wd' % (working_directory, output_prefix)
+
+    bowtie_index_dir                            = '%s/%s_%s_index'                                  % (step_1_wd, output_prefix, marker_gene_seqs_file_basename)
+    pwd_samfile                                 = '%s/%s.sam'                                       % (step_1_wd, marker_gene_seqs_file_basename)
+    clipping_reads_matched_part                 = '%s/%s_clipping_matched_part.txt'                 % (step_1_wd, output_prefix)
+    clipping_reads_not_matched_part_seq         = '%s/%s_clipping_not_matched_part_seq.fasta'       % (step_1_wd, output_prefix)
+    clipping_reads_not_matched_part_seq_blastn  = '%s/%s_clipping_not_matched_part_seq_blast.txt'   % (step_1_wd, output_prefix)
+    clipping_reads_match_profile                = '%s/%s_match_profile_clipping.txt'                % (step_1_wd, output_prefix)
+    unmapped_paired_reads_folder                = '%s/%s_unmapped_paired_reads'                     % (step_1_wd, output_prefix)
+    unmapped_paired_reads_file                  = '%s/%s_unmapped_paired_reads.fasta'               % (step_1_wd, output_prefix)
+    unmapped_paired_reads_blastn                = '%s/%s_unmapped_paired_reads_blast.txt'           % (step_1_wd, output_prefix)
+    paired_reads_match_profile                  = '%s/%s_match_profile_paired.txt'                  % (step_1_wd, output_prefix)
+    blast_results_all_vs_all_16s                = '%s/%s_16S_all_vs_all_blastn.tab'                 % (step_1_wd, output_prefix)
+    link_stats_clipping                         = '%s/%s_stats_clipping.txt'                        % (step_1_wd, output_prefix)
+    link_stats_clipping_filtered                = '%s/%s_stats_clipping_filtered.txt'               % (step_1_wd, output_prefix)
+    link_stats_paired                           = '%s/%s_stats_paired.txt'                          % (step_1_wd, output_prefix)
+    link_stats_paired_filtered                  = '%s/%s_stats_paired_filtered.txt'                 % (step_1_wd, output_prefix)
+    link_stats_combined_table                   = '%s/%s_stats_combined_table.txt'                  % (step_1_wd, output_prefix)
+    link_stats_combined                         = '%s/%s_stats_combined.txt'                        % (step_1_wd, output_prefix)
+    pairwise_marker_similarity                  = '%s/%s_pairwise_marker_similarity.txt'            % (step_1_wd, output_prefix)
+    depth_file_ctg                              = '%s/%s_mean_depth_ctg.txt'                        % (step_1_wd, output_prefix)
+    depth_file_gnm                              = '%s/%s_mean_depth_gnm.txt'                        % (step_1_wd, output_prefix)
+    depth_file_16s                              = '%s/%s_mean_depth_16s.txt'                        % (step_1_wd, output_prefix)
 
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
 
 
+    ################################################# step 2 #################################################
+
+    step_2_wd = '%s/%s_step_2_wd' % (working_directory, output_prefix)
+
+    marker_gene_seqs_1st_round_unlinked         = '%s/step_1_unlinked_marker_genes.fasta'           % step_2_wd
+    combined_1st_round_unlinked_mags            = '%s/step_1_unlinked_combined_gnms.fasta'          % step_2_wd
+    combined_1st_round_unlinked_ctgs            = '%s/step_1_unlinked_combined_ctgs.fasta'          % step_2_wd
+    free_living_mate_gnm                        = '%s/free_living_mate_ctg.txt'                     % step_2_wd
+    free_living_mate_16s                        = '%s/free_living_mate_16s.txt'                     % step_2_wd
+    extracted_reads_folder                      = '%s/free_living_reads'                            % step_2_wd
+    extracted_reads_cbd                         = '%s/free_living_read_combined.fasta'              % step_2_wd
+    spades_wd                                   = '%s/combined_free_living_reads_SPAdes_wd'         % step_2_wd
+    spades_assemblies                           = '%s/scaffolds.fasta'                              % spades_wd
+    sam_file                                    = '%s/scaffolds.sam'                                % step_2_wd
+    stats_GapFilling_file_16s                   = '%s/stats_GapFilling_16s.txt'                     % step_2_wd
+    stats_GapFilling_file_ctg                   = '%s/stats_GapFilling_ctg.txt'                     % step_2_wd
+    stats_GapFilling_file_filtered_16s          = '%s/stats_GapFilling_16s_filtered.txt'            % step_2_wd
+    stats_GapFilling_file_filtered_ctg          = '%s/stats_GapFilling_ctg_filtered.txt'            % step_2_wd
+    stats_GapFilling_file                       = '%s/stats_GapFilling.txt'                         % step_2_wd
+    stats_GapFilling_file_filtered              = '%s/stats_GapFilling_filtered.txt'                % step_2_wd
+
+    combined_linkage_file                       = '%s/%s_combined_linkages.txt'                     % (working_directory, output_prefix)
+    combined_linkage_file_tmp                   = '%s/%s_combined_linkages_tmp.txt'                 % (working_directory, output_prefix)
+
+
     #################################### calculate mean depth for genome/assemblies ####################################
+
+    os.mkdir(step_1_wd)
 
     mean_depth_dict_ctg = {}
     mean_depth_dict_gnm = {}
@@ -1268,32 +1303,9 @@ def link_16s(args, config_dict):
     ############################################### second round linking ###############################################
     ####################################################################################################################
 
-    ################################################# define file name #################################################
-
-    marker_gene_seqs_1st_round_unlinked = '%s/step_1_unlinked_marker_genes.fasta'   % working_directory
-    combined_1st_round_unlinked_mags    = '%s/step_1_unlinked_combined_gnms.fasta'  % working_directory
-    combined_1st_round_unlinked_ctgs    = '%s/step_1_unlinked_combined_ctgs.fasta'  % working_directory
-    free_living_mate_gnm                = '%s/free_living_mate_ctg.txt'             % working_directory
-    free_living_mate_16s                = '%s/free_living_mate_16s.txt'             % working_directory
-    extracted_reads_folder              = '%s/free_living_reads'                    % working_directory
-    extracted_reads_cbd                 = '%s/free_living_read_combined.fasta'      % working_directory
-    spades_wd                           = '%s/combined_free_living_reads_SPAdes_wd' % working_directory
-    spades_assemblies                   = '%s/scaffolds.fasta'                      % spades_wd
-    sam_file                            = '%s/scaffolds.sam'                        % working_directory
-    stats_GapFilling_file_16s           = '%s/stats_GapFilling_16s.txt'             % working_directory
-    stats_GapFilling_file_ctg           = '%s/stats_GapFilling_ctg.txt'             % working_directory
-    stats_GapFilling_file_filtered_16s  = '%s/stats_GapFilling_16s_filtered.txt'    % working_directory
-    stats_GapFilling_file_filtered_ctg  = '%s/stats_GapFilling_ctg_filtered.txt'    % working_directory
-    stats_GapFilling_file               = '%s/stats_GapFilling.txt'                 % working_directory
-    stats_GapFilling_file_filtered      = '%s/stats_GapFilling_filtered.txt'        % working_directory
-
-    end_seq_len     = 3000
-    minCigarM       = 50
-    max_gap_to_end  = 100
-    num_threads     = 4
     gnm_ctg_connector  = '___'
     dict_key_connector = '__|__'
-    min_read_num       = 3
+    os.mkdir(step_2_wd)
 
 
     #################### get the sequences of 1st round unlinked marker genes and genomic sequences ####################
@@ -1408,12 +1420,13 @@ def link_16s(args, config_dict):
 
     ############################################### assemble and mapping ###############################################
 
-    spades_cmd = '%s -s %s -o %s -t %s -k 21,33,55,75,99,127 --only-assembler' % (pwd_spades_exe, extracted_reads_cbd, spades_wd, num_threads)
+    spades_log = '%s/%s_SPAdes.log' % (working_directory, output_prefix)
+    spades_cmd = '%s -s %s -o %s -t %s -k 21,33,55,75,99,127 --only-assembler > %s' % (pwd_spades_exe, extracted_reads_cbd, spades_wd, num_threads, spades_log)
     os.system(spades_cmd)
 
     spades_assemblies_no_ext = '.'.join(spades_assemblies.split('.')[:-1])
-    index_ref_cmd = '%s -f %s %s' % (pwd_bowtie2_build_exe, spades_assemblies, spades_assemblies_no_ext)
-    mapping_cmd = '%s -x %s -U %s -S %s -p %s -f' % (pwd_bowtie2_exe, spades_assemblies_no_ext, extracted_reads_cbd, sam_file, num_threads)
+    index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (pwd_bowtie2_build_exe, spades_assemblies, spades_assemblies_no_ext, num_threads)
+    mapping_cmd = '%s -x %s -U %s -S %s --threads %s -f --quiet' % (pwd_bowtie2_exe, spades_assemblies_no_ext, extracted_reads_cbd, sam_file, num_threads)
     os.system(index_ref_cmd)
     os.system(mapping_cmd)
 
@@ -1539,14 +1552,20 @@ def link_16s(args, config_dict):
     ####################################### combine linkages from the two steps ########################################
     ####################################################################################################################
 
-    combined_linkage_file = '%s/%s_combined_linkages.txt' % (working_directory, output_prefix)
-    combined_linkage_file_handle = open(combined_linkage_file)
-    combined_linkage_file_handle.write('MarkerGene,GenomicSeq,Number,Step\n')
+    combined_linkage_file_handle     = open(combined_linkage_file, 'w')
+    combined_linkage_file_tmp_handle = open(combined_linkage_file_tmp, 'w')
+    combined_linkage_file_handle.write('MarkerGene\tGenomicSeq\tNumber\tStep\n')
+    combined_linkage_file_tmp_handle.write('MarkerGene,GenomicSeq,Number,Step\n')
     for step_1_link in open(link_stats_paired_filtered):
-        combined_linkage_file_handle.write('%s\t1\n' % step_1_link.strip())
+        if not step_1_link.startswith('MarkerGene,GenomicSeq,Number'):
+            combined_linkage_file_handle.write('%s\t1\n' % '\t'.join(step_1_link.strip().split(',')))
+            combined_linkage_file_tmp_handle.write(step_1_link)
     for step_2_link in open(stats_GapFilling_file_filtered):
-        combined_linkage_file_handle.write('%s\t2\n' % step_2_link.strip())
+        if not step_2_link.startswith('MarkerGene,GenomicSeq,Number'):
+            combined_linkage_file_handle.write('%s\t2\n' % '\t'.join(step_2_link.strip().split(',')))
+            combined_linkage_file_tmp_handle.write(step_2_link)
     combined_linkage_file_handle.close()
+    combined_linkage_file_tmp_handle.close()
 
 
     ####################################################################################################################
@@ -1565,10 +1584,10 @@ def link_16s(args, config_dict):
             GenomicSeqs_paired.add(filtered_paired_split[1])
 
     # calculate plot height
-    plot_height_paired       = 500 if max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) <= 25 else max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) * 20
+    plot_height_paired = 500 if max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) <= 25 else max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) * 20
 
     # prepare commands
-    cmd_sankey_paired       = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, link_stats_paired_filtered,   600, plot_height_paired)
+    cmd_sankey_paired = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, link_stats_paired_filtered,   600, plot_height_paired)
 
     # plot
     if len(open(link_stats_paired_filtered).readlines()) == 1:
@@ -1596,25 +1615,21 @@ def link_16s(args, config_dict):
             marker_id_set.add(marker_seq_record.id)
 
         # get recovery and accuracy
-        recovery_paired, accuracy_paired, recovered_paired       = get_accuracy(link_stats_paired_filtered, len(marker_id_set))
-        recovery_clipping, accuracy_clipping, recovered_clipping = get_accuracy(link_stats_clipping_filtered, len(marker_id_set))
+        recovery_combined, accuracy_combined, recovered_combined = get_accuracy(combined_linkage_file_tmp, len(marker_id_set))
 
         # get unrecovered markers
-        unrecovered_markers_paired       = get_unrecovered_markers(marker_id_set, recovered_paired)
-        unrecovered_markers_clipping     = get_unrecovered_markers(marker_id_set, recovered_clipping)
-        unrecovered_markers_paired_str   = 'Unrecovered_Paired(%s):%s'   % (len(unrecovered_markers_paired), ','.join(sorted([i for i in unrecovered_markers_paired])))
-        unrecovered_markers_clipping_str = 'Unrecovered_Clipping(%s):%s' % (len(unrecovered_markers_clipping), ','.join(sorted([i for i in unrecovered_markers_clipping])))
+        unrecovered_markers_paired     = get_unrecovered_markers(marker_id_set, recovered_combined)
+        unrecovered_markers_paired_str = 'Unrecovered(%s):%s'   % (len(unrecovered_markers_paired), ','.join(sorted([i for i in unrecovered_markers_paired])))
 
         # assessment by genome
-        assign_rate_paired, assign_accuracy_paired, right_assign_paired, wrong_assign_paired         = get_accuracy_by_genome(link_stats_paired_filtered, mag_folder, mag_file_extension)
-        assign_rate_clipping, assign_accuracy_clipping, right_assign_clipping, wrong_assign_clipping = get_accuracy_by_genome(link_stats_clipping_filtered, mag_folder, mag_file_extension)
-        unrecovered_paired_report_str   = 'Unrecovered_Paired(%s):%s'   % (len(wrong_assign_paired), ','.join(sorted([i for i in wrong_assign_paired])))
-        unrecovered_clipping_report_str = 'Unrecovered_Clipping(%s):%s' % (len(wrong_assign_clipping), ','.join(sorted([i for i in wrong_assign_clipping])))
+        assign_rate, assign_accuracy, right_assign, wrong_assign         = get_accuracy_by_genome(combined_linkage_file_tmp, mag_folder, mag_file_extension)
+        unrecovered_paired_report_str   = 'Unrecovered(%s):%s'   % (len(wrong_assign), ','.join(sorted([i for i in wrong_assign])))
 
         # report
-        report_and_log(('Prefix\tBy\tPaired_r\tPaired_a\tClip_r\tClip_a\tUnrecovered_Paired\tUnrecovered_Clipping'), pwd_log_file, keep_quiet)
-        report_and_log(('%s\tMarker\t%s\t%s\t%s\t%s\t%s\t%s' % (output_prefix, recovery_paired, accuracy_paired, recovery_clipping, accuracy_clipping, unrecovered_markers_paired_str, unrecovered_markers_clipping_str)), pwd_log_file, keep_quiet)
-        report_and_log(('%s\tGenome\t%s\t%s\t%s\t%s\t%s\t%s' % (output_prefix, assign_rate_paired, assign_accuracy_paired, assign_rate_clipping, assign_accuracy_clipping, unrecovered_paired_report_str, unrecovered_clipping_report_str)), pwd_log_file, keep_quiet)
+        report_and_log(('Prefix\tBy\tRecovery\tAccuracy\tUnrecovered'), pwd_log_file, keep_quiet)
+        report_and_log(('%s\tMarker\t%s\t%s\t%s' % (output_prefix, recovery_combined, accuracy_combined, unrecovered_markers_paired_str)), pwd_log_file, keep_quiet)
+        report_and_log(('%s\tGenome\t%s\t%s\t%s' % (output_prefix, assign_rate, assign_accuracy, unrecovered_paired_report_str)), pwd_log_file, keep_quiet)
+
 
     ################################################### remove tmp files ###################################################
 
@@ -1657,7 +1672,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-mi',              required=False, type=float,    default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
     link_16s_parser.add_argument('-mc',              required=False, type=float,    default=90,         help='alignment coverage cutoff for calculating 16S identity, default: 90')
     link_16s_parser.add_argument('-ma',              required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
-    link_16s_parser.add_argument('-mpl',             required=False, type=int,      default=10,          help='minimum number of paired reads provided linkages to report, default: 10')
+    link_16s_parser.add_argument('-mpl',             required=False, type=int,      default=10,         help='minimum number of paired reads provided linkages to report, default: 10')
     link_16s_parser.add_argument('-depth',           required=False, type=float,    default=0,          help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, default: 0')
     link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
     link_16s_parser.add_argument('-quiet',           required=False, action="store_true",               help='not report progress')
@@ -1665,6 +1680,10 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-tmp',             required=False, action="store_true",               help='keep temporary files')
     link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",               help='only for debugging, do not provide')
     link_16s_parser.add_argument('-bbmap',           required=False, action="store_true",               help='run bbmap, instead of bowtie')
+    link_16s_parser.add_argument('-s2e',             required=False, type=int,      default=3000,       help='end length for mapping, default: 3000')
+    link_16s_parser.add_argument('-s2m',             required=False, type=int,      default=50,         help='minCigarM, default: 50')
+    link_16s_parser.add_argument('-s2g',             required=False, type=int,      default=100,        help='max_gap_to_end, default: 100')
+    link_16s_parser.add_argument('-s2r',             required=False, type=int,      default=3,          help='min_read_num, default: 3')
 
     args = vars(link_16s_parser.parse_args())
 
@@ -1686,7 +1705,7 @@ To_do = '''
 13. add "16S_reads" to SortMeRNA's output prefix
 14. which depth to use, genome level or contig level
 15. also at ctg level
-
+16. check if spades failed 
 
 # on Mac
 export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH
@@ -1723,10 +1742,7 @@ samtools view -f 8 -F 4 -b foo.bam > foo.filtered.bam
 -F 4
 -F 8
 
-
 samtools view -f 8 -F 4 -b MBARC26_fake_bins_combined_sorted.bam > MBARC26_fake_bins_combined_sorted.f8.F4.bam
 samtools view -F 8 -f 4 -b MBARC26_fake_bins_combined_sorted.bam > MBARC26_fake_bins_combined_sorted.F8.f4.bam
-
-
 
 '''
