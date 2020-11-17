@@ -48,3 +48,7 @@ for each_16s in open(file_in_16s):
 # cd /Users/songweizhi/Desktop/get_fake_bins_wd
 # BioSAK iTOL -SimpleBar -lv 16S_gene_to_depth.txt -scale 0-500-1000-1500 -lt Depth -out SimpleBar_depth.txt
 
+print()
+for gnm in genome_to_mean_depth_dict:
+    print('%s\t%s' % (gnm, genome_to_mean_depth_dict[gnm]))
+

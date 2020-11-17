@@ -1253,7 +1253,7 @@ if __name__ == '__main__':
 
 
 To_do = '''
-
+1. include 16S identification step
 2. where does the paired read of the clipping mapped read mapped to? (should take into consideration!!!)
 4. how to incorporate the taxonomy of MAGs and 16S sequences
 5. the effect of sequencing depth, insert size and read length

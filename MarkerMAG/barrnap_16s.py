@@ -1,0 +1,148 @@
+import os
+import glob
+import shutil
+import argparse
+from Bio import SeqIO
+import multiprocessing as mp
+
+
+barrnap_16s_usage = '''
+==================== barrnap_16s example commands ====================
+
+module load perl/5.28.0
+module load hmmer/3.2.1
+module load bedtools/2.27.1
+module load barrnap/0.9
+MarkerMAG barrnap_16s -p Test -g genome_files -x fa -force -seq -t 6
+
+======================================================================
+'''
+
+'''
+module load python/3.7.3
+source ~/mypython3env/bin/activate
+module load perl/5.28.0
+module load hmmer/3.2.1
+module load bedtools/2.27.1
+module load barrnap/0.9
+cd /srv/scratch/z5039045/MarkerMAG_wd/MBARC26/link_mag_ref_wd_spade
+python3 /srv/scratch/z5039045/MarkerMAG_wd/barrnap_16s.py -p SPAdes_refined -g Refined_refined_bins_renamed -x fna -force -seq -t 12
+'''
+
+
+def sep_path_basename_ext(file_in):
+
+    # separate path and file name
+    file_path, file_name = os.path.split(file_in)
+    if file_path == '':
+        file_path = '.'
+
+    # separate file basename and extension
+    file_basename, file_extension = os.path.splitext(file_name)
+
+    return file_path, file_basename, file_extension
+
+
+def force_create_folder(folder_to_create):
+    if os.path.isdir(folder_to_create):
+        shutil.rmtree(folder_to_create, ignore_errors=True)
+        if os.path.isdir(folder_to_create):
+            shutil.rmtree(folder_to_create, ignore_errors=True)
+            if os.path.isdir(folder_to_create):
+                shutil.rmtree(folder_to_create, ignore_errors=True)
+                if os.path.isdir(folder_to_create):
+                    shutil.rmtree(folder_to_create, ignore_errors=True)
+    os.mkdir(folder_to_create)
+
+
+def barrnap_16s(args):
+
+    output_prefix     = args['p']
+    genome_folder     = args['g']
+    genome_ext        = args['x']
+    export_seq        = args['seq']
+    num_threads       = args['t']
+    force_overwrite   = args['force']
+
+    # define file name
+    barrnap_16s_wd      = '%s_barrnap_16s_wd'       % output_prefix
+    barrnap_op_foler    = '%s/%s_barrnap_outputs'   % (barrnap_16s_wd, output_prefix)
+    output_table        = '%s/%s_16S.txt'           % (barrnap_16s_wd, output_prefix)
+
+    # create folder
+    if (os.path.isdir(barrnap_16s_wd) is True) and (force_overwrite is False):
+        print('Output folder detected, program exited: %s' % barrnap_16s_wd)
+        exit()
+    else:
+        force_create_folder(barrnap_16s_wd)
+        os.mkdir(barrnap_op_foler)
+
+    genome_file_re = '%s/*.%s' % (genome_folder, genome_ext)
+    genome_file_list = [os.path.basename(file_name) for file_name in glob.glob(genome_file_re)]
+    genome_file_list_no_extension = ['.'.join(i.split('.')[:-1]) for i in genome_file_list]
+
+    if len(genome_file_list) == 0:
+        print('No query genome detected, program exited!')
+        exit()
+
+    # prepare commands for running barrnap
+    argument_list_for_barrnap = []
+    for genome in genome_file_list_no_extension:
+        pwd_genome = '%s/%s.%s'  % (genome_folder, genome, genome_ext)
+        pwd_op_gff = '%s/%s.gff' % (barrnap_op_foler, genome)
+        pwd_op_ffn = '%s/%s.ffn' % (barrnap_op_foler, genome)
+
+        if export_seq is True:
+            barrnap_cmd = 'barrnap --quiet -o %s %s > %s' % (pwd_op_ffn, pwd_genome, pwd_op_gff)
+        else:
+            barrnap_cmd = 'barrnap --quiet %s > %s'       % (pwd_genome, pwd_op_gff)
+
+        argument_list_for_barrnap.append(barrnap_cmd)
+
+    # run barrnap with multiprocessing
+    pool = mp.Pool(processes=num_threads)
+    pool.map(os.system, argument_list_for_barrnap)
+    pool.close()
+    pool.join()
+
+    # parse gff files
+    genome_failed_barrnap = set()
+    output_table_handle = open(output_table, 'w')
+    output_table_handle.write('Genome\tLength(bp)\tLocation\tStart\tEnd\n')
+    for genome in genome_file_list_no_extension:
+        current_genome_gff = '%s/%s.gff' % (barrnap_op_foler, genome)
+        if os.path.isfile(current_genome_gff):
+            for each_line in open(current_genome_gff):
+                if (not each_line.startswith('#')) and ('16S_rRNA' in each_line):
+                    each_line_split = each_line.strip().split('\t')
+                    ctg_id = each_line_split[0]
+                    start_pos = int(each_line_split[3])
+                    end_pos = int(each_line_split[4])
+                    length = end_pos - start_pos + 1
+                    output_table_handle.write('%s\t%s\t%s\t%s\t%s\n' % (genome, length, ctg_id, start_pos, end_pos))
+        else:
+            genome_failed_barrnap.add(genome)
+
+    output_table_handle.close()
+
+    # report failed geomes
+    if len(genome_failed_barrnap) > 0:
+        print('Failed to run barrnap on the following genomes: %s' % ','.join(genome_failed_barrnap))
+
+    print('Output table exported to %s' % output_table)
+    print('Done!')
+
+
+if __name__ == '__main__':
+
+    barrnap_16s_parser = argparse.ArgumentParser(description='', usage=barrnap_16s_usage)
+    barrnap_16s_parser.add_argument('-g',       required=True, type=str,               help='genome folder')
+    barrnap_16s_parser.add_argument('-x',       required=False, default='fasta',       help='genome file extension, default: fasta')
+    barrnap_16s_parser.add_argument('-p',       required=True, type=str,               help='output prefix')
+    barrnap_16s_parser.add_argument('-seq',     required=False, action="store_true",   help='export 16S sequences, available with "-g"')
+    barrnap_16s_parser.add_argument('-t',       required=False, type=int, default=1,   help='number of threads, default: 1')
+    barrnap_16s_parser.add_argument('-force',   required=False, action="store_true",   help='force overwrite existing results')
+
+    args = vars(barrnap_16s_parser.parse_args())
+
+    barrnap_16s(args)

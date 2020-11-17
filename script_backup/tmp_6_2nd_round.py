@@ -243,39 +243,38 @@ def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max
 
 wd = '/Users/songweizhi/Desktop/777'
 
-second_round_16s    = '%s/rest_16S.fasta' % wd
-ref_in              = '%s/rest_mags.fna' % wd
-reads_file_r1       = '%s/MBARC26_R1_0.05.fasta' % wd
-reads_file_r2       = '%s/MBARC26_R2_0.05.fasta' % wd
+marker_gene_seqs_1st_round_unlinked    = '%s/rest_16S.fasta' % wd
+combined_1st_round_unlinked_mags              = '%s/rest_mags.fna' % wd
+reads_file_r1       = '%s/MBARC26_R1_0.05.fasta'    % wd
+reads_file_r2       = '%s/MBARC26_R2_0.05.fasta'    % wd
 end_seq_len         = 3000
 minCigarM           = 50
 max_gap_to_end      = 100
 num_threads         = 4
 
-bowtie_build_exe    = '/Users/songweizhi/Softwares/bowtie2/bowtie2-build'
-bowtie2_exe         = '/Users/songweizhi/Softwares/bowtie2/bowtie2'
-spades_exe          = '/Users/songweizhi/Softwares/SPAdes-3.14.1/bin/spades.py'
+pwd_bowtie2_build_exe    = '/Users/songweizhi/Softwares/bowtie2/bowtie2-build'
+pwd_bowtie2_exe         = '/Users/songweizhi/Softwares/bowtie2/bowtie2'
+pwd_spades_exe          = '/Users/songweizhi/Softwares/SPAdes-3.14.1/bin/spades.py'
 
-bowtie_build_exe    = 'bowtie2-build'
-bowtie2_exe         = 'bowtie2'
-spades_exe          = 'spades.py'
+pwd_bowtie2_build_exe    = 'bowtie2-build'
+pwd_bowtie2_exe         = 'bowtie2'
+pwd_spades_exe          = 'spades.py'
 
 
 # define output
-free_living_mate_gnm        = '%s/free_living_mate_ctg.txt' % wd
-free_living_mate_16s        = '%s/free_living_mate_16s.txt' % wd
-extracted_reads_folder      = '%s/free_living_reads' % wd
-extracted_reads_cbd         = '%s/free_living_read_combined.fasta' % wd
-spades_wd                   = '%s/combined_free_living_reads_SPAdes_wd'  % wd
-spades_assemblies           = '%s/scaffolds.fasta' % spades_wd
-sam_file                    = '%s/scaffolds.sam'  % wd
-
+free_living_mate_gnm        = '%s/free_living_mate_ctg.txt'             % wd
+free_living_mate_16s        = '%s/free_living_mate_16s.txt'             % wd
+extracted_reads_folder      = '%s/free_living_reads'                    % wd
+extracted_reads_cbd         = '%s/free_living_read_combined.fasta'      % wd
+spades_wd                   = '%s/combined_free_living_reads_SPAdes_wd' % wd
+spades_assemblies           = '%s/scaffolds.fasta'                      % spades_wd
+sam_file                    = '%s/scaffolds.sam'                        % wd
 
 
 ########################################################################################################################
 
-reads_to_extract_to_ref_dict_gnm = get_free_living_mate(ref_in, reads_file_r1, reads_file_r2, end_seq_len, minCigarM, max_gap_to_end, bowtie_build_exe, bowtie2_exe, num_threads)
-reads_to_extract_to_ref_dict_16s = get_free_living_mate(second_round_16s, reads_file_r1, reads_file_r2, end_seq_len, minCigarM, max_gap_to_end, bowtie_build_exe, bowtie2_exe, num_threads)
+reads_to_extract_to_ref_dict_gnm = get_free_living_mate(combined_1st_round_unlinked_mags, reads_file_r1, reads_file_r2, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads)
+reads_to_extract_to_ref_dict_16s = get_free_living_mate(marker_gene_seqs_1st_round_unlinked, reads_file_r1, reads_file_r2, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads)
 
 # write out free_living_mate_gnm
 free_living_mate_gnm_handle = open(free_living_mate_gnm, 'w')
@@ -347,15 +346,15 @@ os.system('rm -r %s' % extracted_reads_folder)
 
 ####################################################### assemble #######################################################
 
-spades_cmd = '%s -s %s -o %s -t %s --only-assembler' % (spades_exe, extracted_reads_cbd, spades_wd, num_threads)
+spades_cmd = '%s -s %s -o %s -t %s -k 21,33,55,75,99,127 --only-assembler' % (pwd_spades_exe, extracted_reads_cbd, spades_wd, num_threads)
 os.system(spades_cmd)
 
 
 ######################################################## mapping #######################################################
 
 spades_assemblies_no_ext = '.'.join(spades_assemblies.split('.')[:-1])
-index_ref_cmd = '%s -f %s %s' % (bowtie_build_exe, spades_assemblies, spades_assemblies_no_ext)
-mapping_cmd = '%s -x %s -U %s -S %s -p %s -f' % (bowtie2_exe, spades_assemblies_no_ext, extracted_reads_cbd, sam_file, num_threads)
+index_ref_cmd = '%s -f %s %s' % (pwd_bowtie2_build_exe, spades_assemblies, spades_assemblies_no_ext)
+mapping_cmd = '%s -x %s -U %s -S %s -p %s -f' % (pwd_bowtie2_exe, spades_assemblies_no_ext, extracted_reads_cbd, sam_file, num_threads)
 os.system(index_ref_cmd)
 os.system(mapping_cmd)
 
@@ -378,8 +377,6 @@ for each_line in open(sam_file):
                 short_ctg_to_reads_dict[ref_id] = [read_id]
             else:
                 short_ctg_to_reads_dict[ref_id].append(read_id)
-
-print(short_ctg_to_reads_dict)
 
 
 for short_ctg in short_ctg_to_reads_dict:
