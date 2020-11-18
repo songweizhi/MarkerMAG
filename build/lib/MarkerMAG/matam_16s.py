@@ -377,6 +377,8 @@ def matam_16s(args):
 
     # report
     report_and_log(('Dereplicated Matam assemblies exported to %s' % uclust_output_fasta), log_file, keep_quiet)
+    report_and_log(('Note: SortMeRNA identified 16S reads were exported to %s, it is highly recommended to provide this file as input to the link module using "-r16s".' % sortmerna_op_fasta), log_file, keep_quiet)
+    report_and_log(('Done!'), log_file, keep_quiet)
 
 
 if __name__ == '__main__':
@@ -387,7 +389,7 @@ if __name__ == '__main__':
     matam_16s_parser.add_argument('-r1',                required=True,                                          help='paired reads r1')
     matam_16s_parser.add_argument('-r2',                required=True,                                          help='paired reads r2')
     matam_16s_parser.add_argument('-pct',               required=True,  type=str, default='1,5,10,25,50,75',    help='subsample percentage, deafault: 1,5,10,25,50,75')
-    matam_16s_parser.add_argument('-ref',               required=False, type=str,                               help='Path to Matam reference database')
+    matam_16s_parser.add_argument('-ref',               required=False, type=str,                               help='path to Matam reference database')
     matam_16s_parser.add_argument('-i',                 required=False, type=float, default=0.995,              help='cluster identity cutoff (0-1), default: 0.995')
     matam_16s_parser.add_argument('-t',                 required=False, type=int, default=1,                    help='number of threads, default: 1')
     matam_16s_parser.add_argument('-force',             required=False, action="store_true",                    help='force overwrite existing results')

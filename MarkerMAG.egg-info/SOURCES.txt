@@ -3,8 +3,10 @@ README.md
 setup.py
 MarkerMAG/MarkerMAG_config.py
 MarkerMAG/VERSION
+MarkerMAG/barrnap_16s.py
 MarkerMAG/get_sankey_plot.R
-MarkerMAG/link_Marker_MAG.py
+MarkerMAG/link_16s.py
+MarkerMAG/link_16s_old.py
 MarkerMAG/matam_16s.py
 MarkerMAG/rename_reads.py
 MarkerMAG/subsample_reads.py

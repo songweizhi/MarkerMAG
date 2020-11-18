@@ -37,6 +37,7 @@ def print_main_help():
     matam_16s        ->  including reads extraction, subsample, assembly and dereplication
     subsample_reads  ->  subsample reads with Usearch
     uclust_16s       ->  cluster marker genes with Usearch
+    barrnap_16s      ->  identify 16S sequences with Barrnap
 
     ''' % version(config_dict)
 
@@ -133,6 +134,17 @@ if __name__ == '__main__':
 
         args = vars(parser.parse_args())
         subsample_reads.subsample_reads(args)
+
+    elif sys.argv[1] == 'barrnap_16s':
+        from MarkerMAG import barrnap_16s
+        barrnap_16s_parser = subparsers.add_parser('barrnap_16s', description='identify 16S sequences with Barrnap', usage=barrnap_16s.barrnap_16s_usage)
+        barrnap_16s_parser.add_argument('-p',       required=True, type=str,               help='output prefix')
+        barrnap_16s_parser.add_argument('-g',       required=True, type=str,               help='genome folder')
+        barrnap_16s_parser.add_argument('-x',       required=False, default='fasta',       help='genome file extension, default: fasta')
+        barrnap_16s_parser.add_argument('-t',       required=False, type=int, default=1,   help='number of threads, default: 1')
+        barrnap_16s_parser.add_argument('-force',   required=False, action="store_true",   help='force overwrite existing results')
+        args = vars(parser.parse_args())
+        barrnap_16s.barrnap_16s(args)
 
     else:
         print('Unrecognized command: %s, program exited' % sys.argv[1])
