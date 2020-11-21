@@ -59,8 +59,8 @@ if __name__ == '__main__':
         sys.exit(0)
 
     elif sys.argv[1] == 'link':
-        from MarkerMAG import link_16s_old
-        link_16s_parser = subparsers.add_parser('link', description='Link MAGs with marker genes', usage=link_16s_old.link_Marker_MAG_usage)
+        from MarkerMAG import link_16s
+        link_16s_parser = subparsers.add_parser('link', description='Link MAGs with marker genes', usage=link_16s.link_Marker_MAG_usage)
         link_16s_parser.add_argument('-p',               required=True,                              help='output prefix')
         link_16s_parser.add_argument('-r1',              required=True,                              help='paired reads r1')
         link_16s_parser.add_argument('-r2',              required=True,                              help='paired reads r2')
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         link_16s_parser.add_argument('-bbmap',           required=False, action="store_true",        help='run bbmap, instead of bowtie')
         link_16s_parser.add_argument('-no_ambiguous',    required=False, action="store_true",        help='ignore ambiguous mappings, specify with dereplicated marker genes')
         args = vars(parser.parse_args())
-        link_16s_old.link_16s(args, config_dict)
+        link_16s.link_16s(args, config_dict)
 
     elif sys.argv[1] == 'rename_reads':
         from MarkerMAG import rename_reads

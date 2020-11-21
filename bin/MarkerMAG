@@ -35,9 +35,9 @@ def print_main_help():
     link             ->  link MAGs with marker genes
     rename_reads     ->  rename paired reads (in fasta format) 
     matam_16s        ->  including reads extraction, subsample, assembly and dereplication
-    subsample_reads  ->  subsample reads with Usearch
     uclust_16s       ->  cluster marker genes with Usearch
-    barrnap_16s      ->  identify 16S sequences with Barrnap
+    barrnap_16s      ->  identify 16S gene sequences with Barrnap
+    subsample_reads  ->  subsample reads with Usearch
 
     ''' % version(config_dict)
 
@@ -59,33 +59,37 @@ if __name__ == '__main__':
         sys.exit(0)
 
     elif sys.argv[1] == 'link':
-        from MarkerMAG import link_16s_old
-        link_16s_parser = subparsers.add_parser('link', description='Link MAGs with marker genes', usage=link_16s_old.link_Marker_MAG_usage)
-        link_16s_parser.add_argument('-p',               required=True,                              help='output prefix')
-        link_16s_parser.add_argument('-r1',              required=True,                              help='paired reads r1')
-        link_16s_parser.add_argument('-r2',              required=True,                              help='paired reads r2')
-        link_16s_parser.add_argument('-m',               required=True,                              help='marker gene sequences')
-        link_16s_parser.add_argument('-g',               required=False, default=None,               help='genomic sequences')
-        link_16s_parser.add_argument('-mag',             required=False, default=None,               help='metagenome-assembled-genome (MAG) folder')
-        link_16s_parser.add_argument('-x',               required=False, default='fasta',            help='MAG file extension, default: fasta')
-        link_16s_parser.add_argument('-mp',              required=False, type=str, default=0,        help='multiple placement during bowtie mapping, default: 0. choose from a,1,2,3...')
-        link_16s_parser.add_argument('-cigarM',          required=False, type=int, default=30,       help='cigarM cutoff, default: 30')
-        link_16s_parser.add_argument('-cigarS',          required=False, type=int, default=30,       help='cigarS cutoff, default: 30')
-        link_16s_parser.add_argument('-ri',              required=False, type=float, default=100,    help='identity cutoff, default: 100')
-        link_16s_parser.add_argument('-rc',              required=False, type=float, default=100,    help='coverage cutoff, default: 100')
-        link_16s_parser.add_argument('-mi',              required=False, type=float, default=99.5,   help='within genome 16S identity cutoff, default: 99.5')
-        link_16s_parser.add_argument('-mc',              required=False, type=float, default=90,     help='alignment coverage cutoff for calculating 16S identity, default: 90')
-        link_16s_parser.add_argument('-ma',              required=False, type=int, default=500,      help='alignment length cutoff for calculating 16S identity, default: 500')
-        link_16s_parser.add_argument('-mpl',             required=False, type=int, default=3,        help='minimum number of paired reads provided linkages to report, default: 3')
-        link_16s_parser.add_argument('-t',               required=False, type=int, default=1,        help='number of threads, default: 1')
-        link_16s_parser.add_argument('-quiet',           required=False, action="store_true",        help='not report progress')
-        link_16s_parser.add_argument('-force',           required=False, action="store_true",        help='force overwrite existing results')
-        link_16s_parser.add_argument('-tmp',             required=False, action="store_true",        help='keep temporary files')
-        link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",        help='only for debugging, do not provide')
-        link_16s_parser.add_argument('-bbmap',           required=False, action="store_true",        help='run bbmap, instead of bowtie')
-        link_16s_parser.add_argument('-no_ambiguous',    required=False, action="store_true",        help='ignore ambiguous mappings, specify with dereplicated marker genes')
+        from MarkerMAG import link_16s
+        link_16s_parser = subparsers.add_parser('link', description='Link MAGs with marker genes', usage=link_16s.link_Marker_MAG_usage)
+        link_16s_parser.add_argument('-p',               required=True,                                     help='output prefix')
+        link_16s_parser.add_argument('-r1',              required=True,                                     help='paired reads r1')
+        link_16s_parser.add_argument('-r2',              required=True,                                     help='paired reads r2')
+        link_16s_parser.add_argument('-r16s',            required=False,                                    help='16S reads')
+        link_16s_parser.add_argument('-m',               required=True,                                     help='marker gene sequences')
+        link_16s_parser.add_argument('-g',               required=False,                default=None,       help='genomic sequences')
+        link_16s_parser.add_argument('-mag',             required=False,                default=None,       help='metagenome-assembled-genome (MAG) folder')
+        link_16s_parser.add_argument('-x',               required=False,                default='fasta',    help='MAG file extension, default: fasta')
+        link_16s_parser.add_argument('-depth',           required=False, type=float,    default=0,          help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, default: 0')
+        link_16s_parser.add_argument('-s1_cigarM',       required=False, type=int,      default=30,         help='cigarM cutoff, default: 30')
+        link_16s_parser.add_argument('-s1_cigarS',       required=False, type=int,      default=30,         help='cigarS cutoff, default: 30')
+        link_16s_parser.add_argument('-s1_ri',           required=False, type=float,    default=100,        help='identity cutoff, default: 100')
+        link_16s_parser.add_argument('-s1_rc',           required=False, type=float,    default=100,        help='coverage cutoff, default: 100')
+        link_16s_parser.add_argument('-s1_mi',           required=False, type=float,    default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
+        link_16s_parser.add_argument('-s1_mc',           required=False, type=float,    default=90,         help='alignment coverage cutoff for calculating 16S identity, default: 90')
+        link_16s_parser.add_argument('-s1_ma',           required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
+        link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=10,         help='minimum number of paired reads provided linkages to report, default: 10')
+        link_16s_parser.add_argument('-s2_e',            required=False, type=int,      default=3000,       help='end length for mapping, default: 3000')
+        link_16s_parser.add_argument('-s2_m',            required=False, type=int,      default=50,         help='minCigarM, default: 50')
+        link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=200,        help='max_gap_to_end, default: 200')
+        link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
+        link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
+        link_16s_parser.add_argument('-quiet',           required=False, action="store_true",               help='not report progress')
+        link_16s_parser.add_argument('-force',           required=False, action="store_true",               help='force overwrite existing results')
+        link_16s_parser.add_argument('-tmp',             required=False, action="store_true",               help='keep temporary files')
+        link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",               help='only for debugging, do not provide')
+        link_16s_parser.add_argument('-bbmap',           required=False, action="store_true",               help='run bbmap, instead of bowtie')
         args = vars(parser.parse_args())
-        link_16s_old.link_16s(args, config_dict)
+        link_16s.link_16s(args, config_dict)
 
     elif sys.argv[1] == 'rename_reads':
         from MarkerMAG import rename_reads
@@ -109,7 +113,6 @@ if __name__ == '__main__':
         matam_16s_parser.add_argument('-force',             required=False, action="store_true",                    help='force overwrite existing results')
         matam_16s_parser.add_argument('-quiet',             required=False, action="store_true",                    help='not report progress')
         matam_16s_parser.add_argument('-matam_assembly',    required=False, type=str, default='matam_assembly.py',  help='path to matam_assembly.py, default: matam_assembly.py')
-        matam_16s_parser.add_argument('-sortmerna',         required=False, type=str, default='sortmerna',          help='path to sortmerna executable file, default: sortmerna')
         matam_16s_parser.add_argument('-seqtk',             required=False, type=str, default='seqtk',              help='path to seqtk executable file, default: seqtk')
         matam_16s_parser.add_argument('-usearch',           required=False, type=str, default='usearch',            help='path to usearch executable file, default: usearch')
         args = vars(parser.parse_args())

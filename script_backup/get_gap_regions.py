@@ -1,24 +1,29 @@
 import os
 
+# file in
+strain = 'EC'
+wd                  = '/Users/songweizhi/Desktop/distance/%s' % strain
+fake_bin            = '%s/bin_%s.fna'                       % (wd, strain)
+ref_genome          = '%s/ref_%s.fna'                       % (wd, strain)
+ref_genome_gff      = '%s/%s.gff'                           % (wd, strain)
+ctg_cov_cutoff      = 90
+iden_cutoff         = 99.5
 
-wd                  = '/Users/songweizhi/Desktop/distance'
-fake_bin            = '%s/PS_FakeBin.fa'                    % wd
-ref_genome          = '%s/PS_ref.fna'                       % wd
-ref_genome_gff      = '%s/PS.gff'                           % wd
-
-output_table        = '%s/PS_distance.txt'                  % wd
+# file out
+output_table        = '%s/%s_distance.txt'                  % (wd, strain)
 
 
-blast_op            = '%s/FakeBin_vs_ref.tab'               % wd
-blast_op_best_hit   = '%s/FakeBin_vs_ref_best_hit.tab'      % wd
+# tmp file
+blast_op            = '%s/%s_bin_vs_ref.tab'               % (wd, strain)
+blast_op_best_hit   = '%s/%s_bin_vs_ref_best_hit.tab'      % (wd, strain)
 
 
 blastn_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn'
 blastn_cmd        = 'blastn -query %s -subject %s -out %s %s' % (fake_bin, ref_genome, blast_op, blastn_parameters)
-#os.system(blastn_cmd)
+os.system(blastn_cmd)
 
 get_best_hit_cmd  = 'BioSAK BestHit -i %s -o %s' % (blast_op, blast_op_best_hit)
-#os.system(get_best_hit_cmd)
+os.system(get_best_hit_cmd)
 
 
 total_hit_num = 0
@@ -41,7 +46,7 @@ for each_hit in open(blast_op_best_hit):
     coverage_q = float(align_len) * 100 / float(query_len)
     coverage_s = float(align_len) * 100 / float(subject_len)
     total_hit_num += 1
-    if (coverage_q >= 90) and (iden >= 99.5):
+    if (coverage_q >= ctg_cov_cutoff) and (iden >= iden_cutoff):
         qualified_hit_num += 1
         current_recovered_ref_region = '-'.join([str(i) for i in sorted([sstart, send])])
         if subject not in recovered_ref_dict:
@@ -67,16 +72,13 @@ for each_line in open(ref_genome_gff):
 
 
 output_table_handle = open(output_table, 'w')
-
 for ref_seq in recovered_ref_dict:
     ref_seq_recovered = recovered_ref_dict[ref_seq]
     for ctg_region in ref_seq_recovered:
         output_table_handle.write('%s\tcontig\t%s\t%s\n' % (ref_seq, ctg_region.split('-')[0], ctg_region.split('-')[1]))
-
-
 for ref_seq in rna_16s_region_dict:
     ref_16s_recovered = rna_16s_region_dict[ref_seq]
     for region_16s in ref_16s_recovered:
         output_table_handle.write('%s\trRNA16S\t%s\t%s\n' % (ref_seq, region_16s.split('-')[0], region_16s.split('-')[1]))
-
 output_table_handle.close()
+
