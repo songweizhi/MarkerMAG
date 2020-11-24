@@ -8,7 +8,9 @@ config_file_path = '/'.join(pwd_config_file.split('/')[:-1])
 config_dict = {'config_file_path'       : config_file_path,
                'bowtie2'                : 'bowtie2',
                'bowtie2_build'          : 'bowtie2-build',
+               'samtools'               : 'samtools',
                'blastn'                 : 'blastn',
                'makeblastdb'            : 'makeblastdb',
+               'spades'                 : 'spades.py',
                'get_sankey_plot_R'      : '%s/get_sankey_plot.R' % config_file_path
                }

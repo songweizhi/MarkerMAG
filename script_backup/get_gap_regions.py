@@ -1,7 +1,7 @@
 import os
 
 # file in
-strain = 'EC'
+strain = 'CP'
 wd                  = '/Users/songweizhi/Desktop/distance/%s' % strain
 fake_bin            = '%s/bin_%s.fna'                       % (wd, strain)
 ref_genome          = '%s/ref_%s.fna'                       % (wd, strain)

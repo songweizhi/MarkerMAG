@@ -107,7 +107,7 @@ def barrnap_16s(args):
     # parse gff files
     genome_failed_barrnap = set()
     output_table_handle = open(output_table, 'w')
-    output_table_handle.write('Genome\tID\tLength(bp)\tLocation\tStart\tEnd\n')
+    output_table_handle.write('Genome\t16S\tLength(bp)\tLocation\tStart\tEnd\n')
     output_table_stats_handle = open(output_table_stats, 'w')
     output_table_stats_handle.write('Genome\tCopies(16S)\n')
     for genome in genome_file_list_no_extension:

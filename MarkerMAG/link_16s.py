@@ -748,7 +748,7 @@ def link_16s(args, config_dict):
     genomic_assemblies                  = args['g']
     mag_folder                          = args['mag']
     mag_file_extension                  = args['x']
-    marker_gene_seqs                    = args['m']
+    marker_gene_seqs                    = args['marker']
     min_16s_gnm_multiple                = args['depth']
     min_cigar_M                         = args['s1_cigarM']
     min_cigar_S                         = args['s1_cigarS']
@@ -790,6 +790,13 @@ def link_16s(args, config_dict):
 
     if not_detected_programs != []:
         print('%s not detected, program exited!' % ','.join(not_detected_programs))
+        exit()
+
+
+    ################################################# check input files ################################################
+
+    if os.path.isfile(marker_gene_seqs) is False:
+        print('%s not found, program exited!' % os.path.basename(marker_gene_seqs))
         exit()
 
 
@@ -1413,10 +1420,7 @@ def link_16s(args, config_dict):
     ############################################### assemble and mapping ###############################################
 
     report_and_log(('Step 2: running SPAdes with extracted reads'), pwd_log_file, keep_quiet)
-
-    #spades_cmd = '%s --meta --careful -s %s -o %s -t %s -k 21,33,55,75,99,127 --only-assembler > %s' % (pwd_spades_exe, extracted_reads_cbd, spades_wd, num_threads, spades_log)
-    #spades_cmd = '%s --meta --careful -s %s -o %s -t %s -k 21,33,55,75,99,127 > %s' % (pwd_spades_exe, extracted_reads_cbd, spades_wd, num_threads, spades_log)
-    spades_cmd = '%s --meta -s %s -o %s -t %s -k 21,33,55,75,99,127 --only-assembler > %s' % (pwd_spades_exe, extracted_reads_cbd, spades_wd, num_threads, spades_log)
+    spades_cmd = '%s -s %s -o %s -t %s -k 21,33,55,75,99,127 --only-assembler > %s' % (pwd_spades_exe, extracted_reads_cbd, spades_wd, num_threads, spades_log)
     print(spades_cmd)
     os.system(spades_cmd)
 
@@ -1672,7 +1676,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-r1',              required=True,                                     help='paired reads r1')
     link_16s_parser.add_argument('-r2',              required=True,                                     help='paired reads r2')
     link_16s_parser.add_argument('-r16s',            required=False,                                    help='16S reads')
-    link_16s_parser.add_argument('-m',               required=True,                                     help='marker gene sequences')
+    link_16s_parser.add_argument('-marker',          required=True,                                     help='marker gene sequences')
     link_16s_parser.add_argument('-g',               required=False,                default=None,       help='genomic sequences')
     link_16s_parser.add_argument('-mag',             required=False,                default=None,       help='metagenome-assembled-genome (MAG) folder')
     link_16s_parser.add_argument('-x',               required=False,                default='fasta',    help='MAG file extension, default: fasta')
@@ -1687,7 +1691,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=10,         help='minimum number of paired reads provided linkages to report, default: 10')
     link_16s_parser.add_argument('-s2_e',            required=False, type=int,      default=3000,       help='end length for mapping, default: 3000')
     link_16s_parser.add_argument('-s2_m',            required=False, type=int,      default=50,         help='minCigarM, default: 50')
-    link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=200,        help='max_gap_to_end, default: 200')
+    link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=300,        help='max_gap_to_end, default: 300')
     link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
     link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
     link_16s_parser.add_argument('-quiet',           required=False, action="store_true",               help='not report progress')
