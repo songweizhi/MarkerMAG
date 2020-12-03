@@ -298,6 +298,40 @@ def extracted_reads_with_multiprocessing(reads_r1, reads_r2, r1_to_extract, r2_t
     pool.join()
 
 
+def paired_blast_results_to_dict(blastn_results, iden_cutoff, query_cov_cutoff):
+    query_to_subject_list_dict = {}
+    for blast_hit in open(blastn_results):
+        blast_hit_split = blast_hit.strip().split('\t')
+        query = blast_hit_split[0]
+        subject = blast_hit_split[1]
+        subject_with_prefix = 'GenomicSeq__%s' % subject
+        iden = float(blast_hit_split[2])
+        align_len = int(blast_hit_split[3])
+        query_len = int(blast_hit_split[12])
+        subject_len = int(blast_hit_split[13])
+        coverage_q = float(align_len) * 100 / float(query_len)
+
+        # for perfect hits
+        if (iden >= iden_cutoff) and (coverage_q == 100):
+            if query not in query_to_subject_list_dict:
+                query_to_subject_list_dict[query] = [subject_with_prefix]
+            else:
+                query_to_subject_list_dict[query].append(subject_with_prefix)
+
+        # for nearly perfect hits
+        elif (iden >= iden_cutoff) and (query_cov_cutoff <= coverage_q < 100):
+            s_l = sorted([int(blast_hit_split[8]), int(blast_hit_split[9])])[0]
+            s_r = sorted([int(blast_hit_split[8]), int(blast_hit_split[9])])[1]
+            subject_min_gap = min([s_l, (subject_len - s_r)])
+            if subject_min_gap <= 5:
+                if query not in query_to_subject_list_dict:
+                    query_to_subject_list_dict[query] = [subject_with_prefix]
+                else:
+                    query_to_subject_list_dict[query].append(subject_with_prefix)
+
+    return query_to_subject_list_dict
+
+
 def blast_results_to_dict(blastn_results, iden_cutoff, query_cov_cutoff):
     query_to_subject_list_dict = {}
 
@@ -750,15 +784,10 @@ def link_16s(args, config_dict):
     mag_file_extension                  = args['x']
     marker_gene_seqs                    = args['marker']
     min_16s_gnm_multiple                = args['depth']
-    min_cigar_M                         = args['s1_cigarM']
-    min_cigar_S                         = args['s1_cigarS']
-    reads_iden_cutoff                   = args['s1_ri']
-    reads_cov_cutoff                    = args['s1_rc']
     within_genome_minimum_iden16s       = args['s1_mi']
     cov16s                              = args['s1_mc']
     aln16s                              = args['s1_ma']
     min_paired_linkages                 = args['s1_mpl']
-    end_seq_len                         = args['s2_e']
     minCigarM                           = args['s2_m']
     max_gap_to_end                      = args['s2_g']
     min_read_num                        = args['s2_r']
@@ -777,7 +806,11 @@ def link_16s(args, config_dict):
     pwd_spades_exe                      = config_dict['spades']
 
     str_connector = '___'
-
+    reads_iden_cutoff = 100
+    reads_cov_cutoff = 90
+    perfect_match_min_cigar_M_pct = 90
+    perfect_match_max_cigar_S_pct = 10
+    end_seq_len = 3000
 
     ################################################ check dependencies ################################################
 
@@ -1067,17 +1100,18 @@ def link_16s(args, config_dict):
             if ('S' in cigar) and (len(cigar_splitted) == 2):
                 cigar_M_len = 0
                 cigar_S_len = 0
-                split_pos = 0
                 if cigar_splitted[0][-1] == 'M':
                     cigar_M_len = int(cigar_splitted[0][:-1])
                     cigar_S_len = int(cigar_splitted[1][:-1])
-                    split_pos = ref_pos + cigar_M_len
                 if cigar_splitted[1][-1] == 'M':
                     cigar_M_len = int(cigar_splitted[1][:-1])
                     cigar_S_len = int(cigar_splitted[0][:-1])
-                    split_pos = ref_pos
 
-                if (cigar_M_len >= min_cigar_M) and (cigar_S_len >= min_cigar_S):
+                cigar_M_pct = cigar_M_len*100/(cigar_M_len + cigar_S_len)
+                cigar_S_pct = cigar_S_len*100/(cigar_M_len + cigar_S_len)
+
+                # for clipping reads with unmapped part >= min_cigar_S
+                if (cigar_M_pct >= 0.3) and (cigar_S_pct >= 0.3):
                     read_seq_left = read_seq[: int(cigar_splitted[0][:-1])]
                     read_seq_right = read_seq[-int(cigar_splitted[1][:-1]):]
 
@@ -1106,6 +1140,18 @@ def link_16s(args, config_dict):
                             clipping_reads_mapped_part_dict[('%s_r' % read_id_with_ref_pos)].append(ref_id_with_prefix)
 
                     clipping_mapped_reads_list.add(read_id)
+
+                # for clipping reads with unmapped part < min_cigar_S
+                # treat these reads as perfectly mapped reads
+                if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
+                    if read_id_base not in perfectly_mapped_reads_dict:
+                        perfectly_mapped_reads_dict[read_id_base] = {read_strand: [ref_id_with_prefix]}
+                    else:
+                        if read_strand not in perfectly_mapped_reads_dict[read_id_base]:
+                            perfectly_mapped_reads_dict[read_id_base][read_strand] = [ref_id_with_prefix]
+                        else:
+                            perfectly_mapped_reads_dict[read_id_base][read_strand].append(ref_id_with_prefix)
+
     clipping_reads_not_matched_part_seq_handle.close()
 
 
@@ -1166,9 +1212,9 @@ def link_16s(args, config_dict):
     report_and_log(('Step 1: Parsing blast results for paired reads'), pwd_log_file, keep_quiet)
 
     # filter blast results for paired reads
-    unmapped_paired_reads_to_ctg_dict = blast_results_to_dict(unmapped_paired_reads_blastn, reads_iden_cutoff, reads_cov_cutoff)
+    unmapped_paired_reads_to_ctg_dict = paired_blast_results_to_dict(unmapped_paired_reads_blastn, reads_iden_cutoff, reads_cov_cutoff)
 
-    paired_stats_dict_num             = {}
+    paired_stats_dict_num = {}
     paired_reads_match_profile_handle = open(paired_reads_match_profile, 'w')
     paired_reads_match_profile_handle.write('ID\tR1\tR2\n')
     for unmapped_read in unmapped_paired_reads_to_ctg_dict:
@@ -1601,7 +1647,7 @@ def link_16s(args, config_dict):
     plot_height_paired = 500 if max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) <= 25 else max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) * 20
 
     # prepare commands
-    cmd_sankey_paired = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, combined_linkage_file_tmp,   600, plot_height_paired)
+    cmd_sankey_paired = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, combined_linkage_file_tmp, 600, plot_height_paired)
 
     # plot
     if len(open(link_stats_paired_filtered).readlines()) == 1:
@@ -1681,15 +1727,10 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-mag',             required=False,                default=None,       help='metagenome-assembled-genome (MAG) folder')
     link_16s_parser.add_argument('-x',               required=False,                default='fasta',    help='MAG file extension, default: fasta')
     link_16s_parser.add_argument('-depth',           required=False, type=float,    default=0,          help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, default: 0')
-    link_16s_parser.add_argument('-s1_cigarM',       required=False, type=int,      default=30,         help='cigarM cutoff, default: 30')
-    link_16s_parser.add_argument('-s1_cigarS',       required=False, type=int,      default=30,         help='cigarS cutoff, default: 30')
-    link_16s_parser.add_argument('-s1_ri',           required=False, type=float,    default=100,        help='identity cutoff, default: 100')
-    link_16s_parser.add_argument('-s1_rc',           required=False, type=float,    default=100,        help='coverage cutoff, default: 100')
     link_16s_parser.add_argument('-s1_mi',           required=False, type=float,    default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
     link_16s_parser.add_argument('-s1_mc',           required=False, type=float,    default=90,         help='alignment coverage cutoff for calculating 16S identity, default: 90')
     link_16s_parser.add_argument('-s1_ma',           required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
     link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=10,         help='minimum number of paired reads provided linkages to report, default: 10')
-    link_16s_parser.add_argument('-s2_e',            required=False, type=int,      default=3000,       help='end length for mapping, default: 3000')
     link_16s_parser.add_argument('-s2_m',            required=False, type=int,      default=50,         help='minCigarM, default: 50')
     link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=300,        help='max_gap_to_end, default: 300')
     link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
@@ -1707,7 +1748,7 @@ if __name__ == '__main__':
 
 To_do = '''
 
-2. where does the paired read of the clipping mapped read mapped to? (should take into consideration!!!)
+2. where do the mates of  clipping mapped read mapped to? (should take into consideration!!!)
 4. how to incorporate the taxonomy of MAGs and 16S sequences
 5. the effect of sequencing depth, insert size and read length
 6. the depth of 16S sequences always not lower than the genome they come from
@@ -1721,6 +1762,7 @@ To_do = '''
 14. which depth to use, genome level or contig level
 15. also at ctg level
 16. check if spades failed 
+17. treat clipping reads with short unmapped part (<30bp?) as perfectly mapped reads.
 
 # on Mac
 export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH

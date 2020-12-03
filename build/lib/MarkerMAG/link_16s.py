@@ -1691,7 +1691,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=10,         help='minimum number of paired reads provided linkages to report, default: 10')
     link_16s_parser.add_argument('-s2_e',            required=False, type=int,      default=3000,       help='end length for mapping, default: 3000')
     link_16s_parser.add_argument('-s2_m',            required=False, type=int,      default=50,         help='minCigarM, default: 50')
-    link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=200,        help='max_gap_to_end, default: 200')
+    link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=300,        help='max_gap_to_end, default: 300')
     link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
     link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
     link_16s_parser.add_argument('-quiet',           required=False, action="store_true",               help='not report progress')

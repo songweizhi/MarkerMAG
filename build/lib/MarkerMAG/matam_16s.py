@@ -150,8 +150,9 @@ def subsample_paired_and_singleton_reads(paired_r1, paired_r2, singleton_in, sub
 def subsample_sortmerna_output(sortmerna_op, subsample_pct, sortmerna_op_subsampled, usearch_exe, seqtk_exe):
 
     # define file name
-    fasta_in_path, fasta_in_basename, fasta_in_ext = sep_path_basename_ext(sortmerna_op)
+    fasta_in_path,  fasta_in_basename,  fasta_in_ext  = sep_path_basename_ext(sortmerna_op)
     fasta_out_path, fasta_out_basename, fasta_out_ext = sep_path_basename_ext(sortmerna_op_subsampled)
+
     fasta_in_paired_r1               = '%s/%s_%s_paired_r1%s'            % (fasta_out_path, fasta_out_basename, fasta_in_basename, fasta_out_ext)
     fasta_in_paired_r2               = '%s/%s_%s_paired_r2%s'            % (fasta_out_path, fasta_out_basename, fasta_in_basename, fasta_out_ext)
     fasta_in_singleton               = '%s/%s_%s_singleton%s'            % (fasta_out_path, fasta_out_basename, fasta_in_basename, fasta_out_ext)
@@ -227,6 +228,7 @@ def matam_16s(args):
     output_prefix                   = args['p']
     reads_file_r1                   = args['r1']
     reads_file_r2                   = args['r2']
+    input_16S_reads                 = args['r16s']
     subsample_pcts                  = args['pct']
     matam_ref                       = args['d']
     uclust_iden_cutoff              = args['i']
@@ -254,6 +256,26 @@ def matam_16s(args):
 
     ####################################################################################################################
 
+    extract_16s_reads = True
+    if (reads_file_r1 is None) and (reads_file_r2 is None) and (input_16S_reads is not None):
+        if os.path.isfile(input_16S_reads) is True:
+            extract_16s_reads = False
+        else:
+            print('%s not found, program exited!' % os.path.basename(input_16S_reads))
+            exit()
+    elif (reads_file_r1 is not None) and (reads_file_r2 is not None) and (input_16S_reads is None):
+        if os.path.isfile(reads_file_r1) is False:
+            print('%s not found, program exited!' % os.path.basename(reads_file_r1))
+            exit()
+        if os.path.isfile(reads_file_r2) is False:
+            print('%s not found, program exited!' % os.path.basename(reads_file_r2))
+            exit()
+    else:
+        print('please either provide paired reads (-r1 and -r2) or 16S reads extracted from the paired reads (-r16s), program exited!')
+        exit()
+
+    ####################################################################################################################
+
     matam16s_wd                             = '%s_Matam16S_wd'                         % output_prefix
     log_file                                = '%s/%s_matam_16s.log'                    % (matam16s_wd, output_prefix)
     combined_r1_r2                          = '%s/%s_combined_R1_R2.fasta'             % (matam16s_wd, output_prefix)
@@ -270,21 +292,27 @@ def matam_16s(args):
     else:
         os.mkdir(matam16s_wd)
 
-    # combine R1 and R2
-    report_and_log(('Combining the forward and reverse reads'), log_file, keep_quiet)
-    combined_r1_r2_cmd = '%s mergepe %s %s > %s' % (seqtk_exe, reads_file_r1, reads_file_r2, combined_r1_r2)
-    os.system(combined_r1_r2_cmd)
+    if extract_16s_reads is True:
+        # combine R1 and R2
+        report_and_log(('Combining the forward and reverse reads'), log_file, keep_quiet)
+        combined_r1_r2_cmd = '%s mergepe %s %s > %s' % (seqtk_exe, reads_file_r1, reads_file_r2, combined_r1_r2)
+        os.system(combined_r1_r2_cmd)
 
-    # Extract 16S reads
-    report_and_log(('Extracting 16S reads with Matam'), log_file, keep_quiet)
-    matam_filter_cmd = '%s -i %s -o %s/%s_get_16S_reads_wd --cpu %s --max_memory 100000 -v --filter_only -d %s' % (matam_assembly_script, combined_r1_r2, matam16s_wd, output_prefix, num_threads, matam_ref)
-    report_and_log(matam_filter_cmd, log_file, True)
-    os.system(matam_filter_cmd)
+        # Extract 16S reads
+        report_and_log(('Extracting 16S reads with Matam'), log_file, keep_quiet)
+        matam_filter_cmd = '%s -i %s -o %s/%s_get_16S_reads_wd --cpu %s --max_memory 100000 -v --filter_only -d %s' % (matam_assembly_script, combined_r1_r2, matam16s_wd, output_prefix, num_threads, matam_ref)
+        report_and_log(matam_filter_cmd, log_file, True)
+        os.system(matam_filter_cmd)
 
-    # get file name of extracted 16S reads
-    matam_16S_reads_re = '%s/%s_get_16S_reads_wd/workdir/*.fasta' % (matam16s_wd, output_prefix)
-    matam_16S_reads    = glob.glob(matam_16S_reads_re)[0]
-    os.system('mv %s %s' % (matam_16S_reads, extracted_16S_reads))
+        # get file name of extracted 16S reads
+        matam_16S_reads_re = '%s/%s_get_16S_reads_wd/workdir/*.fasta' % (matam16s_wd, output_prefix)
+        matam_16S_reads    = glob.glob(matam_16S_reads_re)[0]
+        os.system('mv %s %s' % (matam_16S_reads, extracted_16S_reads))
+
+    else:
+        extracted_16S_reads = input_16S_reads
+        #os.system('cp %s %s' % (input_16S_reads, extracted_16S_reads))
+
 
     # subsample 16S reads and assemble
     renamed_matam_assembly_list = []
@@ -344,18 +372,20 @@ if __name__ == '__main__':
 
     matam_16s_parser = argparse.ArgumentParser()
 
-    matam_16s_parser.add_argument('-p',              required=True,                                           help='output prefix')
-    matam_16s_parser.add_argument('-r1',             required=True,                                           help='paired reads r1')
-    matam_16s_parser.add_argument('-r2',             required=True,                                           help='paired reads r2')
-    matam_16s_parser.add_argument('-pct',            required=True,  type=str, default='1,5,10,25,50,75,100', help='subsample percentage, deafault: 1,5,10,25,50,75,100')
-    matam_16s_parser.add_argument('-d',              required=False, type=str,                                help='MATAM ref db, same as "-d" in Matam')
-    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.995,               help='cluster identity cutoff (0-1), default: 0.995')
-    matam_16s_parser.add_argument('-t',              required=False, type=int, default=1,                     help='number of threads, default: 1')
-    matam_16s_parser.add_argument('-force',          required=False, action="store_true",                     help='force overwrite existing results')
-    matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                     help='not report progress')
-    matam_16s_parser.add_argument('-matam_assembly', required=False, type=str, default='matam_assembly.py',   help='path to matam_assembly.py, default: matam_assembly.py')
-    matam_16s_parser.add_argument('-seqtk',          required=False, type=str, default='seqtk',               help='path to seqtk executable file, default: seqtk')
-    matam_16s_parser.add_argument('-usearch',        required=False, type=str, default='usearch',             help='path to usearch executable file, default: usearch')
+    matam_16s_parser.add_argument('-p',              required=True,                                                     help='output prefix')
+    matam_16s_parser.add_argument('-r1',             required=False, default=None,                                      help='forward reads')
+    matam_16s_parser.add_argument('-r2',             required=False, default=None,                                      help='reverse reads')
+    matam_16s_parser.add_argument('-r16s',           required=False, default=None,                                      help='extracted 16S reads')
+    matam_16s_parser.add_argument('-pct',            required=True,  type=str, default='1,5,10,25,50,75,100',           help='subsample percentage, must be integer, between 1-100, deafault: 1,5,10,25,50,75,100')
+    matam_16s_parser.add_argument('-d',              required=False, type=str,                                          help='MATAM ref db, same as "-d" in Matam')
+    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.995,                         help='cluster identity cutoff (0-1), default: 0.995')
+    matam_16s_parser.add_argument('-t',              required=False, type=int, default=1,                               help='number of threads, default: 1')
+    matam_16s_parser.add_argument('-force',          required=False, action="store_true",                               help='force overwrite existing results')
+    matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                               help='not report progress')
+    matam_16s_parser.add_argument('-matam_assembly', required=False, type=str, default='matam_assembly.py',             help='path to matam_assembly.py, default: matam_assembly.py')
+    matam_16s_parser.add_argument('-seqtk',          required=False, type=str, default='seqtk',                         help='path to seqtk executable file, default: seqtk')
+    matam_16s_parser.add_argument('-usearch',        required=False, type=str, default='usearch',                       help='path to usearch executable file, default: usearch')
 
     args = vars(matam_16s_parser.parse_args())
     matam_16s(args)
+
