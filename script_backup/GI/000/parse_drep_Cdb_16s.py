@@ -11,7 +11,7 @@ drep_cdb_file               = '%s/Cdb.csv'                                      
 combined_GI_ref_16S         = '%s/combined_GI_ref_16S.ffn'                      % wd
 matam_16s_seqs              = '%s/3_GI_assembled_16S_uclust_0.995.fasta'        % wd
 iden_cutoff                 = 99.5
-#iden_cutoff                 = 100
+iden_cutoff                 = 100
 aln_len_cutoff              = 500
 cov_q_cutoff                = 90
 

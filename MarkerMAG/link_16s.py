@@ -1748,21 +1748,21 @@ if __name__ == '__main__':
 
 To_do = '''
 
-2. where do the mates of  clipping mapped read mapped to? (should take into consideration!!!)
-4. how to incorporate the taxonomy of MAGs and 16S sequences
-5. the effect of sequencing depth, insert size and read length
-6. the depth of 16S sequences always not lower than the genome they come from
-7. split sam file
-8. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
-9. check whether input file exist!
-10. minimum number of linkages to report?
-11. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
-12. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
-13. add "16S_reads" to SortMeRNA's output prefix
-14. which depth to use, genome level or contig level
-15. also at ctg level
-16. check if spades failed 
-17. treat clipping reads with short unmapped part (<30bp?) as perfectly mapped reads.
+1. where do the mates of  clipping mapped read mapped to? (should take into consideration!!!)
+2. how to incorporate the taxonomy of MAGs and 16S sequences
+3. the effect of sequencing depth, insert size and read length
+4. the depth of 16S sequences always not lower than the genome they come from
+5. split sam file
+6. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
+7. check whether input file exist!
+8. minimum number of linkages to report?
+9. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
+10. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
+11. add "16S_reads" to SortMeRNA's output prefix
+12. which depth to use, genome level or contig level
+13. also at ctg level
+14. check if spades failed 
+15. treat clipping reads with short unmapped part (<30bp?) as perfectly mapped reads.
 
 # on Mac
 export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH

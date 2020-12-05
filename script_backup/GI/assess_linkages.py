@@ -1,3 +1,6 @@
+import os
+from Bio import SeqIO
+
 
 def overlap_between_list(list_1, list_2):
 
@@ -8,18 +11,69 @@ def overlap_between_list(list_1, list_2):
 
     return overlap
 
-iden = 99.9
-wd                      = '/Users/songweizhi/Desktop/ttt_mag'
-ref_to_strain_file      = '%s/ref_to_strain.txt'                % wd
-bin_to_ref_txt          = '%s/stats_bin_to_ref_%s.txt'          % (wd, iden)
-s16_to_ref_txt          = '%s/stats_16s_to_ref.txt'             % wd
-MarkerMAG_linkages      = '%s/CAMI2_HMP_combined_linkages.txt'  % wd
-#MarkerMAG_linkages     = '%s/CAMI2_HMP_s2m30_combined_linkages.txt'  % wd
-total_query_mag_num     = 97
 
-wrong_linkages_txt      = '%s/wrong_linkages_%s.txt'           % (wd, iden)
-unknown_linkages_txt    = '%s/unknown_linkages_%s.txt'         % (wd, iden)
+########################################################################################################################
 
+wd                          = '/Users/songweizhi/Desktop/assess_linkages'
+ani_cutoff                  = 95
+drep_cdb_file               = '%s/Cdb_%s.csv'                               % (wd, ani_cutoff)
+ref_to_strain_file          = '%s/ref_to_strain.txt'                        % wd
+total_query_mag_num         = 97
+# total_query_mag_num         = 53  # 50, 5
+# total_query_mag_num         = 61  # 40, 5
+# total_query_mag_num         = 68  # 30, 5
+# total_query_mag_num         = 81  # 20, 5
+
+# bin to reference
+parse_blastn_bin_vs_ref     = False
+blastn_bin_vs_ref           = '%s/bin_vs_ref.tab'                           % wd
+#blastn_bin_vs_ref           = '%s/bin_vs_ref_10000.tab'                     % wd
+iden_cutoff                 = 99.9
+aln_len_cutoff              = 1500
+cov_q_cutoff                = 90
+min_match_length            = 102400  # 100 Kbp
+pwd_plot_sankey_R           = '%s/get_sankey_plot.R'                        % wd
+bin_vs_ref_txt              = '%s/bin_vs_ref_iden%s.txt'                    % (wd, iden_cutoff)
+stats_bin_to_ref_txt        = '%s/stats_bin_to_ref_iden%s.txt'              % (wd, iden_cutoff)
+stats_ref_to_bin_txt        = '%s/stats_ref_to_bin_iden%s.txt'              % (wd, iden_cutoff)
+stats_bin_to_cluster_txt    = '%s/stats_bin_to_cluster_iden%s_ani%s_.txt'   % (wd, iden_cutoff, ani_cutoff)
+stats_cluster_to_bin_txt    = '%s/stats_cluster_to_bin_iden%s_ani%s_.txt'   % (wd, iden_cutoff, ani_cutoff)
+
+# 16S to reference
+skip_blastn_16s_vs_refs     = True
+combined_GI_ref_16S         = '%s/combined_GI_ref_16S.ffn'                  % wd
+matam_16s_seqs              = '%s/3_GI_assembled_16S_uclust_0.995.fasta'    % wd
+iden_cutoff_16s             = 99.3  # 99.3 (best), 99.5
+aln_len_cutoff_16s          = 500
+cov_q_cutoff_16s            = 90
+
+# assessment results
+MarkerMAG_linkages          = '%s/CAMI2_HMP_combined_linkages.txt'                  % wd
+wrong_linkages_txt          = '%s/linkages_wrong.txt'                               % wd
+unknown_linkages_txt        = '%s/linkages_unknown.txt'                             % wd
+MarkerMAG_linkages_assessed = '%s/CAMI2_HMP_combined_linkages_with_assessment.txt'  % wd
+
+
+################################################# reference to cluster #################################################
+
+cluster_to_ref_dict = {}
+ref_to_cluster_dict = {}
+for each_ref in open(drep_cdb_file):
+    if not each_ref.startswith('genome,secondary_cluster'):
+        each_ref_split = each_ref.strip().split(',')
+        ref_file_name = each_ref_split[0]
+        ref_file_name_no_ext = '.'.join(ref_file_name.split('.')[:-1])
+        ref_cluster = 'C' + each_ref_split[1]
+        ref_to_cluster_dict[ref_file_name_no_ext] = ref_cluster
+        if ref_cluster not in cluster_to_ref_dict:
+            cluster_to_ref_dict[ref_cluster] = [ref_file_name_no_ext]
+        else:
+            cluster_to_ref_dict[ref_cluster].append(ref_file_name_no_ext)
+
+
+################################################### bin to reference ###################################################
+
+bin_ref_connector           = '__|__'
 
 # get ref_to_strain_dict
 ref_to_strain_dict = {}
@@ -27,66 +81,184 @@ for ref in open(ref_to_strain_file):
     ref_split = ref.strip().split('\t')
     ref_to_strain_dict[ref_split[0]] = ref_split[1]
 
+if parse_blastn_bin_vs_ref is True:
+    bin_vs_ref_dict = {}
+    for match in open(blastn_bin_vs_ref):
+        match_split = match.strip().split('\t')
+        query = match_split[0]
+        query_genome = '_'.join(query.split('_')[:2])
+        subject = match_split[1]
+        subject_genome = '_'.join(subject.split('_')[:2])
+        iden = float(match_split[2])
+        aln_len = int(match_split[3])
+        query_len = int(match_split[12])
+        subject_len = int(match_split[13])
+        coverage_q = float(aln_len) * 100 / float(query_len)
+        if (iden >= iden_cutoff) and (aln_len > aln_len_cutoff) and (coverage_q >= cov_q_cutoff):
+            key_bin_ref = '%s%s%s' % (query_genome, bin_ref_connector, subject_genome)
+            if key_bin_ref not in bin_vs_ref_dict:
+                bin_vs_ref_dict[key_bin_ref] = aln_len
+            else:
+                bin_vs_ref_dict[key_bin_ref] += aln_len
 
-# get bin_to_ref_dict
-bin_to_ref_dict = {}
-for each_bin in open(bin_to_ref_txt):
-    each_bin_split = each_bin.strip().split('\t')
-    bin_id = each_bin_split[0]
-    matched_refs = each_bin_split[1].split(',')
-    bin_to_ref_dict[bin_id] = matched_refs
+    bin_vs_ref_dict_filtered = {}
+    for each_key in bin_vs_ref_dict:
+        if bin_vs_ref_dict[each_key] >= min_match_length:
+            bin_vs_ref_dict_filtered[each_key] = bin_vs_ref_dict[each_key]
+
+    # write out linkages
+    linkage_txt_handle = open(bin_vs_ref_txt, 'w')
+    linkage_txt_handle.write('Bin,Ref,Length\n')
+    bin_to_ref_dict = {}
+    ref_to_bin_dict = {}
+    bin_to_cluster_dict = {}
+    cluster_to_bin_dict = {}
+    for each_linkage in bin_vs_ref_dict_filtered:
+        linkage_split = each_linkage.split(bin_ref_connector)
+        bin_id = linkage_split[0]
+        ref_id = linkage_split[1]
+        ref_cluster = ref_to_cluster_dict[ref_id]
+
+        if bin_id not in bin_to_ref_dict:
+            bin_to_ref_dict[bin_id] = {ref_id}
+        else:
+            bin_to_ref_dict[bin_id].add(ref_id)
+
+        if bin_id not in bin_to_cluster_dict:
+            bin_to_cluster_dict[bin_id] = {ref_cluster}
+        else:
+            bin_to_cluster_dict[bin_id].add(ref_cluster)
+
+        if ref_id not in ref_to_bin_dict:
+            ref_to_bin_dict[ref_id] = {bin_id}
+        else:
+            ref_to_bin_dict[ref_id].add(bin_id)
+
+        if ref_cluster not in cluster_to_bin_dict:
+            cluster_to_bin_dict[ref_cluster] = {bin_id}
+        else:
+            cluster_to_bin_dict[ref_cluster].add(bin_id)
+
+        linkage_txt_handle.write('%s,%s,%s\n' % (bin_id, ref_id, bin_vs_ref_dict_filtered[each_linkage]))
+    linkage_txt_handle.close()
+
+    # visualize
+    cmd_sankey_bin_to_ref = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, bin_vs_ref_txt, 600, 1800)
+    os.system(cmd_sankey_bin_to_ref)
+
+    bin_to_ref_txt_handle = open(stats_bin_to_ref_txt, 'w')
+    for each_bin in bin_to_ref_dict:
+        bin_to_ref_txt_handle.write('%s\t%s\n' % (each_bin, ','.join(bin_to_ref_dict[each_bin])))
+    bin_to_ref_txt_handle.close()
+
+    ref_to_bin_txt_handle = open(stats_ref_to_bin_txt, 'w')
+    for each_ref in ref_to_bin_dict:
+        ref_to_bin_txt_handle.write('%s\t%s\t%s\n' % (each_ref, ','.join(ref_to_bin_dict[each_ref]), ref_to_strain_dict[each_ref]))
+    ref_to_bin_txt_handle.close()
+
+    stats_bin_to_cluster_txt_handle = open(stats_bin_to_cluster_txt, 'w')
+    for each_bin in bin_to_cluster_dict:
+        stats_bin_to_cluster_txt_handle.write('%s\t%s\n' % (each_bin, ','.join(bin_to_cluster_dict[each_bin])))
+    stats_bin_to_cluster_txt_handle.close()
+
+    stats_cluster_to_bin_txt_handle = open(stats_cluster_to_bin_txt, 'w')
+    for each_ref in cluster_to_bin_dict:
+        stats_cluster_to_bin_txt_handle.write('%s\t%s\n' % (each_ref, ','.join(cluster_to_bin_dict[each_ref])))
+    stats_cluster_to_bin_txt_handle.close()
+
+bin_to_cluster_dict = {}
+for each_match in open(stats_bin_to_cluster_txt):
+    each_match_split = each_match.strip().split('\t')
+    bin_to_cluster_dict[each_match_split[0]] = {i for i in each_match_split[1].split(',')}
 
 
-# get s16_to_ref_dict
-s16_to_ref_dict = {}
-for each_16s in open(s16_to_ref_txt):
-    each_16s_split = each_16s.strip().split('\t')
-    s16_id = each_16s_split[0]
-    matched_refs = each_16s_split[1].split(',')
-    s16_to_ref_dict[s16_id] = matched_refs
+################################################### 16S to reference ###################################################
+
+matam_16s_blastn = '%s/3_GI_assembled_16S_uclust_0.995.fasta.blastn'  % wd
+blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads 1'
+blast_cmd = 'blastn -query %s -subject %s -out %s %s' % (matam_16s_seqs, combined_GI_ref_16S, matam_16s_blastn, blast_parameters)
+if skip_blastn_16s_vs_refs is False:
+    os.system(blast_cmd)
+
+# get matam_16s_to_cluster_dict
+matam_16s_to_cluster_dict = {}
+for match in open(matam_16s_blastn):
+    match_split = match.strip().split('\t')
+    query = match_split[0]
+    subject = match_split[1]
+    subject_gnm = subject.split('_16S_')[0]
+    subject_cluster = ref_to_cluster_dict[subject_gnm]
+    iden = float(match_split[2])
+    aln_len = int(match_split[3])
+    query_len = int(match_split[12])
+    subject_len = int(match_split[13])
+    coverage_q = float(aln_len) * 100 / float(query_len)
+    if (iden >= iden_cutoff_16s) and (aln_len > aln_len_cutoff_16s) and (coverage_q >= cov_q_cutoff_16s):
+        if query not in matam_16s_to_cluster_dict:
+            matam_16s_to_cluster_dict[query] = {subject_cluster}
+        else:
+            matam_16s_to_cluster_dict[query].add(subject_cluster)
 
 
+###################################################### assessment ######################################################
+
+MarkerMAG_linkages_assessed_handle = open(MarkerMAG_linkages_assessed, 'w')
 wrong_linkages_txt_handle = open(wrong_linkages_txt, 'w')
 unknown_linkages_txt_handle = open(unknown_linkages_txt, 'w')
 linkage_num_right = 0
 linkage_num_wrong = 0
 linkage_num_unknown = 0
 for each_linkage in open(MarkerMAG_linkages):
-    if not each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tStep'):
+    if each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tStep'):
+        MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\tAssessment\n')
+    else:
         each_linkage_split = each_linkage.strip().split('\t')
         id_16s = each_linkage_split[0]
         id_mag = each_linkage_split[1]
-        if (id_16s in s16_to_ref_dict) and (id_mag in bin_to_ref_dict):
-            matched_refs_16s = s16_to_ref_dict[id_16s]
-            matched_refs_mag = bin_to_ref_dict[id_mag]
-            if overlap_between_list(matched_refs_16s, matched_refs_mag) is True:
+
+        matched_cluster_16s = {}
+        if id_16s in matam_16s_to_cluster_dict:
+            matched_cluster_16s = matam_16s_to_cluster_dict[id_16s]
+
+        matched_cluster_mag = {}
+        if id_mag in bin_to_cluster_dict:
+            matched_cluster_mag = bin_to_cluster_dict[id_mag]
+
+        if (matched_cluster_16s != {}) and (matched_cluster_mag != {}):
+
+            if overlap_between_list(matched_cluster_mag, matched_cluster_16s) is True:
                 linkage_num_right += 1
+                MarkerMAG_linkages_assessed_handle.write('%s\tCorrect\n' % each_linkage.strip())
             else:
                 linkage_num_wrong += 1
-                wrong_linkages_txt_handle.write(each_linkage)
-                for i in matched_refs_16s:
-                    wrong_linkages_txt_handle.write('%s\t%s\t%s\n' % ('16S', i, ref_to_strain_dict[i]))
-                for j in matched_refs_mag:
-                    wrong_linkages_txt_handle.write('%s\t%s\t%s\n' % ('MAG', j, ref_to_strain_dict[j]))
+                MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
+                for each_16s_cluster in matched_cluster_16s:
+                    current_16s_cluster_ref = cluster_to_ref_dict[each_16s_cluster]
+                    for each_ref_1 in current_16s_cluster_ref:
+                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict[each_ref_1]))
+
+                for each_mag_cluster in matched_cluster_mag:
+                    current_mag_cluster_ref = cluster_to_ref_dict[each_mag_cluster]
+                    for each_ref_2 in current_mag_cluster_ref:
+                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict[each_ref_2]))
                 wrong_linkages_txt_handle.write('\n')
         else:
             linkage_num_unknown += 1
-            unknown_linkages_txt_handle.write(each_linkage)
-            if id_16s in s16_to_ref_dict:
-                for m in s16_to_ref_dict[id_16s]:
-                    unknown_linkages_txt_handle.write('16S\t%s\t%s\n' % (m, ref_to_strain_dict[m]))
-            else:
-                unknown_linkages_txt_handle.write('16S\n')
-            if id_mag in bin_to_ref_dict:
-                for n in bin_to_ref_dict[id_mag]:
-                    unknown_linkages_txt_handle.write('MAG\t%s\t%s\n' % (n, ref_to_strain_dict[n]))
-            else:
-                unknown_linkages_txt_handle.write('MAG\n')
+            MarkerMAG_linkages_assessed_handle.write('%s\tUnknown\n' % each_linkage.strip())
+            for each_16s_cluster in matched_cluster_16s:
+                current_16s_cluster_ref = cluster_to_ref_dict[each_16s_cluster]
+                for each_ref_1 in current_16s_cluster_ref:
+                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict[each_ref_1]))
+            for each_mag_cluster in matched_cluster_mag:
+                current_mag_cluster_ref = cluster_to_ref_dict[each_mag_cluster]
+                for each_ref_2 in current_mag_cluster_ref:
+                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict[each_ref_2]))
             unknown_linkages_txt_handle.write('\n')
 wrong_linkages_txt_handle.close()
 unknown_linkages_txt_handle.close()
+MarkerMAG_linkages_assessed_handle.close()
 
-
+# report
 link_recovery = linkage_num_right*100/total_query_mag_num
 link_accuracy = linkage_num_right*100/(linkage_num_right + linkage_num_wrong)
 link_recovery = float("{0:.2f}".format(link_recovery))
@@ -98,8 +270,16 @@ print('%s\tRecovery\tAccuracy\tUnknown' % 'Linkage')
 print('%s\t%s\t%s\t%s' % ('Linkage', recovery_str, accuracy_str, linkage_num_unknown))
 
 
+########################################################################################################################
+
 '''
-
-
-
+Refined_63	C131_1,C130_1
+Escherichia coli    d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Enterobacterales; f__Enterobacteriaceae; g__Escherichia; s__Escherichia coli
+Salmonella enterica d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Enterobacterales; f__Enterobacteriaceae; g__Salmonella; s__Salmonella enterica
+C130_1  OTU_97.161.0.fa,130_1,0.050000000000000044,average,ANImf,130    OTU_97.161.0	CP009086.1 Salmonella enterica subsp. enterica serovar Enteritidis strain OLF-SE4-0317-8
+C130_1  OTU_97.23862.0.fa,130_1,0.050000000000000044,average,ANImf,130  OTU_97.23862.0	CP009083.1 Salmonella enterica subsp. enterica serovar Enteritidis strain OLF-SE1-1019-1 
+C131_1  OTU_97.216.0.fa,131_1,0.050000000000000044,average,ANImf,131    OTU_97.216.0	CP000468.1 Escherichia coli APEC O1
+C131_1  OTU_97.3473.0.fa,131_1,0.050000000000000044,average,ANImf,131   OTU_97.3473.0	CP015020.1 Escherichia coli strain 28RC1
+C131_1  OTU_97.6109.0.fa,131_1,0.050000000000000044,average,ANImf,131   OTU_97.6109.0	AP009240.1 Escherichia coli SE11 DNA
+C131_1  OTU_97.6109.1.fa,131_1,0.050000000000000044,average,ANImf,131   OTU_97.6109.1	HG738867.1 Escherichia coli str. K-12 substr. MC4100
 '''
