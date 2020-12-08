@@ -3,9 +3,9 @@ import glob
 from Bio import SeqIO
 
 
-genome_folder       = '/Users/songweizhi/Desktop/BH_ER_050417_bins'
+genome_folder       = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins'
 genome_ext          = 'fasta'
-genome_folder_out   = '/Users/songweizhi/Desktop/BH_ER_050417_bins_noNs'
+genome_folder_out   = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins_noNs'
 
 
 file_re = '%s/*.%s' % (genome_folder, genome_ext)

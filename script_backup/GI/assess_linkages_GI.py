@@ -2,6 +2,19 @@ import os
 from Bio import SeqIO
 
 
+def sep_path_basename_ext(file_in):
+
+    # separate path and file name
+    file_path, file_name = os.path.split(file_in)
+    if file_path == '':
+        file_path = '.'
+
+    # separate file basename and extension
+    file_basename, file_extension = os.path.splitext(file_name)
+
+    return file_path, file_basename, file_extension
+
+
 def overlap_between_list(list_1, list_2):
 
     overlap = False
@@ -14,44 +27,65 @@ def overlap_between_list(list_1, list_2):
 
 ########################################################################################################################
 
-wd                          = '/Users/songweizhi/Desktop/assess_linkages'
-ani_cutoff                  = 95
-drep_cdb_file               = '%s/Cdb_%s.csv'                               % (wd, ani_cutoff)
-ref_to_strain_file          = '%s/ref_to_strain.txt'                        % wd
-total_query_mag_num         = 97
-# total_query_mag_num         = 53  # 50, 5
-# total_query_mag_num         = 61  # 40, 5
-# total_query_mag_num         = 68  # 30, 5
-# total_query_mag_num         = 81  # 20, 5
+wd = '/Users/songweizhi/Desktop/assess_linkages'
 
-# bin to reference
-parse_blastn_bin_vs_ref     = False
-blastn_bin_vs_ref           = '%s/bin_vs_ref.tab'                           % wd
-#blastn_bin_vs_ref           = '%s/bin_vs_ref_10000.tab'                     % wd
+####################### reference to cluster #######################
+
+drep_ani_cutoff             = 95
+drep_cdb_file               = '%s/file_in/Cdb_%s.csv'                               % (wd, drep_ani_cutoff)
+ref_to_strain_file          = '%s/file_in/ref_to_strain.txt'                        % wd
+
+####################### bin to reference #######################
+
+parse_blastn_bin_vs_ref     = False  # True or False
+blastn_bin_vs_ref           = '%s/file_in/bin_vs_ref.tab'                           % wd
 iden_cutoff                 = 99.9
 aln_len_cutoff              = 1500
 cov_q_cutoff                = 90
 min_match_length            = 102400  # 100 Kbp
-pwd_plot_sankey_R           = '%s/get_sankey_plot.R'                        % wd
-bin_vs_ref_txt              = '%s/bin_vs_ref_iden%s.txt'                    % (wd, iden_cutoff)
-stats_bin_to_ref_txt        = '%s/stats_bin_to_ref_iden%s.txt'              % (wd, iden_cutoff)
-stats_ref_to_bin_txt        = '%s/stats_ref_to_bin_iden%s.txt'              % (wd, iden_cutoff)
-stats_bin_to_cluster_txt    = '%s/stats_bin_to_cluster_iden%s_ani%s_.txt'   % (wd, iden_cutoff, ani_cutoff)
-stats_cluster_to_bin_txt    = '%s/stats_cluster_to_bin_iden%s_ani%s_.txt'   % (wd, iden_cutoff, ani_cutoff)
 
-# 16S to reference
-skip_blastn_16s_vs_refs     = True
-combined_GI_ref_16S         = '%s/combined_GI_ref_16S.ffn'                  % wd
-matam_16s_seqs              = '%s/3_GI_assembled_16S_uclust_0.995.fasta'    % wd
-iden_cutoff_16s             = 99.3  # 99.3 (best), 99.5
+####################### 16S to reference #######################
+
+perform_blastn_16s_vs_refs  = False  # True or False
+combined_GI_ref_16S         = '%s/file_in/combined_GI_ref_16S.ffn'                          % wd
+matam_16s_seqs              = '%s/file_in/3_GI_assembled_16S_uclust_0.995.fasta'            % wd
+matam_16s_blastn            = '%s/file_in/3_GI_assembled_16S_uclust_0.995.fasta.blastn'     % wd
+iden_cutoff_16s             = 99.5  # 99.3 (best), 99.5
 aln_len_cutoff_16s          = 500
 cov_q_cutoff_16s            = 90
 
+####################### assessment results #######################
+
+MarkerMAG_linkages          = '%s/file_in/CAMI2_HMP_combined_linkages.txt'                  % wd
+#MarkerMAG_linkages         = '%s/CAMI2_HMP_20_5_combined_linkages.txt'             % wd
+#MarkerMAG_linkages         = '%s/CAMI2_HMP_30_5_combined_linkages.txt'             % wd
+#MarkerMAG_linkages         = '%s/CAMI2_HMP_40_5_combined_linkages.txt'             % wd
+#MarkerMAG_linkages         = '%s/CAMI2_HMP_50_5_combined_linkages.txt'             % wd
+total_query_mag_num         = 97
+# total_query_mag_num       = 53  # 50, 5
+# total_query_mag_num       = 61  # 40, 5
+# total_query_mag_num       = 68  # 30, 5
+# total_query_mag_num       = 81  # 20, 5
+
+####################### script #######################
+
+pwd_plot_sankey_R = '%s/file_in/get_sankey_plot.R' % wd
+
+
+############################################### define file/folder name ################################################
+
+# bin to reference
+bin_vs_ref_txt              = '%s/bin_vs_ref_imag%s.txt'                    % (wd, iden_cutoff)
+stats_bin_to_ref_txt        = '%s/stats_bin_to_ref_imag%s.txt'              % (wd, iden_cutoff)
+stats_ref_to_bin_txt        = '%s/stats_ref_to_bin_imag%s.txt'              % (wd, iden_cutoff)
+stats_bin_to_cluster_txt    = '%s/stats_bin_to_cluster_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
+stats_cluster_to_bin_txt    = '%s/stats_cluster_to_bin_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
+
 # assessment results
-MarkerMAG_linkages          = '%s/CAMI2_HMP_combined_linkages.txt'                  % wd
-wrong_linkages_txt          = '%s/linkages_wrong.txt'                               % wd
-unknown_linkages_txt        = '%s/linkages_unknown.txt'                             % wd
-MarkerMAG_linkages_assessed = '%s/CAMI2_HMP_combined_linkages_with_assessment.txt'  % wd
+linkage_file_path, linkage_file_basename, linkage_file_extension = sep_path_basename_ext(MarkerMAG_linkages)
+MarkerMAG_linkages_assessed = '%s/%s_with_assessment_ani%s_imag%s_i16S%s.txt'   % (wd, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
+wrong_linkages_txt          = '%s/%s_wrong_ani%s_imag%s_i16S%s.txt'             % (wd, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
+unknown_linkages_txt        = '%s/%s_unknown_ani%s_imag%s_i16S%s.txt'           % (wd, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
 
 
 ################################################# reference to cluster #################################################
@@ -174,10 +208,9 @@ for each_match in open(stats_bin_to_cluster_txt):
 
 ################################################### 16S to reference ###################################################
 
-matam_16s_blastn = '%s/3_GI_assembled_16S_uclust_0.995.fasta.blastn'  % wd
 blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads 1'
 blast_cmd = 'blastn -query %s -subject %s -out %s %s' % (matam_16s_seqs, combined_GI_ref_16S, matam_16s_blastn, blast_parameters)
-if skip_blastn_16s_vs_refs is False:
+if perform_blastn_16s_vs_refs is True:
     os.system(blast_cmd)
 
 # get matam_16s_to_cluster_dict
@@ -282,4 +315,14 @@ C131_1  OTU_97.216.0.fa,131_1,0.050000000000000044,average,ANImf,131    OTU_97.2
 C131_1  OTU_97.3473.0.fa,131_1,0.050000000000000044,average,ANImf,131   OTU_97.3473.0	CP015020.1 Escherichia coli strain 28RC1
 C131_1  OTU_97.6109.0.fa,131_1,0.050000000000000044,average,ANImf,131   OTU_97.6109.0	AP009240.1 Escherichia coli SE11 DNA
 C131_1  OTU_97.6109.1.fa,131_1,0.050000000000000044,average,ANImf,131   OTU_97.6109.1	HG738867.1 Escherichia coli str. K-12 substr. MC4100
+
+# same family
+Erysipelothrix rhusiopathiae    d__Bacteria; p__Firmicutes; c__Bacilli; o__Erysipelotrichales; f__Erysipelotrichaceae; g__Erysipelothrix; s__Erysipelothrix rhusiopathiae
+Erysipelotrichaceae             d__Bacteria; p__Firmicutes; c__Bacilli; o__Erysipelotrichales; f__Erysipelotrichaceae; g__Longicatena; s__Longicatena sp000165065
+
+50_5	35/53	36/38(92.11)	3
+40_5	35/61	36/38(92.11)	3
+30_5	37/68	38/40(92.5)		3
+20_5	43/81	43/45(93.33)	4
+All		43/97	43/43(100)	    5
 '''

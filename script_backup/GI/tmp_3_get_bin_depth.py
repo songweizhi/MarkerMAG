@@ -9,6 +9,12 @@ genome_ext          = 'fasta'
 gnm_mean_depth_file = '/Users/songweizhi/Desktop/GI_bin_mean_depth.txt'
 
 
+ctg_len_depth_file  = '/Users/songweizhi/Desktop/BH_ER_050417_depth.txt'
+genome_folder       = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins'
+genome_ext          = 'fasta'
+gnm_mean_depth_file = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins_mean_depth.txt'
+
+
 # get ctg_len_dict and ctg_depth_dict
 ctg_len_dict = {}
 ctg_depth_dict = {}
@@ -41,21 +47,21 @@ for genome in file_list:
 gnm_mean_depth_file_handle.close()
 
 
-
-linkaged_bin_list = []
-for each_link in open('/Users/songweizhi/Desktop/CAMI2_HMP_combined_linkages.txt'):
-    linkaged_bin_list.append(each_link.strip().split('\t')[1])
-print(linkaged_bin_list)
-
-print(gnm_mean_depth_dict)
-
-for each_gnm in gnm_mean_depth_dict:
-
-    gnm_no_ext= '.'.join(each_gnm.split('.')[:-1])
-
-    gnm_linked = 'no'
-    if gnm_no_ext in linkaged_bin_list:
-        gnm_linked = 'yes'
-
-    print('%s\t%s\t%s' % (gnm_no_ext, gnm_mean_depth_dict[each_gnm], gnm_linked))
-
+#
+# linkaged_bin_list = []
+# for each_link in open('/Users/songweizhi/Desktop/CAMI2_HMP_combined_linkages.txt'):
+#     linkaged_bin_list.append(each_link.strip().split('\t')[1])
+# print(linkaged_bin_list)
+#
+# print(gnm_mean_depth_dict)
+#
+# for each_gnm in gnm_mean_depth_dict:
+#
+#     gnm_no_ext= '.'.join(each_gnm.split('.')[:-1])
+#
+#     gnm_linked = 'no'
+#     if gnm_no_ext in linkaged_bin_list:
+#         gnm_linked = 'yes'
+#
+#     print('%s\t%s\t%s' % (gnm_no_ext, gnm_mean_depth_dict[each_gnm], gnm_linked))
+#

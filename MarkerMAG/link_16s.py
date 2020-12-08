@@ -1067,6 +1067,7 @@ def link_16s(args, config_dict):
     report_and_log(('Step 1: Extracting unmapped part of clipping mapped reads from sam file'), pwd_log_file, keep_quiet)
 
     # export clipping mapped reads and perfectly mapped reads
+    all_mapped_reads_set = set()
     clipping_mapped_reads_list = set()
     clipping_reads_mapped_part_dict = {}
     perfectly_mapped_reads_dict = {}
@@ -1085,6 +1086,7 @@ def link_16s(args, config_dict):
             read_seq = each_read_split[9]
             cigar_splitted  = cigar_splitter(cigar)
             read_id_with_ref_pos = '%s__x__%s__x__%s' % (read_id, ref_id, ref_pos)
+            all_mapped_reads_set.add(read_id)
 
             # for perfectly mapped reads
             if ('M' in cigar) and (len(cigar_splitted) == 1):
@@ -1171,11 +1173,11 @@ def link_16s(args, config_dict):
         strand = list(current_value.keys())[0]
         if strand == '1':
             r2_to_extract = '%s.2' % perfectly_mapped_read
-            if r2_to_extract not in clipping_mapped_reads_list:
+            if r2_to_extract not in all_mapped_reads_set:
                 solely_perfectly_mapped_reads_r2.add(r2_to_extract)
         if strand == '2':
             r1_to_extract = '%s.1' % perfectly_mapped_read
-            if r1_to_extract not in clipping_mapped_reads_list:
+            if r1_to_extract not in all_mapped_reads_set:
                 solely_perfectly_mapped_reads_r1.add(r1_to_extract)
 
     # extract reads

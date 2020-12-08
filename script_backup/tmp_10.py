@@ -36,12 +36,14 @@ def paired_blast_results_to_dict(blastn_results, iden_cutoff, query_cov_cutoff):
 
 unmapped_paired_reads_blastn    = '/Users/songweizhi/Desktop/unmapped_paired_reads_blast.txt'
 reads_iden_cutoff               = 100  # s1_ri
-reads_cov_cutoff                = 100  # s1_rc
+reads_cov_cutoff                = 90   # s1_rc
 
 
 # filter blast results for paired reads
 unmapped_paired_reads_to_ctg_dict = paired_blast_results_to_dict(unmapped_paired_reads_blastn, reads_iden_cutoff, reads_cov_cutoff)
-# print(unmapped_paired_reads_to_ctg_dict)
+print(unmapped_paired_reads_to_ctg_dict)
+print(len(unmapped_paired_reads_to_ctg_dict))
+
 
 
 
