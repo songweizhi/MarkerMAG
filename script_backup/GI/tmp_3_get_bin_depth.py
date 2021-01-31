@@ -9,10 +9,10 @@ genome_ext          = 'fasta'
 gnm_mean_depth_file = '/Users/songweizhi/Desktop/GI_bin_mean_depth.txt'
 
 
-ctg_len_depth_file  = '/Users/songweizhi/Desktop/BH_ER_050417_depth.txt'
-genome_folder       = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins'
-genome_ext          = 'fasta'
-gnm_mean_depth_file = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins_mean_depth.txt'
+# ctg_len_depth_file  = '/Users/songweizhi/Desktop/BH_ER_050417_depth.txt'
+# genome_folder       = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins'
+# genome_ext          = 'fasta'
+# gnm_mean_depth_file = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins_mean_depth.txt'
 
 
 # get ctg_len_dict and ctg_depth_dict

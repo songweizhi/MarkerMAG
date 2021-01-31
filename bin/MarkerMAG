@@ -92,9 +92,10 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'rename_reads':
         from MarkerMAG import rename_reads
         rename_reads_parser = subparsers.add_parser('rename_reads', description='Rename reads', usage=rename_reads.rename_reads_usage)
-        rename_reads_parser.add_argument('-r1', required=True, type=str, help='forward reads, fasta format')
-        rename_reads_parser.add_argument('-r2', required=True, type=str, help='reverse reads, fasta format')
-        rename_reads_parser.add_argument('-p',  required=True, type=str, help='prefix of read id')
+        rename_reads_parser.add_argument('-r1', required=True, type=str,                help='forward reads, fasta format')
+        rename_reads_parser.add_argument('-r2', required=True, type=str,                help='reverse reads, fasta format')
+        rename_reads_parser.add_argument('-p',  required=True, type=str,                help='prefix of output file and read id')
+        rename_reads_parser.add_argument('-fq', required=False, action="store_true",    help='rename reads with quality score')
         args = vars(parser.parse_args())
         rename_reads.rename_reads(args)
 
