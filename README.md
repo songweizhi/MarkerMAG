@@ -49,7 +49,7 @@ MarkerMAG can be installed via `pip3`:
     pip3 install --upgrade MarkerMAG
 
 
-Important Notes !!!
+:warning: Important Notes :warning:
 ---
 
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
