@@ -54,6 +54,7 @@ Important Notes !!!
 
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module. 
+   
    :warning: Please note that all reads in R1.fasta and R2.fasta must be in pair and their orders in the two files must be the same.
 
        MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p Soil
