@@ -70,8 +70,6 @@ if __name__ == '__main__':
         link_16s_parser.add_argument('-mag',             required=False,                default=None,       help='metagenome-assembled-genome (MAG) folder')
         link_16s_parser.add_argument('-x',               required=False,                default='fasta',    help='MAG file extension, default: fasta')
         link_16s_parser.add_argument('-depth',           required=False, type=float,    default=0,          help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, default: 0')
-        link_16s_parser.add_argument('-s1_cigarM',       required=False, type=int,      default=30,         help='cigarM cutoff, default: 30')
-        link_16s_parser.add_argument('-s1_cigarS',       required=False, type=int,      default=30,         help='cigarS cutoff, default: 30')
         link_16s_parser.add_argument('-s1_ri',           required=False, type=float,    default=100,        help='identity cutoff, default: 100')
         link_16s_parser.add_argument('-s1_rc',           required=False, type=float,    default=100,        help='coverage cutoff, default: 100')
         link_16s_parser.add_argument('-s1_mi',           required=False, type=float,    default=99.5,       help='within genome 16S identity cutoff, default: 99.5')
@@ -94,9 +92,11 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'rename_reads':
         from MarkerMAG import rename_reads
         rename_reads_parser = subparsers.add_parser('rename_reads', description='Rename reads', usage=rename_reads.rename_reads_usage)
-        rename_reads_parser.add_argument('-r1', required=True, type=str, help='forward reads, fasta format')
-        rename_reads_parser.add_argument('-r2', required=True, type=str, help='reverse reads, fasta format')
-        rename_reads_parser.add_argument('-p',  required=True, type=str, help='prefix of read id')
+        rename_reads_parser.add_argument('-r1',  required=True, type=str,               help='forward reads, fasta format')
+        rename_reads_parser.add_argument('-r2',  required=True, type=str,               help='reverse reads, fasta format')
+        rename_reads_parser.add_argument('-p',   required=True, type=str,               help='prefix of output file and read id')
+        rename_reads_parser.add_argument('-fq',  required=False, action="store_true",   help='rename reads with quality score')
+        rename_reads_parser.add_argument('-t',   required=False, type=int, default=1,   help='number of threads, default: 1')
         args = vars(parser.parse_args())
         rename_reads.rename_reads(args)
 

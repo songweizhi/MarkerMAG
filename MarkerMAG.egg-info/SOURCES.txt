@@ -6,6 +6,7 @@ MarkerMAG/VERSION
 MarkerMAG/barrnap_16s.py
 MarkerMAG/get_sankey_plot.R
 MarkerMAG/link_16s.py
+MarkerMAG/link_16s_by_blast.py
 MarkerMAG/matam_16s.py
 MarkerMAG/rename_reads.py
 MarkerMAG/subsample_reads.py

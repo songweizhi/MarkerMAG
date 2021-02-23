@@ -380,9 +380,6 @@ for each_assess_key in linkage_assessment_dict:
     linkage_assessment_stats_dict[each_assess_key] = assess_stats
 
 
-
-
-
 for each_mag in open(mag_metadata):
     if not each_mag.startswith('MAG	Depth	Completeness	16S_in_MAG	Matched_ref'):
         each_mag_split = each_mag.strip().split('\t')
@@ -401,16 +398,9 @@ for each_mag in open(mag_metadata):
                 for each_16s in cluster_to_matam_16s_dict[each_cluster]:
                     Matam16S_matched.add(each_16s)
 
-
-
         print('%s\t%s\t%s\t%s' % (each_mag.strip(), ','.join(mag_cluster), ','.join(link_result), len(Matam16S_matched)))
 
 
 print('MAG\tDepth\tCompleteness\t16S_in_MAG\tMatched_ref\tCluster\tLinkage\tMatam16S')
-
-
 print(linkage_assessment_stats_dict)
-
-
-
 print(cluster_to_matam_16s_dict)
