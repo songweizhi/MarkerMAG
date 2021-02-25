@@ -80,7 +80,7 @@ How to run:
 
 + Link 16S rRNA gene sequences with MAGs: 
 
-      MarkerMAG link -p Soil -r1 R1.fastq -r2 R2.fastq -m 16S_seqs.fa -mag MAG_filess -x fa -t 12
+      MarkerMAG link -p Soil -r1 R1.fastq -r2 R2.fastq -marker Soil_16S_uclust_0.995.fasta -mag refined_MAG -x fasta -t 12 -tmp -force
 
 
 Output files:
