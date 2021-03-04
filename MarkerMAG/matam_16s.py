@@ -378,7 +378,7 @@ if __name__ == '__main__':
     matam_16s_parser.add_argument('-r16s',           required=False, default=None,                                      help='extracted 16S reads')
     matam_16s_parser.add_argument('-pct',            required=True,  type=str, default='1,5,10,25,50,75,100',           help='subsample percentage, must be integer, between 1-100, deafault: 1,5,10,25,50,75,100')
     matam_16s_parser.add_argument('-d',              required=False, type=str,                                          help='MATAM ref db, same as "-d" in Matam')
-    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.995,                         help='cluster identity cutoff (0-1), default: 0.995')
+    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.9999,                         help='cluster identity cutoff (0-1), default: 0.9999')
     matam_16s_parser.add_argument('-t',              required=False, type=int, default=1,                               help='number of threads, default: 1')
     matam_16s_parser.add_argument('-force',          required=False, action="store_true",                               help='force overwrite existing results')
     matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                               help='not report progress')

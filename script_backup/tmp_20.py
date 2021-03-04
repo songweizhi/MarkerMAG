@@ -2,6 +2,8 @@
 wd = '/Users/songweizhi/Desktop'
 bin_id_file     = '%s/bin_id.txt'                               % wd
 bin_taxon_file  = '%s/BH_ER_050417.bac120.summary.tsv'          % wd
+mean_depth_file = '%s/BH_ER_050417_refined_bins_mean_depth.txt' % wd
+
 link_output     = '%s/Kelp_0202_combined_linkages.txt'          % wd
 barrnap_output  = '%s/BH_ER_050417_16S.txt'                     % wd
 checkm_output   = '%s/BH_ER_050417_refined_MAG_qualities.2.txt' % wd
@@ -17,6 +19,12 @@ for each_bin_taxon in open(bin_taxon_file):
     if not each_bin_taxon.startswith('user_genome	classification'):
         each_bin_taxon_split = each_bin_taxon.strip().split('\t')
         bin_taxon_dict[each_bin_taxon_split[0]] = each_bin_taxon_split[1]
+
+bin_depth_dict = {}
+for each_bin_depth in open(mean_depth_file):
+    each_bin_depth_split = each_bin_depth.strip().split('\t')
+    bin_depth_dict[each_bin_depth_split[0]] = each_bin_depth_split[2]
+
 
 
 linked_mag_list = set()
@@ -43,6 +51,10 @@ for each_mag_quality in open(checkm_output):
 print('MAG\t16S\tcompleteness\tlinked\ttaxon')
 for each_mag in sorted(bin_id_list):
 
+    mag_depth = '0'
+    if each_mag in bin_depth_dict:
+        mag_depth = bin_depth_dict[each_mag]
+
     mag_taxon = 'unknown'
     if each_mag in bin_taxon_dict:
         mag_taxon = bin_taxon_dict[each_mag]
@@ -59,7 +71,7 @@ for each_mag in sorted(bin_id_list):
     if each_mag in mag_completeness_dict:
         mag_cpl = mag_completeness_dict[each_mag]
 
-    print('%s\t%s\t%s\t%s\t%s' % (each_mag, with_16s_in_mag, mag_cpl, linked_to_16s, mag_taxon))
+    print('%s\t%s\t%s\t%s\t%s\t%s' % (each_mag, mag_depth, with_16s_in_mag, mag_cpl, linked_to_16s, mag_taxon))
 
 
 
