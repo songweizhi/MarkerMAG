@@ -5,6 +5,7 @@ bin_taxon_file  = '%s/BH_ER_050417.bac120.summary.tsv'          % wd
 mean_depth_file = '%s/BH_ER_050417_refined_bins_mean_depth.txt' % wd
 
 link_output     = '%s/Kelp_0202_combined_linkages.txt'          % wd
+link_output     = '%s/Kelp_0.999_aa_combined_linkages.txt'      % wd
 barrnap_output  = '%s/BH_ER_050417_16S.txt'                     % wd
 checkm_output   = '%s/BH_ER_050417_refined_MAG_qualities.2.txt' % wd
 
@@ -48,7 +49,7 @@ for each_mag_quality in open(checkm_output):
     mag_completeness_dict[each_mag_quality_split[0]] = each_mag_quality_split[1]
 
 
-print('MAG\t16S\tcompleteness\tlinked\ttaxon')
+print('MAG\tdepth\t16S\tcompleteness\tlinked\ttaxon')
 for each_mag in sorted(bin_id_list):
 
     mag_depth = '0'

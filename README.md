@@ -18,8 +18,11 @@ Contact
 Dependencies
 ---
  
+ Dependencies are module-specific, please see details below:
+ 
 + `link`: 
-  [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml),
+  [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/) (default)/[Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml),
+  [Mira v5rc2](https://github.com/bachev/mira) (default)/[SPAdes](https://github.com/ablab/spades), 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download),
   [optparse](https://cran.r-project.org/web/packages/optparse/index.html) (R) and 
   [googleVis](https://cran.r-project.org/web/packages/googleVis/index.html) (R)
@@ -40,16 +43,27 @@ Dependencies
 How to install:
 ---
 
-MarkerMAG can be installed via `pip3`:
+MarkerMAG is implemented in python3, you can install it with pip3:
 
-    # First-time installation
+    # install with 
     pip3 install MarkerMAG
         
-    # upgrade
+    # upgrade with 
     pip3 install --upgrade MarkerMAG
 
 
-Important Notes :warning:
+MarkerMAG modules:
+---
+
+    link             ->  link MAGs with marker genes
+    rename_reads     ->  rename paired reads (in fasta format) 
+    matam_16s        ->  including reads extraction, subsample, assembly and dereplication
+    uclust_16s       ->  cluster marker genes with Usearch
+    barrnap_16s      ->  identify 16S gene sequences with Barrnap
+    subsample_reads  ->  subsample reads with Usearch
+
+
+Important Notes :warning::warning::warning:
 ---
 
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.

@@ -341,10 +341,10 @@ def paired_blast_results_to_dict_by_mapping(unmapped_paired_reads_mapping_result
 
     ref_len_dict = {}
     for unmapped_read in open(unmapped_paired_reads_mapping_results):
+        unmapped_read_split = unmapped_read.strip().split('\t')
 
         # get ref len dict
         if unmapped_read.startswith('@'):
-            unmapped_read_split = unmapped_read.strip().split('\t')
             ref_id = ''
             ref_len = 0
             for each_element in unmapped_read_split:
@@ -355,70 +355,71 @@ def paired_blast_results_to_dict_by_mapping(unmapped_paired_reads_mapping_result
             ref_len_dict[ref_id] = ref_len
 
         else:
-            qualified_unmapped_read = False
-            unmapped_read_split = unmapped_read.strip().split('\t')
-            read_id = unmapped_read_split[0]
-            ref_id = unmapped_read_split[2]
-            ref_len = ref_len_dict[ref_id]
-            ref_id_with_prefix = 'GenomicSeq__%s' % unmapped_read_split[2]
-            ref_pos = int(unmapped_read_split[3])
             cigar = unmapped_read_split[5]
-            read_seq = unmapped_read_split[9]
-            read_len = len(read_seq)
-            cigar_splitted = cigar_splitter(cigar)
+            if cigar != '*':
+                qualified_unmapped_read = False
+                unmapped_read_split = unmapped_read.strip().split('\t')
+                read_id = unmapped_read_split[0]
+                ref_id = unmapped_read_split[2]
+                ref_len = ref_len_dict[ref_id]
+                ref_id_with_prefix = 'GenomicSeq__%s' % unmapped_read_split[2]
+                ref_pos = int(unmapped_read_split[3])
+                read_seq = unmapped_read_split[9]
+                read_len = len(read_seq)
+                cigar_splitted = cigar_splitter(cigar)
 
-            # e.g. 189M
-            if ('M' in cigar) and (len(cigar_splitted) == 1):
-                qualified_unmapped_read = True
+                # e.g. 189M
+                if ('M' in cigar) and (len(cigar_splitted) == 1):
+                    qualified_unmapped_read = True
 
-            elif len(cigar_splitted) == 2:
+                elif len(cigar_splitted) == 2:
 
-                # e.g. 139S61M
-                if (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M'):
-                    cigar_M_pct = int(cigar_splitted[1][:-1]) * 100 / read_len
-                    if (ref_pos == 1) and (cigar_M_pct >= cigar_M_pct_min_value):
-                        qualified_unmapped_read = True
-
-                # e.g. 147M53S
-                if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[1][-1] == 'S'):
-                    cigar_M_pct = int(cigar_splitted[0][:-1]) * 100 / read_len
-                    matched_to_bp = ref_pos + int(cigar_splitted[0][:-1]) - 1
-                    if (matched_to_bp == ref_len) and (cigar_M_pct >= cigar_M_pct_min_value):
-                        qualified_unmapped_read = True
-
-            elif len(cigar_splitted) == 3:
-
-                # e.g. 121M1D66M, 121M1I66M
-                if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M'):
-                    mismatch_pct = int(cigar_splitted[1][:-1])*100/read_len
-                    if mismatch_pct <= 1:
-                        qualified_unmapped_read = True
-
-                # e.g. 11S81M3S, not sure, not considered yet
-                elif cigar_splitted[1][-1] == 'M':
-                    min_mismatch = min(int(cigar_splitted[0][:-1]), int(cigar_splitted[2][:-1]))
-
-            elif len(cigar_splitted) == 4:
-
-                # e.g. ['181M', '1D', '8M', '11S'], ['181M', '2D', '8M', '11S']
-                if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M') and (cigar_splitted[3][-1] == 'S'):
-                    cigar_M_pct = (int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1]))*100/read_len
-                    if ((ref_pos + int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1])) == ref_len) and (int(cigar_splitted[1][:-1]) <= 2):
-                        if cigar_M_pct >= cigar_M_pct_min_value:
+                    # e.g. 139S61M
+                    if (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M'):
+                        cigar_M_pct = int(cigar_splitted[1][:-1]) * 100 / read_len
+                        if (ref_pos == 1) and (cigar_M_pct >= cigar_M_pct_min_value):
                             qualified_unmapped_read = True
 
-                # e.g. ['24S', '95M', '1D', '27M'] and ref_pos = 1
-                elif (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M') and (cigar_splitted[3][-1] == 'M'):
-                    cigar_M_pct = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1]))*100/read_len
-                    if (ref_pos == 1) and (int(cigar_splitted[2][:-1]) <= 1) and (cigar_M_pct >= cigar_M_pct_min_value):
-                        qualified_unmapped_read = True
+                    # e.g. 147M53S
+                    if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[1][-1] == 'S'):
+                        cigar_M_pct = int(cigar_splitted[0][:-1]) * 100 / read_len
+                        matched_to_bp = ref_pos + int(cigar_splitted[0][:-1]) - 1
+                        if (matched_to_bp == ref_len) and (cigar_M_pct >= cigar_M_pct_min_value):
+                            qualified_unmapped_read = True
 
-            # add to dict
-            if qualified_unmapped_read is True:
-                if read_id not in unmapped_paired_reads_to_ctg_dict_by_mapping:
-                    unmapped_paired_reads_to_ctg_dict_by_mapping[read_id] = [ref_id_with_prefix]
-                else:
-                    unmapped_paired_reads_to_ctg_dict_by_mapping[read_id].append(ref_id_with_prefix)
+                elif len(cigar_splitted) == 3:
+
+                    # e.g. 121M1D66M, 121M1I66M
+                    if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M'):
+                        mismatch_pct = int(cigar_splitted[1][:-1])*100/read_len
+                        if mismatch_pct <= 1:
+                            qualified_unmapped_read = True
+
+                    # e.g. 11S81M3S, not sure, not considered yet
+                    elif cigar_splitted[1][-1] == 'M':
+                        min_mismatch = min(int(cigar_splitted[0][:-1]), int(cigar_splitted[2][:-1]))
+
+                elif len(cigar_splitted) == 4:
+
+                    # e.g. ['181M', '1D', '8M', '11S'], ['181M', '2D', '8M', '11S']
+                    if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M') and (cigar_splitted[3][-1] == 'S'):
+                        cigar_M_pct = (int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1]))*100/read_len
+                        if ((ref_pos + int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1])) == ref_len) and (int(cigar_splitted[1][:-1]) <= 2):
+                            if cigar_M_pct >= cigar_M_pct_min_value:
+                                qualified_unmapped_read = True
+
+                    # e.g. ['24S', '95M', '1D', '27M'] and ref_pos = 1
+                    elif (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M') and (cigar_splitted[3][-1] == 'M'):
+                        cigar_M_pct = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1]))*100/read_len
+                        if (ref_pos == 1) and (int(cigar_splitted[2][:-1]) <= 1) and (cigar_M_pct >= cigar_M_pct_min_value):
+                            qualified_unmapped_read = True
+
+                # add to dict
+                if qualified_unmapped_read is True:
+                    if read_id not in unmapped_paired_reads_to_ctg_dict_by_mapping:
+                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id] = [ref_id_with_prefix]
+                    else:
+                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id].append(ref_id_with_prefix)
 
     return unmapped_paired_reads_to_ctg_dict_by_mapping
 
@@ -638,12 +639,13 @@ def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, fil
     file_out_intersect_linkages_handle.close()
 
 
-def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max_gap_to_end, bowtie_build_exe, bowtie2_exe, num_threads):
+def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max_gap_to_end, bowtie_build_exe, bowtie2_exe, num_threads, run_bbmap, pwd_bbmap_exe, bbmap_memory):
 
     ref_in_path, ref_in_basename, ref_in_ext = sep_path_basename_ext(ref_in)
 
-    ref_subset = '%s/%s_ends_%sbp%s' % (ref_in_path, ref_in_basename, end_seq_len, ref_in_ext)
-    sam_file = '%s/%s_ends_%sbp.sam' % (ref_in_path, ref_in_basename, end_seq_len)
+    ref_subset      = '%s/%s_ends_%sbp%s'                % (ref_in_path, ref_in_basename, end_seq_len, ref_in_ext)
+    sam_file        = '%s/%s_ends_%sbp.sam'              % (ref_in_path, ref_in_basename, end_seq_len)
+    bbmap_stderr    = '%s/%s_ends_%sbp_bbmap_stderr.txt' % (ref_in_path, ref_in_basename, end_seq_len)
 
     # get ref seqs subset
     ref_subset_len_dict = {}
@@ -670,16 +672,17 @@ def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max
             ref_subset_handle.write('%s\n' % ref_seq_right_end)
     ref_subset_handle.close()
 
-    # index ref seq subset
-    ref_subset_no_ext = '.'.join(ref_subset.split('.')[:-1])
-    bowtie2_index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (
-    bowtie_build_exe, ref_subset, ref_subset_no_ext, num_threads)
-    os.system(bowtie2_index_ref_cmd)
-
-    # mapping
-    bowtie2_mapping_cmd = '%s -x %s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (
-    bowtie2_exe, ref_subset_no_ext, reads_r1, reads_r2, sam_file, num_threads)
-    os.system(bowtie2_mapping_cmd)
+    # mapping with bowtie or bbmap
+    if run_bbmap is False:
+        ref_subset_no_ext = '.'.join(ref_subset.split('.')[:-1])
+        bowtie2_index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (bowtie_build_exe, ref_subset, ref_subset_no_ext, num_threads)
+        bowtie2_mapping_cmd = '%s -x %s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (bowtie2_exe, ref_subset_no_ext, reads_r1, reads_r2, sam_file, num_threads)
+        os.system(bowtie2_index_ref_cmd)
+        os.system(bowtie2_mapping_cmd)
+    else:
+        bbmap_parameter_round2 = 'local=t nodisk=t ambiguous=all sam=1.3 keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
+        bbmap_cmd_round2 = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, ref_subset, reads_r1, reads_r2, sam_file, bbmap_parameter_round2, bbmap_stderr)
+        os.system(bbmap_cmd_round2)
 
     # parse sam file
     all_mapped_reads = set()
@@ -688,73 +691,73 @@ def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max
     for each_line in open(sam_file):
         if not each_line.startswith('@'):
             each_line_split = each_line.strip().split('\t')
-            read_id = each_line_split[0]
-            read_id_base = '.'.join(read_id.split('.')[:-1])
-            read_strand = read_id.split('.')[-1]
-            ref_id = each_line_split[2]
-            ref_pos = int(each_line_split[3])
             cigar = each_line_split[5]
-            cigar_splitted = cigar_splitter(cigar)
 
-            all_mapped_reads.add(read_id)
+            if cigar != '*':
+                read_id = each_line_split[0]
+                read_id_base = '.'.join(read_id.split('.')[:-1])
+                read_strand = read_id.split('.')[-1]
+                ref_id = each_line_split[2]
+                ref_pos = int(each_line_split[3])
+                cigar_splitted = cigar_splitter(cigar)
+                all_mapped_reads.add(read_id)
+                qualified_mapping = False
 
-            qualified_mapping = False
-            if ref_id[-2:] == '_l':
-                if ref_pos <= max_gap_to_end:
-                    if (len(cigar_splitted) == 1) and (cigar[-1] == 'M') and (int(cigar[:-1]) >= minCigarM):
-                        qualified_mapping = True
-
-                    elif (len(cigar_splitted) == 2) and (cigar_splitted[-1][-1] == 'M') and (
-                            cigar_splitted[0][-1] == 'S') and (int(cigar_splitted[-1][:-1]) >= minCigarM) and (
-                            ref_pos == 1):
-                        qualified_mapping = True
-
-            elif ref_id[-2:] == '_r':
-
-                if (len(cigar_splitted) == 1) and (cigar[-1] == 'M') and (int(cigar[:-1]) >= minCigarM):
-                    ref_pos_end = ref_pos + int(cigar[:-1])
-
-                    if (end_seq_len - ref_pos_end) <= max_gap_to_end:
-                        qualified_mapping = True
-
-                elif (len(cigar_splitted) == 2) and (cigar_splitted[0][-1] == 'M') and (
-                        cigar_splitted[1][-1] == 'S') and (int(cigar_splitted[0][:-1]) >= minCigarM):
-                    if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == end_seq_len:
-                        qualified_mapping = True
-
-            else:
-                ref_len = ref_subset_len_dict[ref_id]
-                if (len(cigar_splitted) == 1) and (cigar[-1] == 'M') and (int(cigar[:-1]) >= minCigarM):
-                    ref_pos_end = ref_pos + int(cigar[:-1])
-
-                    # left side
+                if ref_id[-2:] == '_l':
                     if ref_pos <= max_gap_to_end:
-                        qualified_mapping = True
-
-                    # right side
-                    elif (ref_len - ref_pos_end) <= max_gap_to_end:
-                        qualified_mapping = True
-
-                if len(cigar_splitted) == 2:
-
-                    # left side
-                    if (cigar_splitted[-1][-1] == 'M') and (cigar_splitted[0][-1] == 'S') and (
-                            int(cigar_splitted[-1][:-1]) >= minCigarM) and (ref_pos == 1):
-                        qualified_mapping = True
-
-                    # right side
-                    elif (cigar_splitted[-0][-1] == 'M') and (cigar_splitted[1][-1] == 'S') and (
-                            int(cigar_splitted[0][:-1]) >= minCigarM):
-                        if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == ref_len:
+                        if (len(cigar_splitted) == 1) and (cigar[-1] == 'M') and (int(cigar[:-1]) >= minCigarM):
                             qualified_mapping = True
 
-            if qualified_mapping is True:
-                qualified_reads_to_ref_dict[read_id] = ref_id
+                        elif (len(cigar_splitted) == 2) and (cigar_splitted[-1][-1] == 'M') and (
+                                cigar_splitted[0][-1] == 'S') and (int(cigar_splitted[-1][:-1]) >= minCigarM) and (
+                                ref_pos == 1):
+                            qualified_mapping = True
 
-                if read_id_base not in qualified_reads_dict:
-                    qualified_reads_dict[read_id_base] = [read_strand]
+                elif ref_id[-2:] == '_r':
+
+                    if (len(cigar_splitted) == 1) and (cigar[-1] == 'M') and (int(cigar[:-1]) >= minCigarM):
+                        ref_pos_end = ref_pos + int(cigar[:-1])
+                        if (end_seq_len - ref_pos_end) <= max_gap_to_end:
+                            qualified_mapping = True
+
+                    elif (len(cigar_splitted) == 2) and (cigar_splitted[0][-1] == 'M') and (
+                            cigar_splitted[1][-1] == 'S') and (int(cigar_splitted[0][:-1]) >= minCigarM):
+                        if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == end_seq_len:
+                            qualified_mapping = True
+
                 else:
-                    qualified_reads_dict[read_id_base].append(read_strand)
+                    ref_len = ref_subset_len_dict[ref_id]
+                    if (len(cigar_splitted) == 1) and (cigar[-1] == 'M') and (int(cigar[:-1]) >= minCigarM):
+                        ref_pos_end = ref_pos + int(cigar[:-1])
+
+                        # left side
+                        if ref_pos <= max_gap_to_end:
+                            qualified_mapping = True
+
+                        # right side
+                        elif (ref_len - ref_pos_end) <= max_gap_to_end:
+                            qualified_mapping = True
+
+                    if len(cigar_splitted) == 2:
+
+                        # left side
+                        if (cigar_splitted[-1][-1] == 'M') and (cigar_splitted[0][-1] == 'S') and (
+                                int(cigar_splitted[-1][:-1]) >= minCigarM) and (ref_pos == 1):
+                            qualified_mapping = True
+
+                        # right side
+                        elif (cigar_splitted[-0][-1] == 'M') and (cigar_splitted[1][-1] == 'S') and (
+                                int(cigar_splitted[0][:-1]) >= minCigarM):
+                            if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == ref_len:
+                                qualified_mapping = True
+
+                if qualified_mapping is True:
+                    qualified_reads_to_ref_dict[read_id] = ref_id
+
+                    if read_id_base not in qualified_reads_dict:
+                        qualified_reads_dict[read_id_base] = [read_strand]
+                    else:
+                        qualified_reads_dict[read_id_base].append(read_strand)
 
     reads_to_extract_to_ref_dict = {}
     for qualified_read in qualified_reads_dict:
@@ -918,6 +921,8 @@ def link_16s(args, config_dict):
     test_mode                           = args['test_mode']
     round_2_spades                      = args['spades']
     mira_tmp_dir                        = args['mira_tmp']
+    run_bbmap                           = args['bbmap']
+    bbmap_memory                        = args['bbmap_mem']
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_makeblastdb_exe                 = 'makeblastdb'
@@ -926,6 +931,7 @@ def link_16s(args, config_dict):
     pwd_bowtie2_exe                     = 'bowtie2'
     pwd_samtools_exe                    = 'samtools'
     pwd_spades_exe                      = 'spades.py'
+    pwd_bbmap_exe                       = 'bbmap.sh'
 
     str_connector = '___'
     reads_iden_cutoff = 100
@@ -987,10 +993,10 @@ def link_16s(args, config_dict):
         else:
             num_threads_SeqIO_convert_worker = 1
 
-        pool = mp.Pool(processes=num_threads_SeqIO_convert_worker)
-        pool.map(SeqIO_convert_worker, [[reads_file_r1, 'fastq', reads_file_r1_fasta, 'fasta-2line'], [reads_file_r2, 'fastq', reads_file_r2_fasta, 'fasta-2line']])
-        pool.close()
-        pool.join()
+        # pool = mp.Pool(processes=num_threads_SeqIO_convert_worker)
+        # pool.map(SeqIO_convert_worker, [[reads_file_r1, 'fastq', reads_file_r1_fasta, 'fasta-2line'], [reads_file_r2, 'fastq', reads_file_r2_fasta, 'fasta-2line']])
+        # pool.close()
+        # pool.join()
 
         # GI dataset
         # reads_file_r1_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI2_HMP/1_filtered_reads/GI_R1.fasta'
@@ -1001,8 +1007,8 @@ def link_16s(args, config_dict):
         # reads_file_r2_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Mariana_Trench/MT1_R2.fasta'
 
         # Kelp dataset
-        # reads_file_r1_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Kelp/reads_filtered/Kelp_R1.fasta'
-        # reads_file_r2_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Kelp/reads_filtered/Kelp_R2.fasta'
+        reads_file_r1_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Kelp/Kelp_R1.fasta'
+        reads_file_r2_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Kelp/Kelp_R2.fasta'
 
     ######################## check genomic sequence type and prepare files for making blast db #########################
 
@@ -1061,6 +1067,9 @@ def link_16s(args, config_dict):
     pwd_log_file                                = '%s/%s.log'                                    % (working_directory, output_prefix)
     bowtie_index_dir                            = '%s/%s_index'                                  % (step_1_wd, marker_gene_seqs_file_basename)
     pwd_samfile                                 = '%s/%s.sam'                                    % (step_1_wd, marker_gene_seqs_file_basename)
+    pwd_samfile_stderr                          = '%s/%s_bbmap_stderr.txt'                       % (step_1_wd, marker_gene_seqs_file_basename)
+    pwd_samfile_to_mag                          = '%s/%s_combined.sam'                           % (step_1_wd, mag_folder_name)
+    pwd_samfile_to_mag_stderr                   = '%s/%s_combined_bbmap_stderr.txt'              % (step_1_wd, mag_folder_name)
     clipping_reads_matched_part                 = '%s/clipping_matched_part.txt'                 % step_1_wd
     clipping_reads_not_matched_part_seq         = '%s/clipping_not_matched_part_seq.fasta'       % step_1_wd
     clipping_reads_not_matched_part_seq_blastn  = '%s/clipping_not_matched_part_seq_blast.txt'   % step_1_wd
@@ -1204,22 +1213,33 @@ def link_16s(args, config_dict):
 
     ######################################## map reads to marker gene sequences ########################################
 
-    # copy marker gene sequence file to index folder
-    report_and_log(('Round 1: Indexing marker gene sequences for mapping'), pwd_log_file, keep_quiet)
-    bowtie2_index_ref_cmd = '%s -f %s/%s%s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
-    os.system(bowtie2_index_ref_cmd)
+    bbmap_parameter         = 'local=t nodisk=t ambiguous=all sam=1.3 keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
+    marker_gene_seqs_in_wd  = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
 
-    # mapping
-    report_and_log(('Round 1: Mapping reads to marker gene sequences'), pwd_log_file, keep_quiet)
-    sleep(1)
-    report_and_log(('Round 1: Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
-    sleep(1)
-    # bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1_fasta, reads_file_r2_fasta, pwd_samfile, num_threads)
-    bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1_fasta, reads_file_r2_fasta, pwd_samfile, num_threads)
-    os.system(bowtie2_mapping_cmd)
-    sleep(1)
-    report_and_log(('Round 1: Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
-    sleep(1)
+    if run_bbmap is False:
+        # copy marker gene sequence file to index folder
+        report_and_log(('Round 1: Indexing marker gene sequences for mapping'), pwd_log_file, keep_quiet)
+        bowtie2_index_ref_cmd = '%s -f %s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, marker_gene_seqs_in_wd, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
+        os.system(bowtie2_index_ref_cmd)
+
+        # mapping
+        report_and_log(('Round 1: Mapping reads to marker gene sequences'), pwd_log_file, keep_quiet)
+        sleep(1)
+        report_and_log(('Round 1: Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
+        sleep(1)
+        # bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1_fasta, reads_file_r2_fasta, pwd_samfile, num_threads)
+        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local -a --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1_fasta, reads_file_r2_fasta, pwd_samfile, num_threads)
+        os.system(bowtie2_mapping_cmd)
+        sleep(1)
+        report_and_log(('Round 1: Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
+        sleep(1)
+
+    else:
+        report_and_log(('Round 1: Mapping reads to marker gene sequences with bbmap'), pwd_log_file, keep_quiet)
+        bbmap_index_and_mapping_cmd = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, marker_gene_seqs_in_wd, reads_file_r1, reads_file_r2, pwd_samfile, bbmap_parameter, pwd_samfile_stderr)
+        report_and_log(('Round 1: Command for running bbmap exported to log file'), pwd_log_file, keep_quiet)
+        report_and_log((bbmap_index_and_mapping_cmd), pwd_log_file, True)
+        os.system(bbmap_index_and_mapping_cmd)
 
 
     ##################################################### extract reads ####################################################
@@ -1235,82 +1255,133 @@ def link_16s(args, config_dict):
     perfectly_mapped_reads_dict = {}
     clipping_reads_not_matched_part_seq_handle = open(clipping_reads_not_matched_part_seq, 'w')
     for each_read in open(pwd_samfile):
-
         if not each_read.startswith('@'):
             each_read_split = each_read.strip().split('\t')
-            read_id = each_read_split[0]
-            read_id_base = '.'.join(read_id.split('.')[:-1])
-            read_strand = read_id.split('.')[-1]
-            ref_id = each_read_split[2]
-            ref_id_with_prefix = 'MarkerGene__%s' % each_read_split[2]
-            ref_pos = int(each_read_split[3])
             cigar = each_read_split[5]
-            read_seq = each_read_split[9]
-            cigar_splitted = cigar_splitter(cigar)
-            read_id_with_ref_pos = '%s__x__%s__x__%s' % (read_id, ref_id, ref_pos)
-            all_mapped_reads_set.add(read_id)
-            treat_as_full_match = False
+            if cigar != '*':
+                read_id = each_read_split[0]
+                read_id_base = '.'.join(read_id.split('.')[:-1])
+                read_strand = read_id.split('.')[-1]
+                ref_id = each_read_split[2]
+                ref_id_with_prefix = 'MarkerGene__%s' % each_read_split[2]
+                ref_pos = int(each_read_split[3])
+                read_seq = each_read_split[9]
+                cigar_splitted = cigar_splitter(cigar)
+                read_id_with_ref_pos = '%s__x__%s__x__%s' % (read_id, ref_id, ref_pos)
+                all_mapped_reads_set.add(read_id)
+                treat_as_full_match = False
 
-            # for perfectly mapped reads, e.g. 150M
-            if ('M' in cigar) and (len(cigar_splitted) == 1):
-                treat_as_full_match = True
+                # for perfectly mapped reads, e.g. 150M
+                if ('M' in cigar) and (len(cigar_splitted) == 1):
+                    treat_as_full_match = True
 
-            # for perfectly mapped reads, e.g. 120M-1D-80M
-            if len(cigar_splitted) == 3:
-                if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M'):
-                    mismatch_ratio = int(cigar_splitted[1][:-1]) * 100 / len(read_seq)
-                    M_pct_l = int(cigar_splitted[0][:-1]) * 100 / len(read_seq)
-                    M_pct_r = int(cigar_splitted[2][:-1]) * 100 / len(read_seq)
-                    if (M_pct_l >= 20) and (M_pct_r >= 20) and (mismatch_ratio <= 0.5):
-                        treat_as_full_match = True
+                # for perfectly mapped reads, e.g. 120M-1D-80M
+                if len(cigar_splitted) == 3:
+                    if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M'):
+                        mismatch_ratio = int(cigar_splitted[1][:-1]) * 100 / len(read_seq)
+                        M_pct_l = int(cigar_splitted[0][:-1]) * 100 / len(read_seq)
+                        M_pct_r = int(cigar_splitted[2][:-1]) * 100 / len(read_seq)
+                        if (M_pct_l >= 20) and (M_pct_r >= 20) and (mismatch_ratio <= 0.5):
+                            treat_as_full_match = True
 
-            if ('S' in cigar) and (len(cigar_splitted) == 2):
-                cigar_M_len = 0
-                cigar_S_len = 0
-                if cigar_splitted[0][-1] == 'M':
-                    cigar_M_len = int(cigar_splitted[0][:-1])
-                    cigar_S_len = int(cigar_splitted[1][:-1])
-                if cigar_splitted[1][-1] == 'M':
-                    cigar_M_len = int(cigar_splitted[1][:-1])
-                    cigar_S_len = int(cigar_splitted[0][:-1])
-
-                cigar_M_pct = cigar_M_len * 100 / (cigar_M_len + cigar_S_len)
-                cigar_S_pct = cigar_S_len * 100 / (cigar_M_len + cigar_S_len)
-
-                # for clipping reads with unmapped part >= min_cigar_S
-                if (cigar_M_pct >= 30) and (cigar_S_pct >= 30):
-                    read_seq_left = read_seq[: int(cigar_splitted[0][:-1])]
-                    read_seq_right = read_seq[-int(cigar_splitted[1][:-1]):]
-
+                if ('S' in cigar) and (len(cigar_splitted) == 2):
+                    cigar_M_len = 0
+                    cigar_S_len = 0
                     if cigar_splitted[0][-1] == 'M':
-
-                        # write out the sequence of unmapped part
-                        clipping_reads_not_matched_part_seq_handle.write('>%s_r\n' % read_id_with_ref_pos)
-                        clipping_reads_not_matched_part_seq_handle.write(read_seq_right + '\n')
-
-                        # store the match info of mapped part
-                        if ('%s_l' % read_id_with_ref_pos) not in clipping_reads_mapped_part_dict:
-                            clipping_reads_mapped_part_dict[('%s_l' % read_id_with_ref_pos)] = [ref_id_with_prefix]
-                        else:
-                            clipping_reads_mapped_part_dict[('%s_l' % read_id_with_ref_pos)].append(ref_id_with_prefix)
-
+                        cigar_M_len = int(cigar_splitted[0][:-1])
+                        cigar_S_len = int(cigar_splitted[1][:-1])
                     if cigar_splitted[1][-1] == 'M':
+                        cigar_M_len = int(cigar_splitted[1][:-1])
+                        cigar_S_len = int(cigar_splitted[0][:-1])
 
-                        # write out the sequence of unmapped part
-                        clipping_reads_not_matched_part_seq_handle.write('>%s_l\n' % read_id_with_ref_pos)
-                        clipping_reads_not_matched_part_seq_handle.write(read_seq_left + '\n')
+                    cigar_M_pct = cigar_M_len * 100 / (cigar_M_len + cigar_S_len)
+                    cigar_S_pct = cigar_S_len * 100 / (cigar_M_len + cigar_S_len)
 
-                        # store the match info of mapped part
-                        if ('%s_r' % read_id_with_ref_pos) not in clipping_reads_mapped_part_dict:
-                            clipping_reads_mapped_part_dict[('%s_r' % read_id_with_ref_pos)] = [ref_id_with_prefix]
+                    # for clipping reads with unmapped part >= min_cigar_S
+                    if (cigar_M_pct >= 30) and (cigar_S_pct >= 30):
+                        read_seq_left = read_seq[: int(cigar_splitted[0][:-1])]
+                        read_seq_right = read_seq[-int(cigar_splitted[1][:-1]):]
+
+                        if cigar_splitted[0][-1] == 'M':
+
+                            # write out the sequence of unmapped part
+                            clipping_reads_not_matched_part_seq_handle.write('>%s_r\n' % read_id_with_ref_pos)
+                            clipping_reads_not_matched_part_seq_handle.write(read_seq_right + '\n')
+
+                            # store the match info of mapped part
+                            if ('%s_l' % read_id_with_ref_pos) not in clipping_reads_mapped_part_dict:
+                                clipping_reads_mapped_part_dict[('%s_l' % read_id_with_ref_pos)] = [ref_id_with_prefix]
+                            else:
+                                clipping_reads_mapped_part_dict[('%s_l' % read_id_with_ref_pos)].append(ref_id_with_prefix)
+
+                        if cigar_splitted[1][-1] == 'M':
+
+                            # write out the sequence of unmapped part
+                            clipping_reads_not_matched_part_seq_handle.write('>%s_l\n' % read_id_with_ref_pos)
+                            clipping_reads_not_matched_part_seq_handle.write(read_seq_left + '\n')
+
+                            # store the match info of mapped part
+                            if ('%s_r' % read_id_with_ref_pos) not in clipping_reads_mapped_part_dict:
+                                clipping_reads_mapped_part_dict[('%s_r' % read_id_with_ref_pos)] = [ref_id_with_prefix]
+                            else:
+                                clipping_reads_mapped_part_dict[('%s_r' % read_id_with_ref_pos)].append(ref_id_with_prefix)
+
+                        clipping_mapped_reads_list.add(read_id)
+
+                    # for clipping reads with unmapped part < min_cigar_S
+                    # treat these reads as perfectly mapped reads
+                    elif (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
+                        if read_id_base not in perfectly_mapped_reads_dict:
+                            perfectly_mapped_reads_dict[read_id_base] = {read_strand: [ref_id_with_prefix]}
                         else:
-                            clipping_reads_mapped_part_dict[('%s_r' % read_id_with_ref_pos)].append(ref_id_with_prefix)
+                            if read_strand not in perfectly_mapped_reads_dict[read_id_base]:
+                                perfectly_mapped_reads_dict[read_id_base][read_strand] = [ref_id_with_prefix]
+                            else:
+                                perfectly_mapped_reads_dict[read_id_base][read_strand].append(ref_id_with_prefix)
 
-                    clipping_mapped_reads_list.add(read_id)
+                elif ('S' in cigar) and (len(cigar_splitted) > 2):
 
-                # for clipping reads with unmapped part < min_cigar_S
-                # treat these reads as perfectly mapped reads
-                elif (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
+                    if ((cigar_splitted[0][-1] == 'M') and (cigar_splitted[-1][-1] == 'S')) or ((cigar_splitted[0][-1] == 'S') and (cigar_splitted[-1][-1] == 'M')):
+
+                        if len(cigar_splitted) == 4:
+
+                            # e.g. 30M-1D-50M-40S
+                            if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M') and (cigar_splitted[3][-1] == 'S'):
+                                mismatch_ratio = int(cigar_splitted[1][:-1]) * 100 / len(read_seq)
+                                if (mismatch_ratio <= mismatch_ratio_max_value) and (int(cigar_splitted[2][:-1]) >= 30):
+                                    cigar_M_pct = (int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1])) * 100 / len(read_seq)
+                                    cigar_S_pct = (int(cigar_splitted[3][:-1])) * 100 / len(read_seq)
+                                    if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
+                                        treat_as_full_match = True
+
+                            # e.g. 40S-30M-1D-50M
+                            if (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M') and (cigar_splitted[3][-1] == 'M'):
+                                mismatch_ratio = int(cigar_splitted[2][:-1]) * 100 / len(read_seq)
+                                if (mismatch_ratio <= mismatch_ratio_max_value) and (int(cigar_splitted[1][:-1]) >= 30):
+                                    cigar_M_pct = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1])) * 100 / len(read_seq)
+                                    cigar_S_pct = (int(cigar_splitted[0][:-1])) * 100 / len(read_seq)
+                                    if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
+                                        treat_as_full_match = True
+
+                        # elif len(cigar_splitted) == 6:
+                        #     if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M') and (cigar_splitted[4][-1] == 'M') and (cigar_splitted[5][-1] == 'S'):
+                        #         mismatch_ratio = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1])) * 100 / len(read_seq)
+                        #         if mismatch_ratio <= mismatch_ratio_max_value:
+                        #             cigar_M_pct = (int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1]) + int(cigar_splitted[4][:-1])) * 100 / len(read_seq)
+                        #             cigar_S_pct = (int(cigar_splitted[5][:-1])) * 100 / len(read_seq)
+                        #             if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (
+                        #                     cigar_S_pct < perfect_match_max_cigar_S_pct):
+                        #                 treat_as_full_match = True
+                        #
+                        #     if (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M') and (cigar_splitted[3][-1] == 'M') and (cigar_splitted[5][-1] == 'M'):
+                        #         mismatch_ratio = (int(cigar_splitted[2][:-1]) + int(cigar_splitted[4][:-1])) * 100 / len(read_seq)
+                        #         if mismatch_ratio <= mismatch_ratio_max_value:
+                        #             cigar_M_pct = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1]) + int(cigar_splitted[5][:-1])) * 100 / len(read_seq)
+                        #             cigar_S_pct = (int(cigar_splitted[0][:-1])) * 100 / len(read_seq)
+                        #             if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
+                        #                 treat_as_full_match = True
+
+                if treat_as_full_match is True:
                     if read_id_base not in perfectly_mapped_reads_dict:
                         perfectly_mapped_reads_dict[read_id_base] = {read_strand: [ref_id_with_prefix]}
                     else:
@@ -1318,58 +1389,6 @@ def link_16s(args, config_dict):
                             perfectly_mapped_reads_dict[read_id_base][read_strand] = [ref_id_with_prefix]
                         else:
                             perfectly_mapped_reads_dict[read_id_base][read_strand].append(ref_id_with_prefix)
-
-            elif ('S' in cigar) and (len(cigar_splitted) > 2):
-
-                if ((cigar_splitted[0][-1] == 'M') and (cigar_splitted[-1][-1] == 'S')) or ((cigar_splitted[0][-1] == 'S') and (cigar_splitted[-1][-1] == 'M')):
-
-                    if len(cigar_splitted) == 4:
-
-                        # e.g. 30M-1D-50M-40S
-                        if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M') and (cigar_splitted[3][-1] == 'S'):
-                            mismatch_ratio = int(cigar_splitted[1][:-1]) * 100 / len(read_seq)
-                            if (mismatch_ratio <= mismatch_ratio_max_value) and (int(cigar_splitted[2][:-1]) >= 30):
-                                cigar_M_pct = (int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1])) * 100 / len(read_seq)
-                                cigar_S_pct = (int(cigar_splitted[3][:-1])) * 100 / len(read_seq)
-                                if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
-                                    treat_as_full_match = True
-
-                        # e.g. 40S-30M-1D-50M
-                        if (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M') and (cigar_splitted[3][-1] == 'M'):
-                            mismatch_ratio = int(cigar_splitted[2][:-1]) * 100 / len(read_seq)
-                            if (mismatch_ratio <= mismatch_ratio_max_value) and (int(cigar_splitted[1][:-1]) >= 30):
-                                cigar_M_pct = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1])) * 100 / len(read_seq)
-                                cigar_S_pct = (int(cigar_splitted[0][:-1])) * 100 / len(read_seq)
-                                if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
-                                    treat_as_full_match = True
-
-                    # elif len(cigar_splitted) == 6:
-                    #
-                    #     if (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M') and (cigar_splitted[4][-1] == 'M') and (cigar_splitted[5][-1] == 'S'):
-                    #         mismatch_ratio = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1])) * 100 / len(read_seq)
-                    #         if mismatch_ratio <= mismatch_ratio_max_value:
-                    #             cigar_M_pct = (int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1]) + int(cigar_splitted[4][:-1])) * 100 / len(read_seq)
-                    #             cigar_S_pct = (int(cigar_splitted[5][:-1])) * 100 / len(read_seq)
-                    #             if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (
-                    #                     cigar_S_pct < perfect_match_max_cigar_S_pct):
-                    #                 treat_as_full_match = True
-                    #
-                    #     if (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == 'M') and (cigar_splitted[3][-1] == 'M') and (cigar_splitted[5][-1] == 'M'):
-                    #         mismatch_ratio = (int(cigar_splitted[2][:-1]) + int(cigar_splitted[4][:-1])) * 100 / len(read_seq)
-                    #         if mismatch_ratio <= mismatch_ratio_max_value:
-                    #             cigar_M_pct = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1]) + int(cigar_splitted[5][:-1])) * 100 / len(read_seq)
-                    #             cigar_S_pct = (int(cigar_splitted[0][:-1])) * 100 / len(read_seq)
-                    #             if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
-                    #                 treat_as_full_match = True
-
-            if treat_as_full_match is True:
-                if read_id_base not in perfectly_mapped_reads_dict:
-                    perfectly_mapped_reads_dict[read_id_base] = {read_strand: [ref_id_with_prefix]}
-                else:
-                    if read_strand not in perfectly_mapped_reads_dict[read_id_base]:
-                        perfectly_mapped_reads_dict[read_id_base][read_strand] = [ref_id_with_prefix]
-                    else:
-                        perfectly_mapped_reads_dict[read_id_base][read_strand].append(ref_id_with_prefix)
 
     clipping_reads_not_matched_part_seq_handle.close()
 
@@ -1419,23 +1438,25 @@ def link_16s(args, config_dict):
     report_and_log(('Round 1: Making blastn database'), pwd_log_file, keep_quiet)
     os.system(makeblastdb_cmd)
 
-    report_and_log(('Round 1: Running blastn for unmapped paired reads'), pwd_log_file, keep_quiet)
-    #os.system(blastn_cmd_paired)
+    # report_and_log(('Round 1: Running blastn for unmapped paired reads'), pwd_log_file, keep_quiet)
+    # os.system(blastn_cmd_paired)
 
     report_and_log(('Round 1: Running blastn for unmapped parts of clipping mapped reads'), pwd_log_file, keep_quiet)
     os.system(blastn_cmd_clipping)
 
+    if run_bbmap is False:
+        report_and_log(('Round 1: Mapping extracted reads to genomic sequences with Bowtie'), pwd_log_file, keep_quiet)
+        bowtie2_index_mag_cmd = '%s -f %s %s --quiet --threads %s'  % (pwd_bowtie2_build_exe, blast_db, blast_db_no_ext, num_threads)
+        os.system(bowtie2_index_mag_cmd)
+        bowtie2_mapping_cmd_mag = '%s -x %s -U %s -S %s -f --local -a --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, blast_db_no_ext, unmapped_paired_reads_file, pwd_samfile_to_mag, num_threads)
+        os.system(bowtie2_mapping_cmd_mag)
 
-    ####################
-    # or by mapping instead:
-    bowtie2_index_mag_cmd = '%s -f %s %s --quiet --threads %s'  % (pwd_bowtie2_build_exe, blast_db, blast_db_no_ext, num_threads)
-    os.system(bowtie2_index_mag_cmd)
-
-    # mapping
-    report_and_log(('Round 1: Mapping extracted reads to genomic sequences'), pwd_log_file, keep_quiet)
-    pwd_samfile_to_mag = '%s.sam' % blast_db_no_ext
-    bowtie2_mapping_cmd_mag = '%s -x %s -U %s -S %s -f --local --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, blast_db_no_ext, unmapped_paired_reads_file, pwd_samfile_to_mag, num_threads)
-    os.system(bowtie2_mapping_cmd_mag)
+    else:
+        report_and_log(('Round 1: Mapping extracted reads to genomic sequences with bbmap'), pwd_log_file, keep_quiet)
+        bbmap_index_and_mapping_cmd_to_mag = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, blast_db, unmapped_paired_reads_file, pwd_samfile_to_mag, bbmap_parameter, pwd_samfile_to_mag_stderr)
+        report_and_log(('Round 1: Command for running bbmap exported to log file'), pwd_log_file, keep_quiet)
+        report_and_log((bbmap_index_and_mapping_cmd_to_mag), pwd_log_file, True)
+        os.system(bbmap_index_and_mapping_cmd_to_mag)
 
 
     ######################################### parse blast results for paired reads #########################################
@@ -1631,10 +1652,10 @@ def link_16s(args, config_dict):
     ############################################### get reads to extract ###############################################
 
     report_and_log(('Round 2: get unmapped reads with mates mapped to contig ends'), pwd_log_file, keep_quiet)
-    reads_to_extract_to_ref_dict_gnm = get_free_living_mate(combined_1st_round_unlinked_mags, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads)
+    reads_to_extract_to_ref_dict_gnm = get_free_living_mate(combined_1st_round_unlinked_mags, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads, run_bbmap, pwd_bbmap_exe, bbmap_memory)
 
     report_and_log(('Round 2: get unmapped reads with mates mapped to 16S ends'), pwd_log_file, keep_quiet)
-    reads_to_extract_to_ref_dict_16s = get_free_living_mate(marker_gene_seqs_1st_round_unlinked, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads)
+    reads_to_extract_to_ref_dict_16s = get_free_living_mate(marker_gene_seqs_1st_round_unlinked, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads, run_bbmap, pwd_bbmap_exe, bbmap_memory)
 
     # write out free_living_mate_gnm
     free_living_mate_gnm_handle = open(free_living_mate_gnm, 'w')
@@ -1880,7 +1901,7 @@ def link_16s(args, config_dict):
 
 
     ####################################################################################################################
-    ####################################### combine linkages from the two steps ########################################
+    ####################################### combine linkages from step 1 and 2  ########################################
     ####################################################################################################################
 
     report_and_log(('Combining linkages from step 1 and 2'), pwd_log_file, keep_quiet)
@@ -2009,8 +2030,8 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-s1_mi',           required=False, type=float,    default=98,         help='within genome 16S identity cutoff, default: 98')
     link_16s_parser.add_argument('-s1_mc',           required=False, type=float,    default=30,         help='alignment coverage cutoff for calculating 16S identity, default: 30')
     link_16s_parser.add_argument('-s1_ma',           required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
-    link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=10,         help='minimum number of paired reads provided linkages to report, default: 10')
-    link_16s_parser.add_argument('-s1_mplu',         required=False, type=int,      default=5,          help='minimum number of paired reads provided linkages to report (for uniq linked 16S, default: 5')
+    link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=5,         help='minimum number of paired reads provided linkages to report, default: 5')
+    link_16s_parser.add_argument('-s1_mplu',         required=False, type=int,      default=3,          help='minimum number of paired reads provided linkages to report (for uniq linked 16S, default: 3')
     link_16s_parser.add_argument('-s2_m',            required=False, type=int,      default=50,         help='minCigarM, default: 50')
     link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=300,        help='max_gap_to_end, default: 300')
     link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
@@ -2020,6 +2041,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-tmp',             required=False, action="store_true",               help='keep temporary files')
     link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",               help='only for debugging, do not provide')
     link_16s_parser.add_argument('-bbmap',           required=False, action="store_true",               help='run bbmap, instead of bowtie')
+    link_16s_parser.add_argument('-bbmap_mem',       required=False, type=int,      default=10,         help='bbmap memory allocation (in gigabyte), default: 10')
     link_16s_parser.add_argument('-mira_tmp',        required=False, default=None,                      help='tmp dir for mira')
     link_16s_parser.add_argument('-spades',          required=False, action="store_true",               help='run spades, instead of Mira')
 
@@ -2042,29 +2064,21 @@ To_do = '''
 14. check if spades failed 
 16. check Mira tmp_dir at the beginning
 
-
-# on Mac
-export PATH=/Users/songweizhi/Softwares/bowtie2:$PATH
-export PATH=/Users/songweizhi/Softwares/usearch:$PATH
-export PATH=/Users/songweizhi/Softwares/samtools-1.11/bin:$PATH
-cd /Users/songweizhi/Desktop/MarkerMAG_wd/Mac_test
-~/PycharmProjects/MarkerMAG/MarkerMAG/link_16s.py -p Test_0.1 -r1 combined_5x_R1_0.1.fasta -r2 combined_5x_R2_0.1.fasta -r16s ISS_2x_even_16S_reads.fasta -m combined_16S.ffn -mag ref_genomes -x fna -t 4 -tmp -force -test_mode
-~/PycharmProjects/MarkerMAG/MarkerMAG/link_16s.py -p Test -r1 combined_5x_R1.fasta -r2 combined_5x_R2.fasta -r16s ISS_5x_even.fasta -m combined_16S.ffn -mag ref_genomes -x fna -t 4 -tmp -force -test_mode
-
 # on Katana
-module unload python
 module load python/3.7.3
 source ~/mypython3env/bin/activate
-module unload R
 module load R/4.0.2
 module load blast+/2.9.0
 module load bowtie/2.3.5.1
 module load samtools/1.10
 module load spades/3.14.0
-cd /srv/scratch/z5039045/MarkerMAG_wd/MBARC26
-python3 link_16s.py -p Test_s2g100 -mi 98 -s2g 100 -mc 30 -mpl 10 -r1 MBARC26_R1.fasta -r2 MBARC26_R2.fasta -r16s MBARC26_Matam16S_wd/MBARC26.fasta -m MBARC26_Matam16S_wd/MBARC26_all_depth_assemblies.dereplicated_99.5_500bp.fasta -mag /srv/scratch/z5039045/MarkerMAG_wd/MBARC26/link_mag_ref_wd_spade/Refined_refined_bins_renamed -x fna -t 16 -tmp -test_mode -force -depth 0
-python3 link_16s.py -p Test_s2g200 -mi 98 -s2g 200 -mc 30 -mpl 10 -r1 MBARC26_R1.fasta -r2 MBARC26_R2.fasta -r16s MBARC26_Matam16S_wd/MBARC26.fasta -m MBARC26_Matam16S_wd/MBARC26_all_depth_assemblies.dereplicated_99.5_500bp.fasta -mag /srv/scratch/z5039045/MarkerMAG_wd/MBARC26/link_mag_ref_wd_spade/Refined_refined_bins_renamed -x fna -t 16 -tmp -test_mode -force -depth 0
-python3 link_16s.py -p Two_Steps_0.03 -mi 98 -mc 30 -mpl 10 -r1 MBARC26_R1_0.05.fasta -r2 MBARC26_R2_0.05.fasta -r16s MBARC26_Matam16S_wd/MBARC26.fasta -m MBARC26_Matam16S_wd/MBARC26_all_depth_assemblies.dereplicated_99.5_500bp.fasta -mag /srv/scratch/z5039045/MarkerMAG_wd/MBARC26/link_mag_ref_wd_spade/Refined_refined_bins_renamed -x fna -t 16 -tmp -test_mode -force -depth 0
+module load gcc/8.4.0
+module load boost/1.73.0-gcc8   
+module load mira/v5rc2
+module load java/8u201-jdk
+module load bbmap/38.51
+cd /srv/scratch/z5039045/MarkerMAG_wd/Kelp
+python3 link_16s.py -p Kelp_0.999_bbmap -r1 Kelp_R1.fastq -r2 Kelp_R2.fastq -marker BH_ER_050417_Matam16S_wd/BH_ER_050417_assembled_16S_uclust_0.999.fasta -mag BH_ER_050417_refined_bins -x fasta -t 6 -tmp -force -mira_tmp $TMPDIR -bbmap
 
 '''
 
