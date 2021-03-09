@@ -934,11 +934,12 @@ def link_16s(args, config_dict):
     pwd_bbmap_exe                       = 'bbmap.sh'
 
     str_connector = '___'
-    reads_iden_cutoff = 100
-    reads_cov_cutoff = 90
-    perfect_match_min_cigar_M_pct = 80
-    perfect_match_max_cigar_S_pct = 20
-    end_seq_len = 3000
+    reads_iden_cutoff = 100             # %
+    reads_cov_cutoff = 90               # %
+    perfect_match_min_cigar_M_len = 50  # bp
+    perfect_match_min_cigar_M_pct = 80  # %
+    perfect_match_max_cigar_S_pct = 20  # %
+    end_seq_len = 3000                  # bp
 
     ################################################ check dependencies ################################################
 
@@ -1106,7 +1107,8 @@ def link_16s(args, config_dict):
     spades_wd                                   = '%s/combined_free_living_reads_SPAdes_wd'      % step_2_wd
     mira_manifest                               = '%s/mira_manifest.txt'                         % step_2_wd
     mira_stdout                                 = '%s/mira_stdout.txt'                           % step_2_wd
-    sam_file                                    = '%s/scaffolds.sam'                             % step_2_wd
+    sam_file_mini_assembly                      = '%s/scaffolds.sam'                             % step_2_wd
+    sam_file_mini_assembly_stderr               = '%s/scaffolds_bbmap_stderr.txt'                % step_2_wd
     stats_GapFilling_file_16s                   = '%s/stats_GapFilling_16s.txt'                  % step_2_wd
     stats_GapFilling_file_ctg                   = '%s/stats_GapFilling_ctg.txt'                  % step_2_wd
     stats_GapFilling_file_filtered_16s          = '%s/stats_GapFilling_16s_filtered.txt'         % step_2_wd
@@ -1330,14 +1332,15 @@ def link_16s(args, config_dict):
 
                     # for clipping reads with unmapped part < min_cigar_S
                     # treat these reads as perfectly mapped reads
-                    elif (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
-                        if read_id_base not in perfectly_mapped_reads_dict:
-                            perfectly_mapped_reads_dict[read_id_base] = {read_strand: [ref_id_with_prefix]}
-                        else:
-                            if read_strand not in perfectly_mapped_reads_dict[read_id_base]:
-                                perfectly_mapped_reads_dict[read_id_base][read_strand] = [ref_id_with_prefix]
+                    if cigar_M_len >= perfect_match_min_cigar_M_len:
+                        if (cigar_M_pct >= perfect_match_min_cigar_M_pct) and (cigar_S_pct < perfect_match_max_cigar_S_pct):
+                            if read_id_base not in perfectly_mapped_reads_dict:
+                                perfectly_mapped_reads_dict[read_id_base] = {read_strand: [ref_id_with_prefix]}
                             else:
-                                perfectly_mapped_reads_dict[read_id_base][read_strand].append(ref_id_with_prefix)
+                                if read_strand not in perfectly_mapped_reads_dict[read_id_base]:
+                                    perfectly_mapped_reads_dict[read_id_base][read_strand] = [ref_id_with_prefix]
+                                else:
+                                    perfectly_mapped_reads_dict[read_id_base][read_strand].append(ref_id_with_prefix)
 
                 elif ('S' in cigar) and (len(cigar_splitted) > 2):
 
@@ -1766,12 +1769,17 @@ def link_16s(args, config_dict):
         mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
 
 
-    report_and_log(('Round 2: mapping extracted reads to mini assemblies'), pwd_log_file, keep_quiet)
-    mini_assemblies_no_ext = '.'.join(mini_assemblies.split('.')[:-1])
-    index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (pwd_bowtie2_build_exe, mini_assemblies, mini_assemblies_no_ext, num_threads)
-    mapping_cmd = '%s -x %s -U %s -S %s --threads %s -f --quiet' % (pwd_bowtie2_exe, mini_assemblies_no_ext, extracted_reads_cbd_fasta, sam_file, num_threads)
-    os.system(index_ref_cmd)
-    os.system(mapping_cmd)
+    if run_bbmap is False:
+        report_and_log(('Round 2: mapping extracted reads to mini assemblies with Bowtie'), pwd_log_file, keep_quiet)
+        mini_assemblies_no_ext = '.'.join(mini_assemblies.split('.')[:-1])
+        index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (pwd_bowtie2_build_exe, mini_assemblies, mini_assemblies_no_ext, num_threads)
+        mapping_cmd = '%s -x %s -U %s -S %s --threads %s -f --quiet' % (pwd_bowtie2_exe, mini_assemblies_no_ext, extracted_reads_cbd_fasta, sam_file_mini_assembly, num_threads)
+        os.system(index_ref_cmd)
+        os.system(mapping_cmd)
+    else:
+        report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
+        bbmap_cmd_miniassembly = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, extracted_reads_cbd_fasta, sam_file_mini_assembly, bbmap_parameter, sam_file_mini_assembly_stderr)
+        os.system(bbmap_cmd_miniassembly)
 
 
     #################################################### parse sam file ####################################################
@@ -1779,7 +1787,7 @@ def link_16s(args, config_dict):
     report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
 
     gap_seq_to_reads_dict = {}
-    for each_line in open(sam_file):
+    for each_line in open(sam_file_mini_assembly):
         if not each_line.startswith('@'):
             each_line_split = each_line.strip().split('\t')
             read_id = each_line_split[0]
@@ -1791,6 +1799,9 @@ def link_16s(args, config_dict):
                     gap_seq_to_reads_dict[ref_id] = [read_id]
                 else:
                     gap_seq_to_reads_dict[ref_id].append(read_id)
+
+            # allow one mismatch
+            # elif
 
 
     report_and_log(('Round 2: linking genomes/16Ss to Spades assemblies'), pwd_log_file, keep_quiet)
@@ -2052,7 +2063,7 @@ if __name__ == '__main__':
 
 To_do = '''
 
-1. where do the mates of  clipping mapped read mapped to? (should take into consideration!!!)
+1. where do the mates of clipping mapped read mapped to? (should take into consideration!!!)
 2. how to incorporate the taxonomy of MAGs and 16S sequences
 4. the depth of 16S sequences always not lower than the genome they come from
 5. split sam file

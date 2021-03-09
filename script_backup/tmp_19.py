@@ -199,3 +199,4 @@ for perfectly_mapped_read in perfectly_mapped_reads_dict:
 
 
 print(perfectly_mapped_read_singleton_dict)
+

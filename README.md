@@ -69,7 +69,7 @@ Important Notes :warning::warning::warning:
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module. 
    
-    All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same :warning:.
+    Example: All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same :warning:.
 
        MarkerMAG rename_reads -r1 R1.fastq -r2 R2.fastq -p soil -fq -t 2
         
@@ -80,21 +80,24 @@ Important Notes :warning::warning::warning:
 1. The reconstruction of 16S rRNA genes by Matam is highly affected by sequencing depth ([ref](to/be/added)), we thus recommend to 
    run Matam on reads subsets subsampled at different percentage and combine assemblies at all depth, followed by dereplication.
 
-   The following command extracts 16S rRNA reads from `combined_paired_reads.fasta` and subsample at percentage of `1, 5, 10, 25, 50 and 75`.
-   16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.5%`.
+   The following command extracts 16S rRNA reads from `combined_paired_reads.fasta` and subsample at percentage of `1, 5, 10, 25, 50, 75 and 100`.
+   16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.9%`.
    The longest sequence from each cluster will be kept.  
         
-       # convert fastq files fasta files with idba
+       # convert fastq files fasta files (e.g. with idba's fq2fa)
        fq2fa R1.fastq R1.fasta
        fq2fa R2.fastq R2.fasta
-       MarkerMAG matam_16s -p Soil -r1 R1.fasta -r2 R2.fasta -pct 1,5,10,25,50,75,100 -i 0.995 -t 12 -force -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95
+       MarkerMAG matam_16s -p Soil -r1 R1.fasta -r2 R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -t 12 -force
+
+2. All MAGs derived from a set should be included in MarkerMAG run. (more details need to be added)
+
 
 How to run:
 ---
 
 + Link 16S rRNA gene sequences with MAGs: 
 
-      MarkerMAG link -p Soil -r1 R1.fastq -r2 R2.fastq -marker Soil_16S_uclust_0.995.fasta -mag refined_MAG -x fasta -t 12 -tmp -force
+      MarkerMAG link -p Soil -r1 R1.fastq -r2 R2.fastq -marker Soil_16S_uclust_0.999.fasta -mag refined_MAG -x fasta -t 12 -tmp -force
 
 
 Output files:
@@ -102,14 +105,16 @@ Output files:
 
 1. Linkage table
 
-    | Marker | Genome | Paired | Clipping |
+    | MarkerGene | Genome | Linkages | Step |
     |:---:|:---:|:---:|:---:|
-    | g4_00414 | bin_g4 | 196 | 139 |
-    | o3_02626 | bin_o3 | 100 | 81 |
-    | s4_04216 | bin_s4 | 97 | 39 |
-    | s4_00580 | bin_s4 | 84 | 41 |
-    | o2_01394 | bin_o2 | 58 | 0 |
-
+    | Soil_subsample_10_56   | Refined_MAG_26| 65| S1 |
+    | Soil_subsample_25_66   | Refined_MAG_19| 23| S1 |
+    | Soil_subsample_100_322 | Refined_MAG_47| 10| S1 |
+    | Soil_subsample_75_284  | Refined_MAG_5 | 5 | S1 |
+    | Soil_subsample_100_563 | Refined_MAG_26| 3 | S1 |
+    | Soil_subsample_100_133 | Refined_MAG_42| 30| S2 |
+    | Soil_subsample_100_133 | Refined_MAG_42| 11| S2 |
+    | Soil_subsample_100_262 | Refined_MAG_31| 7 | S2 |
 
 1. Visualization of linkages
 ![linkages](images/linkage.png) 
