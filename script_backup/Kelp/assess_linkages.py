@@ -29,6 +29,7 @@ linkage_file        = '%s/Kelp_0.999_combined_linkages.txt'                     
 linkage_file        = '%s/Kelp_0.999_aa_combined_linkages.txt'                      % wd
 linkage_file        = '%s/Kelp_0.999_bbmap_combined_linkages.txt'                   % wd
 linkage_file        = '%s/Kelp_0.999_bbmap_all_steps_combined_linkages.txt'         % wd
+linkage_file        = '%s/Kelp_0.999_bbmap_60_40_combined_linkages.txt'         % wd
 
 ################################################### define file name ###################################################
 
@@ -192,6 +193,18 @@ order	45/49(91.84)
 family	43/49(87.76)
 genus	32/49(65.31)
 Unclassified MAG/16S: 2
+
+
+Linkage accuracy (60_40):
+phylum	53/53(100.0)
+class	53/53(100.0)
+order	49/53(92.45)
+family	47/53(88.68)
+genus	35/53(66.04)
+Unclassified MAG/16S: 3
+
+
+
 
 '''
 

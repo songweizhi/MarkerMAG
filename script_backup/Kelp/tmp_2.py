@@ -32,21 +32,38 @@ for each_line in open(sam_file_mini_assembly):
         ref_id = each_line_split[2]
         cigar = each_line_split[5]
         cigar_splitted = cigar_splitter(cigar)
+
+        qualified_mapping = False
         if (len(cigar_splitted) == 1) and (cigar[-1] == 'M'):
+            qualified_mapping = True
+            print(each_line_split)
+        # allow one mismatch
+        elif (len(cigar_splitted) == 3) and (cigar_splitted[0][-1] == 'M') and (cigar_splitted[2][-1] == 'M'):
+            left_m_len = int(cigar_splitted[0][:-1])
+            mismatch_len = int(cigar_splitted[1][:-1])
+            right_m_len = int(cigar_splitted[2][:-1])
+            read_len = left_m_len + right_m_len + mismatch_len
+            left_m_pct = left_m_len*100/read_len
+            right_m_pct = right_m_len*100/read_len
+            if (left_m_len >= 30) and (right_m_len >= 30) and (left_m_pct >= 25) and (right_m_pct >= 25) and (mismatch_len <= 1):
+                qualified_mapping = True
+
+            else:
+                pass
+                #print(each_line_split)
+
+        # elif len(cigar_splitted) == 4:
+
+
+
+        if qualified_mapping is True:
             if ref_id not in gap_seq_to_reads_dict:
                 gap_seq_to_reads_dict[ref_id] = [read_id]
             else:
                 gap_seq_to_reads_dict[ref_id].append(read_id)
 
-        elif (len(cigar_splitted) == 3):
-
-
-            if () and ():
-                print(cigar_splitted)
 
 
 
-        # allow one mismatch
-        # elif
-
-print(len(gap_seq_to_reads_dict))
+# print(gap_seq_to_reads_dict)
+# print(len(gap_seq_to_reads_dict))
