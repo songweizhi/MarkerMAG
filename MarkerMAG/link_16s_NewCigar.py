@@ -880,7 +880,6 @@ def get_accuracy_by_genome(file_in, mag_folder, mag_file_extension):
     mag_file_list           = [os.path.basename(file_name) for file_name in glob.glob(mag_file_re)]
     mag_file_list_no_ext    = {'.'.join(i.split('.')[:-1]) for i in mag_file_list}
 
-
     genome_with_right_16s_assignment_tmp = set()
     genome_with_wrong_16s_assignment = set()
     for each_match in open(file_in):
@@ -1133,6 +1132,7 @@ def link_16s(args, config_dict):
     depth_file_16s                              = '%s/mean_depth_16s.txt'                        % step_1_wd
 
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
+    bbmap_parameter  = 'local=t nodisk=t ambiguous=all keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
 
 
     ################################################# step 2 #################################################
@@ -1256,7 +1256,6 @@ def link_16s(args, config_dict):
 
     ######################################## map reads to marker gene sequences ########################################
 
-    bbmap_parameter         = 'local=t nodisk=t ambiguous=all keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
     marker_gene_seqs_in_wd  = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
 
     if run_bbmap is False:
