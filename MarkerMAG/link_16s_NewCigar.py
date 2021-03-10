@@ -257,7 +257,7 @@ def get_cigar_matched_and_mismatch_pct(cigar):
             matched_seq_len += each_part_len
 
         # get mismatched part len
-        if each_part_cate in {'I', 'X'}:
+        if each_part_cate in {'I', 'X', 'D'}:
             mismatched_seq_len += each_part_len
 
     matched_pct    = float("{0:.2f}".format(matched_seq_len*100/total_len_with_s))
@@ -448,6 +448,29 @@ def paired_blast_results_to_dict_by_mapping(unmapped_paired_reads_mapping_result
 
                 # add to dict
                 if qualified_unmapped_read is True:
+                    if read_id not in unmapped_paired_reads_to_ctg_dict_by_mapping:
+                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id] = [ref_id_with_prefix]
+                    else:
+                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id].append(ref_id_with_prefix)
+
+    return unmapped_paired_reads_to_ctg_dict_by_mapping
+
+
+def paired_blast_results_to_dict_by_mapping_new(unmapped_paired_reads_mapping_results, perfect_match_min_cigar_M_pct, global_max_mismatch_pct):
+
+    unmapped_paired_reads_to_ctg_dict_by_mapping = {}
+    for unmapped_read in open(unmapped_paired_reads_mapping_results):
+
+        if not unmapped_read.startswith('@'):
+            unmapped_read_split = unmapped_read.strip().split('\t')
+            cigar = unmapped_read_split[5]
+            if cigar != '*':
+                read_id = unmapped_read_split[0]
+                ref_id_with_prefix = 'GenomicSeq__%s' % unmapped_read_split[2]
+                cigar_match_pct, cigar_mismatch_pct = get_cigar_matched_and_mismatch_pct(cigar)
+
+                if (cigar_match_pct >= perfect_match_min_cigar_M_pct) and (cigar_mismatch_pct <= global_max_mismatch_pct):
+
                     if read_id not in unmapped_paired_reads_to_ctg_dict_by_mapping:
                         unmapped_paired_reads_to_ctg_dict_by_mapping[read_id] = [ref_id_with_prefix]
                     else:
@@ -671,7 +694,7 @@ def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, fil
     file_out_intersect_linkages_handle.close()
 
 
-def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max_gap_to_end, bowtie_build_exe, bowtie2_exe, num_threads, run_bbmap, pwd_bbmap_exe, bbmap_memory):
+def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct):
 
     ref_in_path, ref_in_basename, ref_in_ext = sep_path_basename_ext(ref_in)
 
@@ -680,15 +703,15 @@ def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max
     bbmap_stderr    = '%s/%s_ends_%sbp_bbmap_stderr.txt' % (ref_in_path, ref_in_basename, end_seq_len)
 
     # get ref seqs subset
-    ref_subset_len_dict = {}
     ref_subset_handle = open(ref_subset, 'w')
     for ref_seq in SeqIO.parse(ref_in, 'fasta'):
+
         ref_seq_id = ref_seq.id
         ref_seq_len = len(ref_seq.seq)
+
         if ref_seq_len < end_seq_len * 3:
             ref_subset_handle.write('>%s\n' % ref_seq_id)
             ref_subset_handle.write('%s\n' % ref_seq.seq)
-            ref_subset_len_dict[ref_seq_id] = ref_seq_len
         else:
             ref_seq_left_end_id = '%s_l' % ref_seq_id
             ref_seq_right_end_id = '%s_r' % ref_seq_id
@@ -704,236 +727,70 @@ def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max
             ref_subset_handle.write('%s\n' % ref_seq_right_end)
     ref_subset_handle.close()
 
-    # mapping with bowtie or bbmap
-    if run_bbmap is False:
-        ref_subset_no_ext = '.'.join(ref_subset.split('.')[:-1])
-        bowtie2_index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (bowtie_build_exe, ref_subset, ref_subset_no_ext, num_threads)
-        bowtie2_mapping_cmd = '%s -x %s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (bowtie2_exe, ref_subset_no_ext, reads_r1, reads_r2, sam_file, num_threads)
-        os.system(bowtie2_index_ref_cmd)
-        os.system(bowtie2_mapping_cmd)
-    else:
-        bbmap_parameter_round2 = 'local=t nodisk=t ambiguous=all keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
-        bbmap_cmd_round2 = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, ref_subset, reads_r1, reads_r2, sam_file, bbmap_parameter_round2, bbmap_stderr)
-        os.system(bbmap_cmd_round2)
+    # mapping with bbmap
+    bbmap_parameter_round2 = 'local=t nodisk=t ambiguous=all keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
+    bbmap_cmd_round2 = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, ref_subset, reads_r1, reads_r2, sam_file, bbmap_parameter_round2, bbmap_stderr)
+    os.system(bbmap_cmd_round2)
 
     # parse sam file
     all_mapped_reads = set()
     qualified_reads_dict = {}
     qualified_reads_to_ref_dict = {}
+    ref_in_sam_len_dict = {}
     for each_line in open(sam_file):
-        if not each_line.startswith('@'):
-            each_line_split = each_line.strip().split('\t')
-            cigar = each_line_split[5]
-
-            if cigar != '*':
-                read_id = each_line_split[0]
-                read_id_base = '.'.join(read_id.split('.')[:-1])
-                read_strand = read_id.split('.')[-1]
-                ref_id = each_line_split[2]
-                ref_pos = int(each_line_split[3])
-                cigar_splitted = cigar_splitter(cigar)
-                all_mapped_reads.add(read_id)
-                qualified_mapping = False
-
-                if ref_id[-2:] == '_l':
-                    if ref_pos <= max_gap_to_end:
-                        if (len(cigar_splitted) == 1) and (cigar[-1] == '=') and (int(cigar[:-1]) >= minCigarM):
-                            qualified_mapping = True
-
-                        elif (len(cigar_splitted) == 2) and (cigar_splitted[-1][-1] == '=') and (
-                                cigar_splitted[0][-1] == 'S') and (int(cigar_splitted[-1][:-1]) >= minCigarM) and (
-                                ref_pos == 1):
-                            qualified_mapping = True
-
-                elif ref_id[-2:] == '_r':
-
-                    if (len(cigar_splitted) == 1) and (cigar[-1] == '=') and (int(cigar[:-1]) >= minCigarM):
-                        ref_pos_end = ref_pos + int(cigar[:-1])
-                        if (end_seq_len - ref_pos_end) <= max_gap_to_end:
-                            qualified_mapping = True
-
-                    elif (len(cigar_splitted) == 2) and (cigar_splitted[0][-1] == '=') and (
-                            cigar_splitted[1][-1] == 'S') and (int(cigar_splitted[0][:-1]) >= minCigarM):
-                        if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == end_seq_len:
-                            qualified_mapping = True
-
-                else:
-                    ref_len = ref_subset_len_dict[ref_id]
-                    if (len(cigar_splitted) == 1) and (cigar[-1] == '=') and (int(cigar[:-1]) >= minCigarM):
-                        ref_pos_end = ref_pos + int(cigar[:-1])
-
-                        # left side
-                        if ref_pos <= max_gap_to_end:
-                            qualified_mapping = True
-
-                        # right side
-                        elif (ref_len - ref_pos_end) <= max_gap_to_end:
-                            qualified_mapping = True
-
-                    if len(cigar_splitted) == 2:
-
-                        # left side
-                        if (cigar_splitted[-1][-1] == '=') and (cigar_splitted[0][-1] == 'S') and (
-                                int(cigar_splitted[-1][:-1]) >= minCigarM) and (ref_pos == 1):
-                            qualified_mapping = True
-
-                        # right side
-                        elif (cigar_splitted[-0][-1] == '=') and (cigar_splitted[1][-1] == 'S') and (
-                                int(cigar_splitted[0][:-1]) >= minCigarM):
-                            if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == ref_len:
-                                qualified_mapping = True
-
-                if qualified_mapping is True:
-                    qualified_reads_to_ref_dict[read_id] = ref_id
-
-                    if read_id_base not in qualified_reads_dict:
-                        qualified_reads_dict[read_id_base] = [read_strand]
-                    else:
-                        qualified_reads_dict[read_id_base].append(read_strand)
-
-    reads_to_extract_to_ref_dict = {}
-    for qualified_read in qualified_reads_dict:
-        read_strand = qualified_reads_dict[qualified_read]
-        if len(read_strand) == 1:
-
-            mapped_mate = ''
-            mate_to_extract = ''
-            if read_strand == ['1']:
-                mapped_mate = '%s.1' % (qualified_read)
-                mate_to_extract = '%s.2' % (qualified_read)
-            if read_strand == ['2']:
-                mapped_mate = '%s.2' % (qualified_read)
-                mate_to_extract = '%s.1' % (qualified_read)
-
-            if mate_to_extract not in all_mapped_reads:
-                reads_to_extract_to_ref_dict[mate_to_extract] = qualified_reads_to_ref_dict[mapped_mate]
-
-    return reads_to_extract_to_ref_dict
-
-
-def get_free_living_mate_16s(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM, max_gap_to_end, bowtie_build_exe, bowtie2_exe, num_threads, run_bbmap, pwd_bbmap_exe, bbmap_memory):
-
-    ref_in_path, ref_in_basename, ref_in_ext = sep_path_basename_ext(ref_in)
-
-    ref_subset      = '%s/%s_ends_%sbp%s'                % (ref_in_path, ref_in_basename, end_seq_len, ref_in_ext)
-    sam_file        = '%s/%s_ends_%sbp.sam'              % (ref_in_path, ref_in_basename, end_seq_len)
-    bbmap_stderr    = '%s/%s_ends_%sbp_bbmap_stderr.txt' % (ref_in_path, ref_in_basename, end_seq_len)
-
-    # get ref seqs subset
-    ref_subset_len_dict = {}
-    ref_subset_handle = open(ref_subset, 'w')
-    for ref_seq in SeqIO.parse(ref_in, 'fasta'):
-        ref_seq_id = ref_seq.id
-        ref_seq_len = len(ref_seq.seq)
-        if ref_seq_len < end_seq_len * 3:
-            ref_subset_handle.write('>%s\n' % ref_seq_id)
-            ref_subset_handle.write('%s\n' % ref_seq.seq)
-            ref_subset_len_dict[ref_seq_id] = ref_seq_len
+        each_line_split = each_line.strip().split('\t')
+        if each_line.startswith('@'):
+            ref_id = ''
+            ref_len = 0
+            for each_element in each_line_split:
+                if each_element.startswith('SN:'):
+                    ref_id = each_element[3:]
+                if each_element.startswith('LN:'):
+                    ref_len = int(each_element[3:])
+            ref_in_sam_len_dict[ref_id] = ref_len
         else:
-            ref_seq_left_end_id = '%s_l' % ref_seq_id
-            ref_seq_right_end_id = '%s_r' % ref_seq_id
-            ref_seq_left_end = ref_seq.seq[:end_seq_len]
-            ref_seq_right_end = ref_seq.seq[-end_seq_len:]
-
-            # write out left end
-            ref_subset_handle.write('>%s\n' % ref_seq_left_end_id)
-            ref_subset_handle.write('%s\n' % ref_seq_left_end)
-
-            # write out right end
-            ref_subset_handle.write('>%s\n' % ref_seq_right_end_id)
-            ref_subset_handle.write('%s\n' % ref_seq_right_end)
-    ref_subset_handle.close()
-
-    # mapping with bowtie or bbmap
-    if run_bbmap is False:
-        ref_subset_no_ext = '.'.join(ref_subset.split('.')[:-1])
-        bowtie2_index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (bowtie_build_exe, ref_subset, ref_subset_no_ext, num_threads)
-        bowtie2_mapping_cmd = '%s -x %s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (bowtie2_exe, ref_subset_no_ext, reads_r1, reads_r2, sam_file, num_threads)
-        os.system(bowtie2_index_ref_cmd)
-        os.system(bowtie2_mapping_cmd)
-    else:
-        bbmap_parameter_round2 = 'local=t nodisk=t ambiguous=all keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
-        bbmap_cmd_round2 = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, ref_subset, reads_r1, reads_r2, sam_file, bbmap_parameter_round2, bbmap_stderr)
-        os.system(bbmap_cmd_round2)
-
-    # parse sam file
-    all_mapped_reads = set()
-    qualified_reads_dict = {}
-    qualified_reads_to_ref_dict = {}
-    for each_line in open(sam_file):
-        if not each_line.startswith('@'):
-            each_line_split = each_line.strip().split('\t')
             cigar = each_line_split[5]
-
             if cigar != '*':
                 read_id = each_line_split[0]
                 read_id_base = '.'.join(read_id.split('.')[:-1])
                 read_strand = read_id.split('.')[-1]
                 ref_id = each_line_split[2]
+                ref_len = ref_in_sam_len_dict[ref_id]
                 ref_pos = int(each_line_split[3])
                 cigar_splitted = cigar_splitter(cigar)
+                cigar_match_pct, cigar_mismatch_pct = get_cigar_matched_and_mismatch_pct(cigar)
                 all_mapped_reads.add(read_id)
+
+                # get aligned length
+                aligned_len = 0
+                for each_section in cigar_splitted:
+                    each_section_len = int(each_section[:-1])
+                    each_section_cate = each_section[-1]
+                    if each_section_cate in {'D', '=', 'X'}:
+                        aligned_len += each_section_len
+
+                # filter mapped reads
                 qualified_mapping = False
+                if (cigar_match_pct >= perfect_match_min_cigar_M_pct) and (cigar_mismatch_pct <= global_max_mismatch_pct):
 
-                if ref_id[-2:] == '_l':
-                    if ref_pos <= max_gap_to_end:
-                        if (len(cigar_splitted) == 1) and (cigar[-1] == '=') and (int(cigar[:-1]) >= minCigarM):
-                            qualified_mapping = True
-
-                        elif (len(cigar_splitted) == 2) and (cigar_splitted[-1][-1] == '=') and (
-                                cigar_splitted[0][-1] == 'S') and (int(cigar_splitted[-1][:-1]) >= minCigarM) and (
-                                ref_pos == 1):
-                            qualified_mapping = True
-
-                elif ref_id[-2:] == '_r':
-
-                    if (len(cigar_splitted) == 1) and (cigar[-1] == '=') and (int(cigar[:-1]) >= minCigarM):
-                        ref_pos_end = ref_pos + int(cigar[:-1])
-                        if (end_seq_len - ref_pos_end) <= max_gap_to_end:
-                            qualified_mapping = True
-
-                    elif (len(cigar_splitted) == 2) and (cigar_splitted[0][-1] == '=') and (
-                            cigar_splitted[1][-1] == 'S') and (int(cigar_splitted[0][:-1]) >= minCigarM):
-                        if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == end_seq_len:
-                            qualified_mapping = True
-
-                else:
-                    ref_len = ref_subset_len_dict[ref_id]
-                    if (len(cigar_splitted) == 1) and (cigar[-1] == '=') and (int(cigar[:-1]) >= minCigarM):
-                        ref_pos_end = ref_pos + int(cigar[:-1])
-
-                        # left side
+                    # check left end for contig's left end sequence
+                    if ref_id[-2:] == '_l':
                         if ref_pos <= max_gap_to_end:
                             qualified_mapping = True
 
-                        # right side
-                        elif (ref_len - ref_pos_end) <= max_gap_to_end:
-                            qualified_mapping = True
-
-                    if len(cigar_splitted) == 2:
-
-                        # left side
-                        if (cigar_splitted[-1][-1] == '=') and (cigar_splitted[0][-1] == 'S') and (
-                                int(cigar_splitted[-1][:-1]) >= minCigarM) and (ref_pos == 1):
-                            qualified_mapping = True
-
-                        # right side
-                        elif (cigar_splitted[-0][-1] == '=') and (cigar_splitted[1][-1] == 'S') and (
-                                int(cigar_splitted[0][:-1]) >= minCigarM):
-                            if (ref_pos + int(cigar_splitted[0][:-1]) - 1) == ref_len:
+                    # check right end for contig's right end sequence
+                    elif ref_id[-2:] == '_r':
+                        if cigar_splitted[0][-1] != 'S':
+                            ref_pos_end = ref_pos + aligned_len
+                            if (ref_len - ref_pos_end) <= max_gap_to_end:
                                 qualified_mapping = True
 
-                    if len(cigar_splitted) == 3:
-                        if (cigar_splitted[0][-1] == '=') and (cigar_splitted[2][-1] == '='):
-                            left_m_len = int(cigar_splitted[0][:-1])
-                            mismatch_len = int(cigar_splitted[1][:-1])
-                            right_m_len = int(cigar_splitted[2][:-1])
-                            read_len = left_m_len + right_m_len + mismatch_len
-                            left_m_pct = left_m_len * 100 / read_len
-                            right_m_pct = right_m_len * 100 / read_len
-                            if (left_m_len >= 30) and (right_m_len >= 30) and (left_m_pct >= 25) and (right_m_pct >= 25) and (mismatch_len == 1):
-                                qualified_mapping = True
+                    # check both ends for contigs without subset
+                    else:
+                        if (ref_pos <= max_gap_to_end) or ((ref_len - ref_pos - aligned_len) <= max_gap_to_end):
+                            qualified_mapping = True
 
+                # proceed with qualified mappings
                 if qualified_mapping is True:
                     qualified_reads_to_ref_dict[read_id] = ref_id
 
@@ -946,7 +803,6 @@ def get_free_living_mate_16s(ref_in, reads_r1, reads_r2, end_seq_len, minCigarM,
     for qualified_read in qualified_reads_dict:
         read_strand = qualified_reads_dict[qualified_read]
         if len(read_strand) == 1:
-
             mapped_mate = ''
             mate_to_extract = ''
             if read_strand == ['1']:
@@ -1106,7 +962,7 @@ def link_16s(args, config_dict):
     mira_tmp_dir                        = args['mira_tmp']
     run_bbmap                           = args['bbmap']
     bbmap_memory                        = args['bbmap_mem']
-    global_max_mismatch_pct             = 1
+    global_max_mismatch_pct             = args['mismatch']
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_makeblastdb_exe                 = 'makeblastdb'
@@ -1578,8 +1434,8 @@ def link_16s(args, config_dict):
 
     report_and_log(('Round 1: Parsing mapping results for paired reads'), pwd_log_file, keep_quiet)
 
-    # filter blast results for paired reads
-    unmapped_paired_reads_to_ctg_dict = paired_blast_results_to_dict_by_mapping(pwd_samfile_to_mag)
+    # filter mapping results
+    unmapped_paired_reads_to_ctg_dict = paired_blast_results_to_dict_by_mapping_new(pwd_samfile_to_mag, perfect_match_min_cigar_M_pct, global_max_mismatch_pct)
 
     paired_stats_dict_num = {}
     paired_reads_match_profile_handle = open(paired_reads_match_profile, 'w')
@@ -1766,10 +1622,10 @@ def link_16s(args, config_dict):
     ############################################### get reads to extract ###############################################
 
     report_and_log(('Round 2: get unmapped reads with mates mapped to contig ends'), pwd_log_file, keep_quiet)
-    reads_to_extract_to_ref_dict_gnm = get_free_living_mate(combined_1st_round_unlinked_mags, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads, run_bbmap, pwd_bbmap_exe, bbmap_memory)
+    reads_to_extract_to_ref_dict_gnm = get_free_living_mate(combined_1st_round_unlinked_mags, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct)
 
     report_and_log(('Round 2: get unmapped reads with mates mapped to 16S ends'), pwd_log_file, keep_quiet)
-    reads_to_extract_to_ref_dict_16s = get_free_living_mate_16s(marker_gene_seqs_1st_round_unlinked, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, minCigarM, max_gap_to_end, pwd_bowtie2_build_exe, pwd_bowtie2_exe, num_threads, run_bbmap, pwd_bbmap_exe, bbmap_memory)
+    reads_to_extract_to_ref_dict_16s = get_free_living_mate(marker_gene_seqs_1st_round_unlinked, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct)
 
     # write out free_living_mate_gnm
     free_living_mate_gnm_handle = open(free_living_mate_gnm, 'w')
@@ -2182,6 +2038,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-s1_min_M_len',    required=False, type=int,      default=50,         help='perfect_match_min_cigar_M_len, default: 50')
     link_16s_parser.add_argument('-s1_min_M_pct',    required=False, type=float,    default=70,         help='perfect_match_min_cigar_M_pct, default: 70')
     link_16s_parser.add_argument('-s1_max_S_pct',    required=False, type=float,    default=30,         help='perfect_match_max_cigar_S_pct, default: 30')
+    link_16s_parser.add_argument('-mismatch',        required=False, type=float,    default=1,          help='maximum mismatch percentage, default: 1')
     args = vars(link_16s_parser.parse_args())
 
     link_16s(args, config_dict)

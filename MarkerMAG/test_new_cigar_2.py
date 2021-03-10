@@ -146,10 +146,41 @@ def paired_blast_results_to_dict_by_mapping(unmapped_paired_reads_mapping_result
     return unmapped_paired_reads_to_ctg_dict_by_mapping
 
 
+def paired_blast_results_to_dict_by_mapping_new(unmapped_paired_reads_mapping_results):
+
+    cigar_M_pct_min_value = 50
+    mismatch_pct_max_value = 1
+
+    unmapped_paired_reads_to_ctg_dict_by_mapping = {}
+
+    for unmapped_read in open(unmapped_paired_reads_mapping_results):
+
+        # get ref len dict
+        if not unmapped_read.startswith('@'):
+            unmapped_read_split = unmapped_read.strip().split('\t')
+            cigar = unmapped_read_split[5]
+            if cigar != '*':
+                read_id = unmapped_read_split[0]
+                ref_id_with_prefix = 'GenomicSeq__%s' % unmapped_read_split[2]
+                cigar_match_pct, cigar_mismatch_pct = get_cigar_matched_and_mismatch_pct(cigar)
+
+                if (cigar_match_pct >= cigar_M_pct_min_value) and (cigar_mismatch_pct <= mismatch_pct_max_value):
+
+                    if read_id not in unmapped_paired_reads_to_ctg_dict_by_mapping:
+                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id] = [ref_id_with_prefix]
+                    else:
+                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id].append(ref_id_with_prefix)
+
+    return unmapped_paired_reads_to_ctg_dict_by_mapping
+
+
+
 pwd_samfile_to_mag = '/Users/songweizhi/Desktop/BH_ER_050417_refined_bins_combined.sam'
 unmapped_paired_reads_to_ctg_dict = paired_blast_results_to_dict_by_mapping(pwd_samfile_to_mag)
-print(unmapped_paired_reads_to_ctg_dict)
+print(len(unmapped_paired_reads_to_ctg_dict))
 
+unmapped_paired_reads_to_ctg_dict = paired_blast_results_to_dict_by_mapping_new(pwd_samfile_to_mag)
+print(len(unmapped_paired_reads_to_ctg_dict))
 
 
 
