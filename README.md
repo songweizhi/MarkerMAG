@@ -21,7 +21,7 @@ Dependencies
  Dependencies are module-specific, please see details below:
  
 + `link`: 
-  [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/) (default)/[Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml),
+  [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/),
   [Mira v5rc2](https://github.com/bachev/mira) (default)/[SPAdes](https://github.com/ablab/spades), 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download),
   [optparse](https://cran.r-project.org/web/packages/optparse/index.html) (R) and 

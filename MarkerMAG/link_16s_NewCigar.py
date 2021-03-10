@@ -959,7 +959,6 @@ def link_16s(args, config_dict):
     test_mode                           = args['test_mode']
     round_2_spades                      = args['spades']
     mira_tmp_dir                        = args['mira_tmp']
-    run_bbmap                           = args['bbmap']
     bbmap_memory                        = args['bbmap_mem']
     global_max_mismatch_pct             = args['mismatch']
 
@@ -1258,30 +1257,11 @@ def link_16s(args, config_dict):
 
     marker_gene_seqs_in_wd  = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
 
-    if run_bbmap is False:
-        # copy marker gene sequence file to index folder
-        report_and_log(('Round 1: Indexing marker gene sequences for mapping'), pwd_log_file, keep_quiet)
-        bowtie2_index_ref_cmd = '%s -f %s %s/%s --quiet --threads %s' % (pwd_bowtie2_build_exe, marker_gene_seqs_in_wd, bowtie_index_dir, marker_gene_seqs_file_basename, num_threads)
-        os.system(bowtie2_index_ref_cmd)
-
-        # mapping
-        report_and_log(('Round 1: Mapping reads to marker gene sequences'), pwd_log_file, keep_quiet)
-        sleep(1)
-        report_and_log(('Round 1: Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
-        sleep(1)
-        # bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1_fasta, reads_file_r2_fasta, pwd_samfile, num_threads)
-        bowtie2_mapping_cmd = '%s -x %s/%s -1 %s -2 %s -S %s -f --local -a --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, bowtie_index_dir, marker_gene_seqs_file_basename, reads_file_r1_fasta, reads_file_r2_fasta, pwd_samfile, num_threads)
-        os.system(bowtie2_mapping_cmd)
-        sleep(1)
-        report_and_log(('Round 1: Please ignore warnings starting with "Use of uninitialized value" during Bowtie mapping.'), pwd_log_file, keep_quiet)
-        sleep(1)
-
-    else:
-        report_and_log(('Round 1: Mapping reads to marker gene sequences with bbmap'), pwd_log_file, keep_quiet)
-        bbmap_index_and_mapping_cmd = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, marker_gene_seqs_in_wd, reads_file_r1, reads_file_r2, pwd_samfile, bbmap_parameter, pwd_samfile_stderr)
-        report_and_log(('Round 1: Command for running bbmap exported to log file'), pwd_log_file, keep_quiet)
-        report_and_log((bbmap_index_and_mapping_cmd), pwd_log_file, True)
-        os.system(bbmap_index_and_mapping_cmd)
+    report_and_log(('Round 1: Mapping reads to marker gene sequences with bbmap'), pwd_log_file, keep_quiet)
+    bbmap_index_and_mapping_cmd = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, marker_gene_seqs_in_wd, reads_file_r1, reads_file_r2, pwd_samfile, bbmap_parameter, pwd_samfile_stderr)
+    report_and_log(('Round 1: Command for running bbmap exported to log file'), pwd_log_file, keep_quiet)
+    report_and_log((bbmap_index_and_mapping_cmd), pwd_log_file, True)
+    os.system(bbmap_index_and_mapping_cmd)
 
 
     ##################################################### extract reads ####################################################
@@ -1414,19 +1394,12 @@ def link_16s(args, config_dict):
     report_and_log(('Round 1: Running blastn for unmapped parts of clipping mapped reads'), pwd_log_file, keep_quiet)
     os.system(blastn_cmd_clipping)
 
-    if run_bbmap is False:
-        report_and_log(('Round 1: Mapping extracted reads to genomic sequences with Bowtie'), pwd_log_file, keep_quiet)
-        bowtie2_index_mag_cmd = '%s -f %s %s --quiet --threads %s'  % (pwd_bowtie2_build_exe, blast_db, blast_db_no_ext, num_threads)
-        os.system(bowtie2_index_mag_cmd)
-        bowtie2_mapping_cmd_mag = '%s -x %s -U %s -S %s -f --local -a --no-unal --quiet --threads %s' % (pwd_bowtie2_exe, blast_db_no_ext, unmapped_paired_reads_file, pwd_samfile_to_mag, num_threads)
-        os.system(bowtie2_mapping_cmd_mag)
-
-    else:
-        report_and_log(('Round 1: Mapping extracted reads to genomic sequences with bbmap'), pwd_log_file, keep_quiet)
-        bbmap_index_and_mapping_cmd_to_mag = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, blast_db, unmapped_paired_reads_file, pwd_samfile_to_mag, bbmap_parameter, pwd_samfile_to_mag_stderr)
-        report_and_log(('Round 1: Command for running bbmap exported to log file'), pwd_log_file, keep_quiet)
-        report_and_log((bbmap_index_and_mapping_cmd_to_mag), pwd_log_file, True)
-        os.system(bbmap_index_and_mapping_cmd_to_mag)
+    # mapping with bbmap
+    report_and_log(('Round 1: Mapping extracted reads to genomic sequences with bbmap'), pwd_log_file, keep_quiet)
+    bbmap_index_and_mapping_cmd_to_mag = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, blast_db, unmapped_paired_reads_file, pwd_samfile_to_mag, bbmap_parameter, pwd_samfile_to_mag_stderr)
+    report_and_log(('Round 1: Command for running bbmap exported to log file'), pwd_log_file, keep_quiet)
+    report_and_log((bbmap_index_and_mapping_cmd_to_mag), pwd_log_file, True)
+    os.system(bbmap_index_and_mapping_cmd_to_mag)
 
 
     ######################################### parse blast results for paired reads #########################################
@@ -1735,17 +1708,10 @@ def link_16s(args, config_dict):
         mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
 
 
-    if run_bbmap is False:
-        report_and_log(('Round 2: mapping extracted reads to mini assemblies with Bowtie'), pwd_log_file, keep_quiet)
-        mini_assemblies_no_ext = '.'.join(mini_assemblies.split('.')[:-1])
-        index_ref_cmd = '%s -f %s %s --quiet --threads %s' % (pwd_bowtie2_build_exe, mini_assemblies, mini_assemblies_no_ext, num_threads)
-        mapping_cmd = '%s -x %s -U %s -S %s --threads %s -f --quiet' % (pwd_bowtie2_exe, mini_assemblies_no_ext, extracted_reads_cbd_fasta, sam_file_mini_assembly, num_threads)
-        os.system(index_ref_cmd)
-        os.system(mapping_cmd)
-    else:
-        report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
-        bbmap_cmd_miniassembly = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, extracted_reads_cbd_fasta, sam_file_mini_assembly, bbmap_parameter, sam_file_mini_assembly_stderr)
-        os.system(bbmap_cmd_miniassembly)
+    # mapping extracted reads to mini assemblies with bbmap
+    report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
+    bbmap_cmd_miniassembly = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, extracted_reads_cbd_fasta, sam_file_mini_assembly, bbmap_parameter, sam_file_mini_assembly_stderr)
+    os.system(bbmap_cmd_miniassembly)
 
 
     #################################################### parse sam file ####################################################
@@ -2030,7 +1996,6 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-force',           required=False, action="store_true",               help='force overwrite existing results')
     link_16s_parser.add_argument('-tmp',             required=False, action="store_true",               help='keep temporary files')
     link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",               help='only for debugging, do not provide')
-    link_16s_parser.add_argument('-bbmap',           required=False, action="store_true",               help='run bbmap, instead of bowtie')
     link_16s_parser.add_argument('-bbmap_mem',       required=False, type=int,      default=10,         help='bbmap memory allocation (in gigabyte), default: 10')
     link_16s_parser.add_argument('-mira_tmp',        required=False, default=None,                      help='tmp dir for mira')
     link_16s_parser.add_argument('-spades',          required=False, action="store_true",               help='run spades, instead of Mira')
@@ -2074,7 +2039,7 @@ module load mira/v5rc2
 module load java/8u201-jdk
 module load bbmap/38.51
 cd /srv/scratch/z5039045/MarkerMAG_wd/Kelp
-python3 link_16s.py -p Kelp_0.999_bbmap -r1 Kelp_R1.fastq -r2 Kelp_R2.fastq -marker BH_ER_050417_Matam16S_wd/BH_ER_050417_assembled_16S_uclust_0.999.fasta -mag BH_ER_050417_refined_bins -x fasta -t 6 -tmp -force -mira_tmp $TMPDIR -bbmap
+python3 link_16s.py -p Kelp_0.999_bbmap -r1 Kelp_R1.fastq -r2 Kelp_R2.fastq -marker BH_ER_050417_Matam16S_wd/BH_ER_050417_assembled_16S_uclust_0.999.fasta -mag BH_ER_050417_refined_bins -x fasta -t 6 -tmp -force -mira_tmp $TMPDIR
 
 '''
 
