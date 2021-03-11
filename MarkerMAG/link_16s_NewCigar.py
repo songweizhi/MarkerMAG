@@ -35,8 +35,8 @@ config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split(
 link_Marker_MAG_usage = '''
 =================================== MarkerMAG example commands ===================================
 
-MarkerMAG -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
-MarkerMAG -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAGs -x fa -t 4
+MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
+MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAGs -x fa -t 4
 
 Note:
 MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference 
@@ -694,7 +694,7 @@ def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, fil
     file_out_intersect_linkages_handle.close()
 
 
-def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct):
+def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct, pwd_log_file, keep_quiet):
 
     ref_in_path, ref_in_basename, ref_in_ext = sep_path_basename_ext(ref_in)
 
@@ -703,13 +703,14 @@ def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, max_gap_to_end
     bbmap_stderr    = '%s/%s_ends_%sbp_bbmap_stderr.txt' % (ref_in_path, ref_in_basename, end_seq_len)
 
     # get ref seqs subset
+    report_and_log(('Round 2: map reads to %s%s, get ends sequences' % (ref_in_basename, ref_in_ext)), pwd_log_file, keep_quiet)
     ref_subset_handle = open(ref_subset, 'w')
     for ref_seq in SeqIO.parse(ref_in, 'fasta'):
 
         ref_seq_id = ref_seq.id
         ref_seq_len = len(ref_seq.seq)
 
-        if ref_seq_len < end_seq_len * 3:
+        if ref_seq_len < end_seq_len * 2:
             ref_subset_handle.write('>%s\n' % ref_seq_id)
             ref_subset_handle.write('%s\n' % ref_seq.seq)
         else:
@@ -728,11 +729,13 @@ def get_free_living_mate(ref_in, reads_r1, reads_r2, end_seq_len, max_gap_to_end
     ref_subset_handle.close()
 
     # mapping with bbmap
+    report_and_log(('Round 2: map reads to %s%s, mapping' % (ref_in_basename, ref_in_ext)), pwd_log_file, keep_quiet)
     bbmap_parameter_round2 = 'local=t nodisk=t ambiguous=all keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
     bbmap_cmd_round2 = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, ref_subset, reads_r1, reads_r2, sam_file, bbmap_parameter_round2, bbmap_stderr)
     os.system(bbmap_cmd_round2)
 
     # parse sam file
+    report_and_log(('Round 2: map reads to %s%s, filter sam' % (ref_in_basename, ref_in_ext)), pwd_log_file, keep_quiet)
     all_mapped_reads = set()
     qualified_reads_dict = {}
     qualified_reads_to_ref_dict = {}
@@ -923,6 +926,7 @@ def rename_seq(ctg_file_in, ctg_file_out, prefix, str_connector):
 
 
 def SeqIO_convert_worker(argument_list):
+
     file_in         = argument_list[0]
     file_in_fmt     = argument_list[1]
     file_out        = argument_list[2]
@@ -949,7 +953,6 @@ def link_16s(args, config_dict):
     aln16s                              = args['s1_ma']
     min_paired_linkages                 = args['s1_mpl']
     min_paired_linkages_for_uniq_linked_16s  = args['s1_mplu']
-    minCigarM                           = args['s2_m']
     max_gap_to_end                      = args['s2_g']
     min_read_num                        = args['s2_r']
     num_threads                         = args['t']
@@ -961,6 +964,7 @@ def link_16s(args, config_dict):
     mira_tmp_dir                        = args['mira_tmp']
     bbmap_memory                        = args['bbmap_mem']
     global_max_mismatch_pct             = args['mismatch']
+    perfect_match_min_cigar_M_pct       = args['min_M_pct']
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_makeblastdb_exe                 = 'makeblastdb'
@@ -974,11 +978,7 @@ def link_16s(args, config_dict):
     str_connector       = '___'
     reads_iden_cutoff   = 100             # %
     reads_cov_cutoff    = 90              # %
-    end_seq_len         = 3000            # bp
-
-    perfect_match_min_cigar_M_len = args['s1_min_M_len']
-    perfect_match_min_cigar_M_pct = args['s1_min_M_pct']
-    perfect_match_max_cigar_S_pct = args['s1_max_S_pct']
+    end_seq_len         = 1000            # bp
 
     ################################################ check dependencies ################################################
 
@@ -1020,35 +1020,31 @@ def link_16s(args, config_dict):
     r1_path, r1_basename, r1_ext = sep_path_basename_ext(reads_file_r1)
     r2_path, r2_basename, r2_ext = sep_path_basename_ext(reads_file_r2)
 
-    reads_fmt = 'fasta'
     reads_file_r1_fasta = reads_file_r1
     reads_file_r2_fasta = reads_file_r2
     if 'q' in r1_ext:
-        reads_fmt = 'fastq'
-        reads_file_r1_fasta = '%s/%s.fasta' % (step_1_wd, r1_basename)
-        reads_file_r2_fasta = '%s/%s.fasta' % (step_1_wd, r2_basename)
 
-        if num_threads >= 2:
-            num_threads_SeqIO_convert_worker = 2
+        reads_file_r1_fasta_to_check = '%s/%s.fasta' % (r1_path, r1_basename)
+        reads_file_r2_fasta_to_check = '%s/%s.fasta' % (r2_path, r2_basename)
+
+        if (os.path.isfile(reads_file_r1_fasta_to_check) is True) and (os.path.isfile(reads_file_r2_fasta_to_check) is True):
+            reads_file_r1_fasta = reads_file_r1_fasta_to_check
+            reads_file_r2_fasta = reads_file_r2_fasta_to_check
+
         else:
-            num_threads_SeqIO_convert_worker = 1
+            reads_file_r1_fasta = '%s/%s.fasta' % (step_1_wd, r1_basename)
+            reads_file_r2_fasta = '%s/%s.fasta' % (step_1_wd, r2_basename)
 
-        # pool = mp.Pool(processes=num_threads_SeqIO_convert_worker)
-        # pool.map(SeqIO_convert_worker, [[reads_file_r1, 'fastq', reads_file_r1_fasta, 'fasta-2line'], [reads_file_r2, 'fastq', reads_file_r2_fasta, 'fasta-2line']])
-        # pool.close()
-        # pool.join()
+            if num_threads >= 2:
+                num_threads_SeqIO_convert_worker = 2
+            else:
+                num_threads_SeqIO_convert_worker = 1
 
-        # GI dataset
-        # reads_file_r1_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI2_HMP/1_filtered_reads/GI_R1.fasta'
-        # reads_file_r2_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI2_HMP/1_filtered_reads/GI_R2.fasta'
+            pool = mp.Pool(processes=num_threads_SeqIO_convert_worker)
+            pool.map(SeqIO_convert_worker, [[reads_file_r1, 'fastq', reads_file_r1_fasta, 'fasta-2line'], [reads_file_r2, 'fastq', reads_file_r2_fasta, 'fasta-2line']])
+            pool.close()
+            pool.join()
 
-        # MT dataset
-        # reads_file_r1_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Mariana_Trench/MT1_R1.fasta'
-        # reads_file_r2_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Mariana_Trench/MT1_R2.fasta'
-
-        # Kelp dataset
-        reads_file_r1_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Kelp/Kelp_R1.fasta'
-        reads_file_r2_fasta = '/srv/scratch/z5039045/MarkerMAG_wd/Kelp/Kelp_R2.fasta'
 
     ######################## check genomic sequence type and prepare files for making blast db #########################
 
@@ -1133,7 +1129,6 @@ def link_16s(args, config_dict):
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
     bbmap_parameter  = 'local=t nodisk=t ambiguous=all keepnames=t saa=f silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
 
-
     ################################################# step 2 #################################################
 
     marker_gene_seqs_1st_round_unlinked         = '%s/step_1_unlinked_marker_genes.fasta'        % step_2_wd
@@ -1160,7 +1155,6 @@ def link_16s(args, config_dict):
     combined_linkage_file_tmp_html              = '%s/combined_linkages_tmp.html'                % step_2_wd
     combined_linkage_file                       = '%s/%s_combined_linkages.txt'                  % (working_directory, output_prefix)
     combined_linkage_file_html                  = '%s/%s_combined_linkages.html'                 % (working_directory, output_prefix)
-
 
     #################################### calculate mean depth for genome/assemblies ####################################
 
@@ -1381,17 +1375,10 @@ def link_16s(args, config_dict):
     ############################# run blast between extracted reads and metagenomic assemblies #############################
 
     # run blastn
-    makeblastdb_cmd     = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, blast_db)
-    blastn_cmd_paired   = '%s -query %s -db %s -out %s %s'                          % (pwd_blastn_exe, unmapped_paired_reads_file, blast_db, unmapped_paired_reads_blastn, blast_parameters)
-    blastn_cmd_clipping = '%s -query %s -db %s -out %s %s'                          % (pwd_blastn_exe, clipping_reads_not_matched_part_seq, blast_db, clipping_reads_not_matched_part_seq_blastn, blast_parameters)
-
-    report_and_log(('Round 1: Making blastn database'), pwd_log_file, keep_quiet)
-    os.system(makeblastdb_cmd)
-
-    # report_and_log(('Round 1: Running blastn for unmapped paired reads'), pwd_log_file, keep_quiet)
-    # os.system(blastn_cmd_paired)
-
     report_and_log(('Round 1: Running blastn for unmapped parts of clipping mapped reads'), pwd_log_file, keep_quiet)
+    makeblastdb_cmd     = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, blast_db)
+    blastn_cmd_clipping = '%s -query %s -db %s -out %s %s'                          % (pwd_blastn_exe, clipping_reads_not_matched_part_seq, blast_db, clipping_reads_not_matched_part_seq_blastn, blast_parameters)
+    os.system(makeblastdb_cmd)
     os.system(blastn_cmd_clipping)
 
     # mapping with bbmap
@@ -1594,10 +1581,10 @@ def link_16s(args, config_dict):
     ############################################### get reads to extract ###############################################
 
     report_and_log(('Round 2: get unmapped reads with mates mapped to contig ends'), pwd_log_file, keep_quiet)
-    reads_to_extract_to_ref_dict_gnm = get_free_living_mate(combined_1st_round_unlinked_mags, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct)
+    reads_to_extract_to_ref_dict_gnm = get_free_living_mate(combined_1st_round_unlinked_mags, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct, pwd_log_file, keep_quiet)
 
     report_and_log(('Round 2: get unmapped reads with mates mapped to 16S ends'), pwd_log_file, keep_quiet)
-    reads_to_extract_to_ref_dict_16s = get_free_living_mate(marker_gene_seqs_1st_round_unlinked, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct)
+    reads_to_extract_to_ref_dict_16s = get_free_living_mate(marker_gene_seqs_1st_round_unlinked, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, max_gap_to_end, num_threads, pwd_bbmap_exe, bbmap_memory, perfect_match_min_cigar_M_pct, global_max_mismatch_pct, pwd_log_file, keep_quiet)
 
     # write out free_living_mate_gnm
     free_living_mate_gnm_handle = open(free_living_mate_gnm, 'w')
@@ -1676,13 +1663,6 @@ def link_16s(args, config_dict):
         mira_manifest_handle.write('technology = solexa\n')
         mira_manifest_handle.close()
 
-        # # create tmp_dir if not exist
-        # if (os.path.isdir(mira_tmp_dir) is True) and (force_overwrite is False):
-        #     print('Mira tmp_dir detected, program exited!')
-        #     exit()
-        # else:
-        #     force_create_folder(mira_tmp_dir)
-
         if os.path.isdir(mira_tmp_dir) is False:
             os.mkdir(mira_tmp_dir)
 
@@ -1706,7 +1686,6 @@ def link_16s(args, config_dict):
         report_and_log(('Round 2: running Mira on extracted reads'), pwd_log_file, keep_quiet)
         run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, extracted_reads_cbd, mira_stdout, force_overwrite)
         mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
-
 
     # mapping extracted reads to mini assemblies with bbmap
     report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
@@ -1988,7 +1967,6 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-s1_ma',           required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
     link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=5,         help='minimum number of paired reads provided linkages to report, default: 5')
     link_16s_parser.add_argument('-s1_mplu',         required=False, type=int,      default=3,          help='minimum number of paired reads provided linkages to report (for uniq linked 16S, default: 3')
-    link_16s_parser.add_argument('-s2_m',            required=False, type=int,      default=50,         help='minCigarM, default: 50')
     link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=300,        help='max_gap_to_end, default: 300')
     link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
     link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
@@ -1999,9 +1977,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-bbmap_mem',       required=False, type=int,      default=10,         help='bbmap memory allocation (in gigabyte), default: 10')
     link_16s_parser.add_argument('-mira_tmp',        required=False, default=None,                      help='tmp dir for mira')
     link_16s_parser.add_argument('-spades',          required=False, action="store_true",               help='run spades, instead of Mira')
-    link_16s_parser.add_argument('-s1_min_M_len',    required=False, type=int,      default=50,         help='perfect_match_min_cigar_M_len, default: 50')
-    link_16s_parser.add_argument('-s1_min_M_pct',    required=False, type=float,    default=70,         help='perfect_match_min_cigar_M_pct, default: 70')
-    link_16s_parser.add_argument('-s1_max_S_pct',    required=False, type=float,    default=30,         help='perfect_match_max_cigar_S_pct, default: 30')
+    link_16s_parser.add_argument('-min_M_pct',       required=False, type=float,    default=70,         help='perfect_match_min_cigar_M_pct, default: 70')
     link_16s_parser.add_argument('-mismatch',        required=False, type=float,    default=1,          help='maximum mismatch percentage, default: 1')
     args = vars(link_16s_parser.parse_args())
 
@@ -2022,7 +1998,7 @@ To_do = '''
 14. check if spades failed 
 16. check Mira tmp_dir at the beginning
 17. BH_ER_050417_refined_bins_combined.sam: >Kelp_659345.1__x__Refined_9___NODE_5430_length_12683_cov_6.017999 NODE_5430_length_12683_cov_6.017999__x__12552_r (space in ref id !!!)
-
+18. !!!!!! if isfile(mira_assembly) is False: report and only export first round linkages !!!!!!
 
 
 # on Katana
@@ -2030,7 +2006,6 @@ module load python/3.7.3
 source ~/mypython3env/bin/activate
 module load R/4.0.2
 module load blast+/2.9.0
-module load bowtie/2.3.5.1
 module load samtools/1.10
 module load spades/3.14.0
 module load gcc/8.4.0

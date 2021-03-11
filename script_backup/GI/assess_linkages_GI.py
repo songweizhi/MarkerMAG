@@ -53,13 +53,14 @@ matam_16s_blastn            = '%s/file_in/3_GI_assembled_16S_uclust_0.995.fasta.
 iden_cutoff_16s             = 99.3  # 99.3 (best), 99.5
 aln_len_cutoff_16s          = 500
 cov_q_cutoff_16s            = 70
-
 total_query_mag_num         = 97
 
 ########## assessment results ##########
 
 MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mita_test_combined_linkages.txt'                  % wd
 # Linkage	51/97(52.58)	51/52(98.08)	10
+
+MarkerMAG_linkages          = '%s/file_in/GI_combined_linkages.txt'                  % wd
 
 
 ########## script ##########

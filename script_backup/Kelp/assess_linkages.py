@@ -32,6 +32,10 @@ linkage_file        = '%s/Kelp_0.999_bbmap_all_steps_combined_linkages.txt'     
 linkage_file        = '%s/Kelp_0.999_bbmap_60_40_combined_linkages.txt'         % wd
 linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'         % wd
 
+linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'         % wd
+linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'         % wd
+linkage_file        = '%s/Kelp_NewCigar_60_mis2_combined_linkages.txt'         % wd
+
 
 ################################################### define file name ###################################################
 
