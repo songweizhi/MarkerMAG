@@ -24,18 +24,74 @@ barrnap_output      = '%s/BH_ER_050417_16S.txt'                                 
 checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                   % wd
 mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                 % wd
 
-
 linkage_file        = '%s/Kelp_0.999_combined_linkages.txt'                         % wd
 linkage_file        = '%s/Kelp_0.999_aa_combined_linkages.txt'                      % wd
 linkage_file        = '%s/Kelp_0.999_bbmap_combined_linkages.txt'                   % wd
 linkage_file        = '%s/Kelp_0.999_bbmap_all_steps_combined_linkages.txt'         % wd
-linkage_file        = '%s/Kelp_0.999_bbmap_60_40_combined_linkages.txt'         % wd
-linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'         % wd
+linkage_file        = '%s/Kelp_0.999_bbmap_60_40_combined_linkages.txt'             % wd
+linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'                      % wd
+linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'                      % wd
+linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'                      % wd
+linkage_file        = '%s/file_in/Kelp_NewCigar_70_mis5_combined_linkages.txt'      % wd
 
-linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'         % wd
-linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'         % wd
-linkage_file        = '%s/Kelp_NewCigar_60_mis2_combined_linkages.txt'         % wd
 
+'''
+60_mis1
+phylum	38/38(100.0)
+class	35/38(92.11)
+order	31/38(81.58)
+family	29/38(76.32)
+genus	18/38(47.37)
+
+60_mis2
+phylum	48/48(100.0)
+class	45/48(93.75)
+order	41/48(85.42)
+family	39/48(81.25)
+genus	29/48(60.42)
+
+60_mis3
+phylum	46/46(100.0)
+class	43/46(93.48)
+order	39/46(84.78)
+family	37/46(80.43)
+genus	27/46(58.7)
+
+
+
+        70_mis1         70_mis2         70_mis3         70_mis4         70_mis5
+phylum	37/37(100.0)	46/46(100.0)	50/50(100.0)	52/52(100.0)    54/54(100.0)
+class	34/37(91.89)	43/46(93.48)	47/50(94.0)	    49/52(94.23)    51/54(94.44)
+order	30/37(81.08)	39/46(84.78)	43/50(86.0) 	45/52(86.54)    47/54(87.04)
+family	28/37(75.68)	37/46(80.43)	41/50(82.0) 	43/52(82.69)    45/54(83.33)
+genus	18/37(48.65)	27/46(58.7)	    31/50(62.0) 	32/52(61.54)    34/54(62.96)
+
+
+
+80_mis1
+phylum	33/33(100.0)
+class	31/33(93.94)
+order	27/33(81.82)
+family	25/33(75.76)
+genus	17/33(51.52)
+
+80_mis2
+phylum	42/42(100.0)
+class	40/42(95.24)
+order	36/42(85.71)
+family	34/42(80.95)
+genus	24/42(57.14)
+
+
+80_mis3
+phylum	44/44(100.0)
+class	42/44(95.45)
+order	38/44(86.36)
+family	36/44(81.82)
+genus	26/44(59.09)
+
+
+'''
 
 ################################################### define file name ###################################################
 
@@ -165,6 +221,7 @@ for each_linkage in open(linkage_file):
 linkage_file_with_assessment_handle.close()
 
 print('=============================')
+
 print('Linkage accuracy:')
 print('phylum\t%s/%s(%s)' % (correct_linkage_p, total_linkage, float("{0:.2f}".format(correct_linkage_p*100/total_linkage))))
 print('class\t%s/%s(%s)'  % (correct_linkage_c, total_linkage, float("{0:.2f}".format(correct_linkage_c*100/total_linkage))))
@@ -172,6 +229,7 @@ print('order\t%s/%s(%s)'  % (correct_linkage_o, total_linkage, float("{0:.2f}".f
 print('family\t%s/%s(%s)' % (correct_linkage_f, total_linkage, float("{0:.2f}".format(correct_linkage_f*100/total_linkage))))
 print('genus\t%s/%s(%s)'  % (correct_linkage_g, total_linkage, float("{0:.2f}".format(correct_linkage_g*100/total_linkage))))
 print('Unclassified MAG/16S: %s' % unknown_mag_16s_taxon)
+
 print('=============================')
 
 
