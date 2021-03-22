@@ -1,5 +1,5 @@
 
-## MarkerMAG (link MAGs with marker genes)
+## MarkerMAG (linking MAGs with 16S rRNA marker genes)
 
 ![logo](images/MarkerMAG_logo.jpg) 
 
@@ -7,12 +7,11 @@
 [![pypi version](https://img.shields.io/pypi/v/MarkerMAG.svg)](https://pypi.python.org/pypi/MarkerMAG) 
 
 
-Contact
+Publication
 ---
-
-+ **Weizhi Song**, Postdoctoral Researcher
++ In preparation
++ **Weizhi Song** (songwz03[at]gmail.com)
 + Center for Marine Science & Innovation, University of New South Wales, Sydney, Australia
-+ E-mail: songwz03@gmail.com
 
 
 Dependencies
@@ -22,7 +21,7 @@ Dependencies
  
 + `link`: 
   [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/),
-  [Mira v5rc2](https://github.com/bachev/mira) (default)/[SPAdes](https://github.com/ablab/spades), 
+  [Mira v5rc2](https://github.com/bachev/mira) (default) or [SPAdes](https://github.com/ablab/spades), 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download),
   [optparse](https://cran.r-project.org/web/packages/optparse/index.html) (R) and 
   [googleVis](https://cran.r-project.org/web/packages/googleVis/index.html) (R)
@@ -68,13 +67,13 @@ MarkerMAG modules:
       subsample_reads  ->  subsample reads with Usearch
 
 
-Important Notes :warning::warning::warning:
+Important Notes :warning:
 ---
 
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module. 
    
-    Example: All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same :warning:.
+    :warning: All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same.
 
        MarkerMAG rename_reads -r1 R1.fastq -r2 R2.fastq -p soil -fq -t 2
         
@@ -94,7 +93,7 @@ Important Notes :warning::warning::warning:
        fq2fa R2.fastq R2.fasta
        MarkerMAG matam_16s -p Soil -r1 R1.fasta -r2 R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -t 12 -force
 
-2. All MAGs derived from a set should be included in MarkerMAG run. (more details need to be added)
+2. :warning: All MAGs derived from a set should be included in MarkerMAG run. (more details need to be added)
 
 
 How to run:
