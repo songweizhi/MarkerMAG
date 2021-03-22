@@ -24,38 +24,35 @@ barrnap_output      = '%s/BH_ER_050417_16S.txt'                                 
 checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                   % wd
 mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                 % wd
 
-linkage_file        = '%s/Kelp_0.999_combined_linkages.txt'                         % wd
-linkage_file        = '%s/Kelp_0.999_aa_combined_linkages.txt'                      % wd
-linkage_file        = '%s/Kelp_0.999_bbmap_combined_linkages.txt'                   % wd
-linkage_file        = '%s/Kelp_0.999_bbmap_all_steps_combined_linkages.txt'         % wd
-linkage_file        = '%s/Kelp_0.999_bbmap_60_40_combined_linkages.txt'             % wd
-linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'                      % wd
-linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'                      % wd
-linkage_file        = '%s/Kelp_NewCigar_combined_linkages.txt'                      % wd
-linkage_file        = '%s/file_in/Kelp_NewCigar_70_mis5_combined_linkages.txt'      % wd
+linkage_file        = '%s/file_in/Kelp_NewCigar_70_mis3_combined_linkages.txt'      % wd
+#linkage_file        = '%s/file_in/Kelp_70_3_combined_linkages.txt'      % wd
 
 
 '''
-60_mis1
-phylum	38/38(100.0)
-class	35/38(92.11)
-order	31/38(81.58)
-family	29/38(76.32)
-genus	18/38(47.37)
+Linkage accuracy: Kelp_NewCigar_70_mis1_combined_linkages
+Rank	Links	NA	Correct	Unknown	Total(Accuracy)
+phylum	37	0	37	0	37(100.0)
+class	37	0	34	0	34(91.89)
+order	37	0	30	0	30(81.08)
+family	37	0	28	0	28(75.68)
+genus	37	0	18	7	25(67.57)
 
-60_mis2
-phylum	48/48(100.0)
-class	45/48(93.75)
-order	41/48(85.42)
-family	39/48(81.25)
-genus	29/48(60.42)
+Linkage accuracy: Kelp_NewCigar_70_mis2_combined_linkages
+Rank	Links	NA	Correct	Unknown	Total(Accuracy)
+phylum	46	0	46	0	46(100.0)
+class	46	0	43	0	43(93.48)
+order	46	0	39	0	39(84.78)
+family	46	0	37	0	37(80.43)
+genus	46	0	27	7	34(73.91)
 
-60_mis3
-phylum	46/46(100.0)
-class	43/46(93.48)
-order	39/46(84.78)
-family	37/46(80.43)
-genus	27/46(58.7)
+Linkage accuracy: Kelp_NewCigar_70_mis3_combined_linkages
+Rank	Links	NA	Correct	Unknown	Total(Accuracy)
+phylum	50	0	50	0	50(100.0)
+class	50	0	47	0	47(94.0)
+order	50	0	43	0	43(86.0)
+family	50	0	41	0	41(82.0)
+genus	50	0	31	7	38(76.0)
+
 
 
 
@@ -90,6 +87,26 @@ order	38/44(86.36)
 family	36/44(81.82)
 genus	26/44(59.09)
 
+60_mis1
+phylum	38/38(100.0)
+class	35/38(92.11)
+order	31/38(81.58)
+family	29/38(76.32)
+genus	18/38(47.37)
+
+60_mis2
+phylum	48/48(100.0)
+class	45/48(93.75)
+order	41/48(85.42)
+family	39/48(81.25)
+genus	29/48(60.42)
+
+60_mis3
+phylum	46/46(100.0)
+class	43/46(93.48)
+order	39/46(84.78)
+family	37/46(80.43)
+genus	27/46(58.7)
 
 '''
 
@@ -161,11 +178,18 @@ for each_16s in s16_taxon_blca_dict:
 linkage_file_with_assessment_handle = open(linkage_file_with_assessment, 'w')
 total_linkage = 0
 correct_linkage_p = 0
+linkage_with_unknown_p = 0
 correct_linkage_c = 0
+linkage_with_unknown_c = 0
 correct_linkage_o = 0
+linkage_with_unknown_o = 0
 correct_linkage_f = 0
+linkage_with_unknown_f = 0
 correct_linkage_g = 0
-unknown_mag_16s_taxon = 0
+linkage_with_unknown_g = 0
+correct_linkage_s = 0
+linkage_with_unknown_s = 0
+unknown_mag_or_16s_taxon = 0
 for each_linkage in open(linkage_file):
     if each_linkage.startswith('MarkerGene	GenomicSeq'):
         linkage_file_with_assessment_handle.write('%s\tPhylum\tClass\tOrder\tFamily\tGenus\tMAG_taxon\t16S_taxon\t16S_taxon_BLCA\n' % each_linkage.strip())
@@ -179,98 +203,113 @@ for each_linkage in open(linkage_file):
         taxon_16s_blca = s16_taxon_blca_dict_formatted.get(s16_id, 'NA')
         taxon_mag_split = taxon_mag.split(';')
         taxon_16s_split = taxon_16s.split(';')
+        total_linkage += 1
 
-        if (taxon_mag != 'NA') and (taxon_16s != 'NA'):
+        if (taxon_mag == 'NA') or (taxon_16s == 'NA'):
+            unknown_mag_or_16s_taxon += 1
+        else:
+            taxon_mag_p = taxon_mag_split[1]
+            taxon_mag_c = taxon_mag_split[2]
+            taxon_mag_o = taxon_mag_split[3]
+            taxon_mag_f = taxon_mag_split[4]
+            taxon_mag_g = taxon_mag_split[5]
+            taxon_mag_s = taxon_mag_split[6]
+            taxon_16s_p = taxon_16s_split[1]
+            taxon_16s_c = taxon_16s_split[2]
+            taxon_16s_o = taxon_16s_split[3]
+            taxon_16s_f = taxon_16s_split[4]
+            taxon_16s_g = taxon_16s_split[5]
+            taxon_16s_s = taxon_16s_split[6]
+            already_wrong = False
 
-            if taxon_mag_split[1] == taxon_16s_split[1]:
+            if taxon_mag_p == taxon_16s_p:
                 correct_linkage_p += 1
                 line_to_write += '\t1'
             else:
-                line_to_write += '\t0'
-            if taxon_mag_split[2] == taxon_16s_split[2]:
-                correct_linkage_c += 1
-                line_to_write += '\t1'
-            else:
-                line_to_write += '\t0'
-            if taxon_mag_split[3] == taxon_16s_split[3]:
-                correct_linkage_o += 1
-                line_to_write += '\t1'
-            else:
-                line_to_write += '\t0'
-            if taxon_mag_split[4] == taxon_16s_split[4]:
-                correct_linkage_f += 1
-                line_to_write += '\t1'
+                if taxon_mag_p == 'p__':
+                    linkage_with_unknown_p += 1
+                    line_to_write += '\tna'
+                else:
+                    already_wrong = True
+                    line_to_write += '\t0'
+
+            if already_wrong is False:
+                if taxon_mag_c == taxon_16s_c:
+                    correct_linkage_c += 1
+                    line_to_write += '\t1'
+                else:
+                    if taxon_mag_c == 'c__':
+                        linkage_with_unknown_c += 1
+                        line_to_write += '\tna'
+                    else:
+                        already_wrong = True
+                        line_to_write += '\t0'
             else:
                 line_to_write += '\t0'
 
-            if taxon_mag_split[5] == taxon_16s_split[5]:
-                correct_linkage_g += 1
-                line_to_write += '\t1'
+            if already_wrong is False:
+                if taxon_mag_o == taxon_16s_o:
+                    correct_linkage_o += 1
+                    line_to_write += '\t1'
+                else:
+                    if taxon_mag_o == 'o__':
+                        linkage_with_unknown_o += 1
+                        line_to_write += '\tna'
+                    else:
+                        already_wrong = True
+                        line_to_write += '\t0'
             else:
                 line_to_write += '\t0'
 
-            total_linkage += 1
+            if already_wrong is False:
+                if taxon_mag_f == taxon_16s_f:
+                    correct_linkage_f += 1
+                    line_to_write += '\t1'
+                else:
+                    if taxon_mag_f == 'f__':
+                        linkage_with_unknown_f += 1
+                        line_to_write += '\tna'
+                    else:
+                        already_wrong = True
+                        line_to_write += '\t0'
+            else:
+                line_to_write += '\t0'
 
-        else:
-            unknown_mag_16s_taxon += 1
-            line_to_write += '\t0\t0\t0\t0\t0'
+            if already_wrong is False:
+                if taxon_mag_g == taxon_16s_g:
+                    correct_linkage_g += 1
+                    line_to_write += '\t1'
+                else:
+                    if taxon_mag_g == 'g__':
+                        linkage_with_unknown_g += 1
+                        line_to_write += '\tna'
+                    else:
+                        already_wrong = True
+                        line_to_write += '\t0'
+            else:
+                line_to_write += '\t0'
 
         line_to_write += '\t%s\t%s\t%s' % (taxon_mag, taxon_16s, taxon_16s_blca)
         linkage_file_with_assessment_handle.write('%s\n' % line_to_write)
 
-linkage_file_with_assessment_handle.close()
 
-print('=============================')
+if total_linkage > 0:
 
-print('Linkage accuracy:')
-print('phylum\t%s/%s(%s)' % (correct_linkage_p, total_linkage, float("{0:.2f}".format(correct_linkage_p*100/total_linkage))))
-print('class\t%s/%s(%s)'  % (correct_linkage_c, total_linkage, float("{0:.2f}".format(correct_linkage_c*100/total_linkage))))
-print('order\t%s/%s(%s)'  % (correct_linkage_o, total_linkage, float("{0:.2f}".format(correct_linkage_o*100/total_linkage))))
-print('family\t%s/%s(%s)' % (correct_linkage_f, total_linkage, float("{0:.2f}".format(correct_linkage_f*100/total_linkage))))
-print('genus\t%s/%s(%s)'  % (correct_linkage_g, total_linkage, float("{0:.2f}".format(correct_linkage_g*100/total_linkage))))
-print('Unclassified MAG/16S: %s' % unknown_mag_16s_taxon)
+    print('=============================')
+    accuracy_p = float("{0:.2f}".format((correct_linkage_p + linkage_with_unknown_p) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))
+    accuracy_c = float("{0:.2f}".format((correct_linkage_c + linkage_with_unknown_c) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))
+    accuracy_o = float("{0:.2f}".format((correct_linkage_o + linkage_with_unknown_o) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))
+    accuracy_f = float("{0:.2f}".format((correct_linkage_f + linkage_with_unknown_f) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))
+    accuracy_g = float("{0:.2f}".format((correct_linkage_g + linkage_with_unknown_g) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))
 
-print('=============================')
-
-
-'''
-Linkage accuracy (Bowtie aa):
-phylum	39/39(100.0)
-class	39/39(100.0)
-order	35/39(89.74)
-family	31/39(79.49)
-genus	23/39(58.97)
-Unclassified MAG/16S: 0
-
-Linkage accuracy (bbmap):
-phylum	46/46(100.0)
-class	44/46(95.65)
-order	40/46(86.96)
-family	37/46(80.43)
-genus	28/46(60.87)
-Unclassified MAG/16S: 1
-
-Linkage accuracy (bbmap all step):
-phylum	49/49(100.0)
-class	49/49(100.0)
-order	45/49(91.84)
-family	43/49(87.76)
-genus	32/49(65.31)
-Unclassified MAG/16S: 2
-
-
-Linkage accuracy (60_40):
-phylum	53/53(100.0)
-class	53/53(100.0)
-order	49/53(92.45)
-family	47/53(88.68)
-genus	35/53(66.04)
-Unclassified MAG/16S: 3
-
-
-
-
-'''
+    print('Linkage accuracy: %s' % linkage_file_basename)
+    print('Rank\tLinks\tNA\tCorrect\tUnknown\tTotal(Accuracy)')
+    print('phylum\t%s\t%s\t%s\t%s\t%s(%s)' % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_p, linkage_with_unknown_p, (correct_linkage_p + linkage_with_unknown_p), accuracy_p))
+    print('class\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_c, linkage_with_unknown_c, (correct_linkage_c + linkage_with_unknown_c), accuracy_c))
+    print('order\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_o, linkage_with_unknown_o, (correct_linkage_o + linkage_with_unknown_o), accuracy_o))
+    print('family\t%s\t%s\t%s\t%s\t%s(%s)' % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_f, linkage_with_unknown_f, (correct_linkage_f + linkage_with_unknown_f), accuracy_f))
+    print('genus\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_g, linkage_with_unknown_g, (correct_linkage_g + linkage_with_unknown_g), accuracy_g))
+    print('=============================')
 
 ######################################################## by MAG ########################################################
 
@@ -308,11 +347,4 @@ for each_mag in sorted(bin_id_list):
     linkage_file_with_assessment_by_mag_handle.write('%s\t%s\t%s\t%s\t%s\t%s\n' % (each_mag, mag_depth, with_16s_in_mag, mag_cpl, linked_to_16s, mag_taxon))
 linkage_file_with_assessment_by_mag_handle.close()
 
-'''
-
-Refined_33	11.06	no	83.3	no	d__Bacteria;p__Myxococcota;c__Polyangia;o__Haliangiales;f__Haliangiaceae;g__;s__
-
-BH_ER_050417_subsample_100_98	d__Bacteria;p__Myxococcota;c__Polyangia;o__Haliangiales;f__Haliangiaceae;g__Haliangium;s__Haliangium_ochraceum
-BH_ER_050417_subsample_75_86	d__Bacteria;p__Myxococcota;c__Polyangia;o__Haliangiales;f__Haliangiaceae;g__Haliangium;s__Haliangium_ochraceum
-
-'''
+print('linked MAGs: %s' % len(linked_mag_list))

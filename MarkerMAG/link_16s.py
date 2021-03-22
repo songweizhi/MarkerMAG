@@ -1967,7 +1967,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-mira_tmp',        required=False, default=None,                      help='tmp dir for mira')
     link_16s_parser.add_argument('-spades',          required=False, action="store_true",               help='run spades, instead of Mira')
     link_16s_parser.add_argument('-min_M_pct',       required=False, type=float,    default=70,         help='perfect_match_min_cigar_M_pct, default: 70')
-    link_16s_parser.add_argument('-mismatch',        required=False, type=float,    default=1,          help='maximum mismatch percentage, default: 1')
+    link_16s_parser.add_argument('-mismatch',        required=False, type=float,    default=3,          help='maximum mismatch percentage, default: 3')
     args = vars(link_16s_parser.parse_args())
 
     link_16s(args, config_dict)
@@ -1988,13 +1988,11 @@ To_do = '''
 16. check Mira tmp_dir at the beginning
 17. BH_ER_050417_refined_bins_combined.sam: >Kelp_659345.1__x__Refined_9___NODE_5430_length_12683_cov_6.017999 NODE_5430_length_12683_cov_6.017999__x__12552_r (space in ref id !!!)
 18. !!!!!! if isfile(mira_assembly) is False: report and only export first round linkages !!!!!!
-
+19. use wc -l to check if fastq and fasta match
 
 # on Katana
-module unload python
 module load python/3.7.3
 source ~/mypython3env/bin/activate
-module unload R
 module load R/4.0.2
 module load blast+/2.11.0
 module load bowtie/2.3.5.1

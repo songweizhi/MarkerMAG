@@ -3,32 +3,19 @@ import glob
 from Bio import SeqIO
 
 '''
+MBARC26_mis_1_10_5_combined_linkages.txt	Genome	17/23(73.91)	17/17(100.0)	Wrong:	Unlinked:AS,CG,CP,HR,PS,TR
+MBARC26_mis_2_10_5_combined_linkages.txt	Genome	17/23(73.91)	17/17(100.0)	Wrong:	Unlinked:AS,CG,CP,HR,PS,TR
+MBARC26_mis_3_10_5_combined_linkages.txt	Genome	16/23(69.57)	16/16(100.0)	Wrong:	Unlinked:AS,CG,CP,EC,HR,PS,TR
+MBARC26_mis_4_10_5_combined_linkages.txt	Genome	18/23(78.26)	18/18(100.0)	Wrong:	Unlinked:CG,CP,HR,PS,TR
+MBARC26_mis_5_10_5_combined_linkages.txt	Genome	17/23(73.91)	17/17(100.0)	Wrong:	Unlinked:AS,CG,CP,HR,PS,TR
+MBARC26_mis_6_10_5_combined_linkages.txt	Genome	16/23(69.57)	16/17(94.12)	Wrong:EC	Unlinked:AS,CG,CP,HR,PS,TR
+MBARC26_mis_7_10_5_combined_linkages.txt	Genome	17/23(73.91)	17/17(100.0)	Wrong:	Unlinked:CG,CP,EC,HR,PS,TR
+MBARC26_mis_8_10_5_combined_linkages.txt	Genome	17/23(73.91)	17/17(100.0)	Wrong:	Unlinked:CG,CP,EC,HR,PS,TR
+MBARC26_mis_9_10_5_combined_linkages.txt	Genome	17/23(73.91)	17/17(100.0)	Wrong:	Unlinked:CG,CP,EC,HR,PS,TR
 
-MBARC26_mis_1	    Marker	42/66(63.64)	42/43(97.67)	Wrong:PS_m1	Unlinked:
-MBARC26_mis_2       Marker	42/66(63.64)	42/43(97.67)	Wrong:FA_m2	Unlinked:
-MBARC26_mis_3       Marker	43/66(65.15)	43/44(97.73)	Wrong:PS_m1	Unlinked:
-MBARC26_mis_4       Marker	43/66(65.15)	43/44(97.73)	Wrong:PS_m1	Unlinked:
-MBARC26_mis_5       Marker	43/66(65.15)	43/44(97.73)	Wrong:PS_m1	Unlinked:
-MBARC26_mis3_minM75 Marker	42/66(63.64)	42/43(97.67)	Wrong:PS_m1	Unlinked:
-MBARC26_mis3_minM80 Marker	43/66(65.15)	43/44(97.73)	Wrong:PS_m1	Unlinked:
-MBARC26_mis3_minM85 Marker	42/66(63.64)	42/43(97.67)	Wrong:FA_m2	Unlinked:
-MBARC26_mis3_minM90 Marker	42/66(63.64)	42/43(97.67)	Wrong:FA_m2	Unlinked:
-
-
-MBARC26_mis_1	    Genome	17/23(73.91)	17/18(94.44)	Wrong:CA	Unlinked:AS,CG,CP,PS,TR
-MBARC26_mis_2       Genome	16/23(69.57)	16/17(94.12)	Wrong:CA	Unlinked:AS,CG,CP,HR,PS,TR
-MBARC26_mis_3       Genome	17/23(73.91)	17/18(94.44)	Wrong:CA	Unlinked:AS,CG,CP,PS,TR
-MBARC26_mis_4       Genome	16/23(69.57)	16/17(94.12)	Wrong:CA	Unlinked:AS,CG,CP,HR,PS,TR
-MBARC26_mis_5       Genome	16/23(69.57)	16/17(94.12)	Wrong:CA	Unlinked:AS,CG,CP,HR,PS,TR
-MBARC26_mis3_minM75 Genome	16/23(69.57)	16/17(94.12)	Wrong:CA	Unlinked:AS,CG,CP,HR,PS,TR
-MBARC26_mis3_minM80 Genome	17/23(73.91)	17/18(94.44)	Wrong:CA	Unlinked:CG,CP,HR,PS,TR
-MBARC26_mis3_minM85 Genome	16/23(69.57)	16/17(94.12)	Wrong:CA	Unlinked:AS,CG,CP,HR,PS,TR
-MBARC26_mis3_minM90 Genome	16/23(69.57)	16/17(94.12)	Wrong:CA	Unlinked:AS,CG,CP,HR,PS,TR
-
-
-MBARC26_mis_3_spades_combined_linkages.txt	Marker	42/66(63.64)	42/43(97.67)	Wrong:FA_m2	Unlinked:
-MBARC26_mis_3_spades_combined_linkages.txt	Genome	16/23(69.57)	16/17(94.12)	Wrong:CA	Unlinked:AS,CG,CP,EC,PS,TR
-
+MBARC26_mis_3_10_5_spades_combined_linkages.txt	Genome	17/23(73.91)	17/17(100.0)	Wrong:	Unlinked:AS,CG,CP,EC,PS,TR
+MBARC26_mis_4_10_5_spades_combined_linkages.txt	Genome	18/23(78.26)	18/18(100.0)	Wrong:	Unlinked:CG,CP,EC,PS,TR
+MBARC26_mis_5_10_5_spades_combined_linkages.txt	Genome	18/23(78.26)	18/18(100.0)	Wrong:	Unlinked:CG,CP,EC,PS,TR
 
 '''
 
@@ -38,7 +25,7 @@ wd                          = '/Users/songweizhi/Desktop/MarkerMAG_wd/2_MBARC26'
 marker_gene_seqs            = '%s/MBARC26_all_depth_assemblies_uclust_0.999_99.9_500bp.fasta'   % wd
 mag_folder                  = '%s/Refined_refined_bins_renamed'                                 % wd
 mag_file_extension          = 'fna'
-combined_linkage_file       = '%s/MBARC26_mis_3_spades_combined_linkages.txt'                          % wd
+combined_linkage_file       = '%s/MBARC26_mis_6_10_5_combined_linkages.txt'                          % wd
 
 
 ########################################################################################################################

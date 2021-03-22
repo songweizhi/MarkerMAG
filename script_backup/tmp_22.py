@@ -30,3 +30,5 @@ for ref_seq in SeqIO.parse(ref_in, 'fasta'):
         ref_subset_handle.write('>%s\n' % ref_seq_right_end_id)
         ref_subset_handle.write('%s\n' % ref_seq_right_end)
 ref_subset_handle.close()
+
+

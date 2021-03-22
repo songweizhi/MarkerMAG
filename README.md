@@ -55,12 +55,17 @@ MarkerMAG is implemented in python3, you can install it with pip3:
 MarkerMAG modules:
 ---
 
-    link             ->  link MAGs with marker genes
-    rename_reads     ->  rename paired reads (in fasta format) 
-    matam_16s        ->  including reads extraction, subsample, assembly and dereplication
-    uclust_16s       ->  cluster marker genes with Usearch
-    barrnap_16s      ->  identify 16S gene sequences with Barrnap
-    subsample_reads  ->  subsample reads with Usearch
++ Main module
+
+      link             ->  link MAGs with marker genes
+    
++ Supplementary modules
+
+      rename_reads     ->  rename paired reads 
+      matam_16s        ->  Assemble 16S rRNA genes with Matam, including subsample and dereplication
+      uclust_16s       ->  cluster marker genes with Usearch
+      barrnap_16s      ->  identify 16S gene sequences with Barrnap
+      subsample_reads  ->  subsample reads with Usearch
 
 
 Important Notes :warning::warning::warning:

@@ -26,7 +26,7 @@ def overlap_between_list(list_1, list_2):
 
 ########################################################################################################################
 
-wd = '/Users/songweizhi/Desktop/assess_linkages'
+wd = '/Users/songweizhi/Desktop/MarkerMAG_wd/3_CAMI_GI/assess_linkages'
 
 ########## reference to cluster ##########
 
@@ -38,52 +38,54 @@ ref_to_strain_file          = '%s/file_in/ref_to_strain.txt'                    
 
 parse_blastn_bin_vs_ref     = False  # True or False
 blastn_bin_vs_ref           = '%s/file_in/bin_vs_ref.tab'                                   % wd
-iden_cutoff                 = 99.5
-aln_len_cutoff              = 1500
-cov_q_cutoff                = 90
-min_match_length            = 102400  # 100 Kbp
+iden_cutoff                 = 99
+aln_len_cutoff              = 1000
+cov_q_cutoff                = 80
+min_match_length            = 10240  # 10 Kbp
 mag_metadata                = '%s/file_in/MAG_metadata.txt'                                 % wd
 
 ########## 16S to reference ##########
 
-perform_blastn_16s_vs_refs  = False  # True or False
-combined_GI_ref_16S         = '%s/file_in/combined_GI_ref_16S.ffn'                          % wd
-matam_16s_seqs              = '%s/file_in/3_GI_assembled_16S_uclust_0.999.fasta'            % wd
 matam_16s_blastn            = '%s/file_in/3_GI_assembled_16S_uclust_0.999_vs_ref.tab'       % wd
 iden_cutoff_16s             = 99.5  # 99.3 (best), 99.5
 aln_len_cutoff_16s          = 500
 cov_q_cutoff_16s            = 70
 total_query_mag_num         = 97
 
-########## assessment results ##########
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mita_test_combined_linkages.txt'                                % wd
-# Linkage	51/97(52.58)	51/52(98.08)	10
-#MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_mismatch0.55_mplu10_combined_linkages.txt'     % wd
-# 99.3 Linkage	57/97(58.76)	57/64(89.06)	9
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_0128_combined_linkages.txt'                     % wd
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_0128_2_combined_linkages.txt'                   % wd
-MarkerMAG_linkages          = '%s/file_in/GI_combined_linkages.txt'                                                 % wd
-
-MarkerMAG_linkages          = '%s/file_in/GI_3_70_10_5_combined_linkages.txt'                                                 % wd
-# Linkage	155/97(159.79)	155/174(89.08)	21
-# Linkage	160/97(164.95)	160/181(88.4)	14
-
-MarkerMAG_linkages          = '%s/file_in/GI_1_70_10_5_combined_linkages.txt'                                                 % wd
-# Linkage	109/97(112.37)	109/113(96.46)	4
-
-MarkerMAG_linkages          = '%s/file_in/GI_2_70_10_5_combined_linkages.txt'                                                 % wd
-# Linkage	141/97(145.36)	141/156(90.38)	11
-
-
-
 ########## script ##########
 
 pwd_plot_sankey_R = '%s/file_in/get_sankey_plot.R' % wd
 
+########## assessment results ##########
+
+MarkerMAG_linkages          = '%s/GI_3_70_10_5_combined_linkages.txt'       % wd
+# Linkage	156/97(160.82)	156/174(89.66)	21
+
+MarkerMAG_linkages          = '%s/GI_3_80_10_5_combined_linkages.txt'       % wd
+# Linkage	151/97(155.67)	151/166(90.96)	19
+
+MarkerMAG_linkages          = '%s/GI_0_70_10_5_combined_linkages.txt'       % wd
+
+'''
+
+GI_0_70_10_5    Linkage	89/97(91.75)	89/95(93.68)	9	Correctly_linked_MAG(29)
+GI_1_70_10_5    Linkage	105/97(108.25)	105/108(97.22)	9	Correctly_linked_MAG(34)
+GI_2_70_10_5    Linkage	136/97(140.21)	136/150(90.67)	17	Correctly_linked_MAG(41)
+GI_3_70_10_5    Linkage	156/97(160.82)	156/174(89.66)	21	Correctly_linked_MAG(43)
+
+
+GI_1_80_10_5    Linkage	102/97(105.15)	102/106(96.23)	8
+GI_3_80_10_5    Linkage	151/97(155.67)	151/166(90.96)	19
+
+'''
+
+
+
+
 ############################################### define file/folder name ################################################
 
 # bin to reference
+cluster_to_ref_file         = '%s/cluster_to_ref.txt'                       % wd
 bin_vs_ref_txt              = '%s/bin_vs_ref_imag%s.txt'                    % (wd, iden_cutoff)
 stats_bin_to_ref_txt        = '%s/stats_bin_to_ref_imag%s.txt'              % (wd, iden_cutoff)
 stats_ref_to_bin_txt        = '%s/stats_ref_to_bin_imag%s.txt'              % (wd, iden_cutoff)
@@ -112,6 +114,11 @@ for each_ref in open(drep_cdb_file):
             cluster_to_ref_dict[ref_cluster] = [ref_file_name_no_ext]
         else:
             cluster_to_ref_dict[ref_cluster].append(ref_file_name_no_ext)
+
+cluster_to_ref_file_handle = open(cluster_to_ref_file, 'w')
+for each_cluster in cluster_to_ref_dict:
+    cluster_to_ref_file_handle.write('%s\t%s\n' % (each_cluster, ','.join(cluster_to_ref_dict[each_cluster])))
+cluster_to_ref_file_handle.close()
 
 
 ################################################### bin to reference ###################################################
@@ -224,13 +231,7 @@ for each_bin in bin_to_cluster_dict:
         else:
             cluster_to_bin_dict[matched_cluster].add(each_bin)
 
-
 ################################################### 16S to reference ###################################################
-
-blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads 1'
-blast_cmd = 'blastn -query %s -subject %s -out %s %s' % (matam_16s_seqs, combined_GI_ref_16S, matam_16s_blastn, blast_parameters)
-if perform_blastn_16s_vs_refs is True:
-    os.system(blast_cmd)
 
 # get matam_16s_to_cluster_dict
 matam_16s_to_cluster_dict = {}
@@ -266,6 +267,8 @@ for matam_16s in matam_16s_to_cluster_dict:
 MarkerMAG_linkages_assessed_handle = open(MarkerMAG_linkages_assessed, 'w')
 wrong_linkages_txt_handle = open(wrong_linkages_txt, 'w')
 unknown_linkages_txt_handle = open(unknown_linkages_txt, 'w')
+
+linkage_mag_right = set()
 linkage_num_right = 0
 linkage_num_wrong = 0
 linkage_num_unknown = 0
@@ -291,6 +294,7 @@ for each_linkage in open(MarkerMAG_linkages):
 
             if overlap_between_list(matched_cluster_mag, matched_cluster_16s) is True:
                 linkage_num_right += 1
+                linkage_mag_right.add(id_mag)
                 MarkerMAG_linkages_assessed_handle.write('%s\tCorrect\n' % each_linkage.strip())
                 if id_mag not in linkage_assessment_dict:
                     linkage_assessment_dict[id_mag] = ['Correct']
@@ -298,6 +302,9 @@ for each_linkage in open(MarkerMAG_linkages):
                     linkage_assessment_dict[id_mag].append('Correct')
 
             else:
+                print(matched_cluster_mag)
+                print(matched_cluster_16s)
+                print()
                 linkage_num_wrong += 1
                 MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
                 if id_mag not in linkage_assessment_dict:
@@ -346,75 +353,52 @@ recovery_str  = '%s/%s(%s)' % (linkage_num_right, total_query_mag_num, link_reco
 accuracy_str  = '%s/%s(%s)' % (linkage_num_right, (linkage_num_right + linkage_num_wrong), link_accuracy)
 
 print('%s\tRecovery\tAccuracy\tUnknown' % 'Linkage')
-print('%s\t%s\t%s\t%s' % ('Linkage', recovery_str, accuracy_str, linkage_num_unknown))
-print()
+print('%s\t%s\t%s\t%s\tCorrectly_linked_MAG(%s)' % ('Linkage', recovery_str, accuracy_str, linkage_num_unknown, len(linkage_mag_right)))
+
+
 
 ########################################################################################################################
 
-'''
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_longkmer_33-127_combined_linkages.txt'                         % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_longkmer_55-127_combined_linkages.txt'                         % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_9_combined_linkages.txt'                                       % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_longkmer_combined_linkages.txt'                                % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_combined_linkages.txt'                                         % wd
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mita_test_combined_linkages.txt'                                    % wd
-# Linkage	51/97(52.58)	51/52(98.08)	10
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_combined_linkages.txt'                  % wd
-# Linkage	61/97(62.89)	61/68(89.71)	21
-# Linkage	60/97(61.86)	60/67(89.55)	20
-# Linkage	69/97(71.13)	69/76(90.79)	11
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_mismatch0.55_combined_linkages.txt'     % wd
-# 99.5  Linkage	60/97(61.86)	60/67(89.55)	19
-# 99.3  Linkage	68/97(70.1)	    68/75(90.67)	11
-# 99.0  Linkage	72/97(74.23)	72/79(91.14)	7
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_mismatch0.55_mplu10_combined_linkages.txt'                  % wd
-# Linkage	55/97(56.7)	55/62(88.71)	11
-# Linkage	57/97(58.76)	57/64(89.06)	9
-'''
-
-
-linkage_assessment_stats_dict = {}
-for each_assess_key in linkage_assessment_dict:
-    assess_result = linkage_assessment_dict[each_assess_key]
-    assess_result_sorted = sorted(assess_result)
-    assess_result_uniq = []
-    for each_a in assess_result_sorted:
-        if each_a not in assess_result_uniq:
-            assess_result_uniq.append(each_a)
-    assess_stats = []
-    for uniq_a in assess_result_uniq:
-        assess_stats.append('%s(%s)' % (uniq_a, assess_result_sorted.count(uniq_a)))
-    linkage_assessment_stats_dict[each_assess_key] = assess_stats
+# linkage_assessment_stats_dict = {}
+# for each_assess_key in linkage_assessment_dict:
+#     assess_result = linkage_assessment_dict[each_assess_key]
+#     assess_result_sorted = sorted(assess_result)
+#     assess_result_uniq = []
+#     for each_a in assess_result_sorted:
+#         if each_a not in assess_result_uniq:
+#             assess_result_uniq.append(each_a)
+#     assess_stats = []
+#     for uniq_a in assess_result_uniq:
+#         assess_stats.append('%s(%s)' % (uniq_a, assess_result_sorted.count(uniq_a)))
+#     linkage_assessment_stats_dict[each_assess_key] = assess_stats
+#
+#
+# for each_mag in open(mag_metadata):
+#     if not each_mag.startswith('MAG	Depth	Completeness	16S_in_MAG	Matched_ref'):
+#         each_mag_split = each_mag.strip().split('\t')
+#         mag_id = each_mag_split[0]
+#         mag_cluster = {'unknown'}
+#         if mag_id in bin_to_cluster_dict:
+#             mag_cluster = bin_to_cluster_dict[mag_id]
+#
+#         link_result = {'no'}
+#         if mag_id in linkage_assessment_stats_dict:
+#             link_result = linkage_assessment_stats_dict[mag_id]
+#
+#         Matam16S_matched = set()
+#         for each_cluster in mag_cluster:
+#             if each_cluster in cluster_to_matam_16s_dict:
+#                 for each_16s in cluster_to_matam_16s_dict[each_cluster]:
+#                     Matam16S_matched.add(each_16s)
+#
+#         print('%s\t%s\t%s\t%s' % (each_mag.strip(), ','.join(mag_cluster), ','.join(link_result), len(Matam16S_matched)))
+#
 
 
-for each_mag in open(mag_metadata):
-    if not each_mag.startswith('MAG	Depth	Completeness	16S_in_MAG	Matched_ref'):
-        each_mag_split = each_mag.strip().split('\t')
-        mag_id = each_mag_split[0]
-        mag_cluster = {'unknown'}
-        if mag_id in bin_to_cluster_dict:
-            mag_cluster = bin_to_cluster_dict[mag_id]
+# # print('MAG\tDepth\tCompleteness\t16S_in_MAG\tMatched_ref\tCluster\tLinkage\tMatam16S')
+# # print(linkage_assessment_stats_dict)
+# # print(cluster_to_matam_16s_dict)
+#
+# for bin in bin_to_cluster_dict:
+#     print('%s\t%s' % (bin, bin_to_cluster_dict[bin]))
 
-        link_result = {'no'}
-        if mag_id in linkage_assessment_stats_dict:
-            link_result = linkage_assessment_stats_dict[mag_id]
-
-        Matam16S_matched = set()
-        for each_cluster in mag_cluster:
-            if each_cluster in cluster_to_matam_16s_dict:
-                for each_16s in cluster_to_matam_16s_dict[each_cluster]:
-                    Matam16S_matched.add(each_16s)
-
-        #print('%s\t%s\t%s\t%s' % (each_mag.strip(), ','.join(mag_cluster), ','.join(link_result), len(Matam16S_matched)))
-
-
-# print('MAG\tDepth\tCompleteness\t16S_in_MAG\tMatched_ref\tCluster\tLinkage\tMatam16S')
-# print(linkage_assessment_stats_dict)
-# print(cluster_to_matam_16s_dict)
-
-for bin in bin_to_cluster_dict:
-    print('%s\t%s' % (bin, bin_to_cluster_dict[bin]))
