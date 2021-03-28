@@ -12,7 +12,7 @@ from distutils.spawn import find_executable
 matam_16s_usage = '''
 =================================== matam_16s example commands ===================================
 
-MarkerMAG matam_16s -p Test -r1 R1.fasta -r2 R2.fasta -t 12 -force -d path/to/SILVA_128_SSURef_NR95
+MarkerMAG matam_16s -p Test -r1 R1.fasta -r2 R2.fasta -t 12 -force -d path/to/SILVA_138_SSURef_NR99
 
 ==================================================================================================
 '''
