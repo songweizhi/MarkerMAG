@@ -16,16 +16,17 @@ def sep_path_basename_ext(file_in):
 ###################################################### file in/out #####################################################
 
 wd                  = '/Users/songweizhi/Desktop/MarkerMAG_wd/4_Kelp'
-taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                          % wd
-taxonomy_16s        = '%s/BH_ER_050417_assembled_16S_uclust_0.999_classified.txt'   % wd
-taxonomy_16s_blca   = '%s/BH_ER_050417_assembled_16S_uclust_0.999.fasta.blca.out'   % wd
-bin_id_file         = '%s/bin_id.txt'                                               % wd
-barrnap_output      = '%s/BH_ER_050417_16S.txt'                                     % wd
-checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                   % wd
-mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                 % wd
+taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                              % wd
+taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified.txt' % wd
+taxonomy_16s_blca   = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999.fasta.blca.out' % wd
+bin_id_file         = '%s/bin_id.txt'                                                   % wd
+barrnap_output      = '%s/BH_ER_050417_16S.txt'                                         % wd
+checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                       % wd
+mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                     % wd
 
-linkage_file        = '%s/file_in/Kelp_70_3_138_combined_linkages.txt'      % wd
+linkage_file        = '%s/file_in/manual_linkages.txt'      % wd
 #linkage_file        = '%s/file_in/Kelp_70_3_combined_linkages.txt'      % wd
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/mock_final_op.txt'
 
 
 '''

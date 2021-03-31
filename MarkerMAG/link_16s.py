@@ -1513,7 +1513,12 @@ def link_16s(args, config_dict):
 
     # filter paired and clipping linkages
     if genomic_seq_type == 'mag':
-        filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_paired_linkages, min_paired_linkages_for_uniq_linked_16s, link_stats_paired_filtered)
+        filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict,
+                                    mean_depth_dict_gnm, mean_depth_dict_16s,
+                                    min_16s_gnm_multiple,
+                                    within_genome_minimum_iden16s, min_paired_linkages, min_paired_linkages_for_uniq_linked_16s, link_stats_paired_filtered)
+
+
         filter_linkages_iteratively(link_stats_clipping, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, 0, 0, link_stats_clipping_filtered)
     if genomic_seq_type == 'ctg':
         filter_linkages_iteratively(link_stats_paired, 'Number', pairwise_16s_iden_dict, mean_depth_dict_ctg, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_paired_linkages, min_paired_linkages_for_uniq_linked_16s, link_stats_paired_filtered)
@@ -1989,6 +1994,9 @@ To_do = '''
 17. BH_ER_050417_refined_bins_combined.sam: >Kelp_659345.1__x__Refined_9___NODE_5430_length_12683_cov_6.017999 NODE_5430_length_12683_cov_6.017999__x__12552_r (space in ref id !!!)
 18. !!!!!! if isfile(mira_assembly) is False: report and only export first round linkages !!!!!!
 19. use wc -l to check if fastq and fasta match
+20. faster way to rename and extract reads: seqtk (test it)?
+
+
 
 # on Katana
 module load python/3.7.3

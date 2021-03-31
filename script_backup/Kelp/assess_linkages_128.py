@@ -16,16 +16,15 @@ def sep_path_basename_ext(file_in):
 ###################################################### file in/out #####################################################
 
 wd                  = '/Users/songweizhi/Desktop/MarkerMAG_wd/4_Kelp'
-taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                          % wd
-taxonomy_16s        = '%s/BH_ER_050417_assembled_16S_uclust_0.999_classified.txt'   % wd
-taxonomy_16s_blca   = '%s/BH_ER_050417_assembled_16S_uclust_0.999.fasta.blca.out'   % wd
-bin_id_file         = '%s/bin_id.txt'                                               % wd
-barrnap_output      = '%s/BH_ER_050417_16S.txt'                                     % wd
-checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                   % wd
-mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                 % wd
+taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                              % wd
+taxonomy_16s        = '%s/Kelp_SILVA128_id95_assembled_16S_uclust_0.999_classified.txt' % wd
+taxonomy_16s_blca   = '%s/Kelp_SILVA128_id95_assembled_16S_uclust_0.999.fasta.blca.out' % wd
+bin_id_file         = '%s/bin_id.txt'                                                   % wd
+barrnap_output      = '%s/BH_ER_050417_16S.txt'                                         % wd
+checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                       % wd
+mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                     % wd
 
-linkage_file        = '%s/file_in/Kelp_70_3_138_combined_linkages.txt'      % wd
-#linkage_file        = '%s/file_in/Kelp_70_3_combined_linkages.txt'      % wd
+linkage_file        = '%s/file_in/Kelp_70_3_128_combined_linkages.txt'                  % wd
 
 
 '''
@@ -146,12 +145,10 @@ for each_16s_taxon in open(taxonomy_16s):
     each_16s_taxon_split = each_16s_taxon.strip().split('\t')
     s16_taxon_dict[each_16s_taxon_split[0]] = each_16s_taxon_split[1].split(' [')[0]
 
-
 s16_taxon_blca_dict = {}
 for each_16s_taxon in open(taxonomy_16s_blca):
     each_16s_taxon_split = each_16s_taxon.strip().split('\t')
     s16_taxon_blca_dict[each_16s_taxon_split[0]] = each_16s_taxon_split[1]
-
 
 s16_taxon_blca_dict_formatted = {}
 for each_16s in s16_taxon_blca_dict:

@@ -88,7 +88,7 @@ Important Notes :warning:
    16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.9%`.
    The longest sequence from each cluster will be kept.
    
-   Please refer to [here](demo_files/README_Matam.md) for running Matam using an updated SILVA SSU database (version 138.1).
+   Please refer to [here](demo_files/README_Matam.md) for running Matam using the latest SILVA SSU database (v138.1).
         
        # convert fastq files fasta files (e.g. with idba's fq2fa)
        fq2fa R1.fastq R1.fasta

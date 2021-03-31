@@ -1,20 +1,25 @@
 
-Prepare SILVA SSU database for Matam
+Prepare Matam database with the latest SILVA SSU sequences (v138.1)
 ---
 
-1. Download SILVA SSU sequences (version 138.1)
+1. Download SILVA SSU sequences (v138.1)
 
+       # specify a location where you want to store the db files
+       matam_db_folder='/srv/scratch/z5039045/DB/Matam'
+
+       # download the SILVA SSU sequence file to the specified folder and decompress it
+       cd $matam_db_folder
        wget https://www.arb-silva.de/fileadmin/silva_databases/release_138_1/Exports/README.txt
        wget https://www.arb-silva.de/fileadmin/silva_databases/release_138_1/Exports/SILVA_138.1_SSURef_NR99_tax_silva.fasta.gz
-       gunzip SILVA_138.1_SSURef_NR99_tax_silva.fasta.gz  
+       gunzip SILVA_138.1_SSURef_NR99_tax_silva.fasta.gz
 
 1. Format SILVA SSU sequences with Matam
 
-       matam_db_preprocessing.py --clustering_id_threshold 0.99 --max_memory 30000 --cpu 6 -v -i SILVA_138.1_SSURef_NR99_tax_silva.fasta -d SILVA_138_1_SSURef_NR99_id99
+       matam_db_preprocessing.py --clustering_id_threshold 0.99 --max_memory 30000 --cpu 12 -v -i SILVA_138.1_SSURef_NR99_tax_silva.fasta -d SILVA_138_1_SSURef_NR99_id99
 
 1. Run Matam with generated SILVA SSU database
 
-       matam_assembly.py -i filtered_reads.fasta -o Matam_outputs -d SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 --filter_only -v --cpu 6 --max_memory 30000 
+       matam_assembly.py -i filtered_reads_R1_R2.fasta -o Matam_outputs -d $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -v --cpu 12 --max_memory 30000 
 
 For UNSW Katana users
 ---
@@ -26,4 +31,4 @@ For UNSW Katana users
     module load sparsehash/2.0.3
     module load matam/1.5.3
     module load samtools/1.9
-
+    matam_assembly.py -h
