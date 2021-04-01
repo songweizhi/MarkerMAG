@@ -299,7 +299,7 @@ if total_linkage > 0:
     accuracy_g = float("{0:.2f}".format((correct_linkage_g + linkage_with_unknown_g) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))
 
     print('Linkage accuracy: %s' % linkage_file_basename)
-    print('Rank\tLinks\tNA\tCorrect\tUnknown\tTotal(Accuracy)')
+    print('Rank\tAll\tNA\tCorrect\tUnknown\tTotal(Accuracy)')
     print('phylum\t%s\t%s\t%s\t%s\t%s(%s)' % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_p, linkage_with_unknown_p, (correct_linkage_p + linkage_with_unknown_p), accuracy_p))
     print('class\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_c, linkage_with_unknown_c, (correct_linkage_c + linkage_with_unknown_c), accuracy_c))
     print('order\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_o, linkage_with_unknown_o, (correct_linkage_o + linkage_with_unknown_o), accuracy_o))
