@@ -1,6 +1,13 @@
 import os
 import pandas as pd
 from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+
+
+def get_rc(seq_in):
+    seq_in_rc = str(SeqRecord(Seq(seq_in)).reverse_complement().seq)
+    return seq_in_rc
 
 
 def sort_csv_by_col(file_in, file_out, col_header):
@@ -350,11 +357,13 @@ for each_read in open(pwd_samfile):
 
 
 for each_mp in MappingRecord_dict:
-    current_mp_record = MappingRecord_dict[each_mp]
-    current_mp_r1_seq  = current_mp_record.r1_seq
-    current_mp_r2_seq  = current_mp_record.r2_seq
-    current_mp_r1_refs = current_mp_record.r1_refs
-    current_mp_r2_refs = current_mp_record.r2_refs
+    current_mp_record       = MappingRecord_dict[each_mp]
+    current_mp_r1_seq       = current_mp_record.r1_seq
+    current_mp_r2_seq       = current_mp_record.r2_seq
+    current_mp_r1_seq_qual  = current_mp_record.r1_seq_qual
+    current_mp_r2_seq_qual  = current_mp_record.r2_seq_qual
+    current_mp_r1_refs      = current_mp_record.r1_refs
+    current_mp_r2_refs      = current_mp_record.r2_refs
 
     # only r1 mapped
     if (current_mp_r1_refs != {}) and (current_mp_r2_refs == {}):
@@ -380,7 +389,9 @@ for each_mp in MappingRecord_dict:
                     current_clipping_part_len = int(current_match_cigar_split[0][:-1])
                     if current_clipping_part_len > len(current_mp_record.r1_clipping_seq):
                         current_clipping_seq = current_mp_r1_seq[:int(current_match_cigar_split[0][:-1])]
+                        current_clipping_seq_qual = current_mp_r1_seq_qual[:int(current_match_cigar_split[0][:-1])]
                         current_mp_record.r1_clipping_seq = current_clipping_seq
+                        current_mp_record.r1_clipping_seq_qual = current_clipping_seq_qual
 
                 elif (current_match_cigar_split[0][-1] not in ['S', 's']) and (current_match_cigar_split[-1][-1] in ['S', 's']):
                     current_mp_record.qualified_reads = True
@@ -388,7 +399,9 @@ for each_mp in MappingRecord_dict:
                     current_clipping_part_len = int(current_match_cigar_split[-1][:-1])
                     if current_clipping_part_len > len(current_mp_record.r1_clipping_seq):
                         current_clipping_seq = current_mp_r1_seq[-int(current_match_cigar_split[-1][:-1]):]
+                        current_clipping_seq_qual = current_mp_r1_seq_qual[-int(current_match_cigar_split[-1][:-1]):]
                         current_mp_record.r1_clipping_seq = current_clipping_seq
+                        current_mp_record.r1_clipping_seq_qual = current_clipping_seq_qual
 
                 elif (current_match_cigar_split[0][-1] in ['S', 's']) and (current_match_cigar_split[-1][-1] in ['S', 's']):
 
@@ -998,13 +1011,12 @@ mock_final_op_ctg_level_handle.close()
 #################### extract sequences flanking 16S ends ####################
 
 link_stats_combined_filtered_s1 = stats_combined_filtered
-free_living_16s_clipping_seq = '/Users/songweizhi/Desktop/new_algorithm_Kelp/free_living_16s_clipping.fa'
-free_living_16s_unmapped_seq = '/Users/songweizhi/Desktop/new_algorithm_Kelp/free_living_16s_unmapped.fa'
 round2_fq   = False
 
 free_living_ext = 'fa'
 if round2_fq is True:
     free_living_ext = 'fq'
+
 
 free_living_16s_R1 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_16s_R1.%s' % free_living_ext
 free_living_16s_R2 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_16s_R2.%s' % free_living_ext
@@ -1021,8 +1033,9 @@ for each_link in open(link_stats_combined_filtered_s1):
         linked_genomic_seq_set.add(each_link_split[1][12:])
 
 
-free_living_16s_unmapped_id = set()
-free_living_16s_clipping_seq_handle = open(free_living_16s_clipping_seq, 'w')
+free_living_16s_R1_handle = open(free_living_16s_R1, 'w')
+free_living_16s_R2_handle = open(free_living_16s_R2, 'w')
+free_living_16s_UP_handle = open(free_living_16s_UP, 'w')
 for qualified_read in MappingRecord_dict:
     read_mr = MappingRecord_dict[qualified_read]
 
@@ -1038,25 +1051,97 @@ for qualified_read in MappingRecord_dict:
 
         if ref_been_linked is False:
             read_mr.consider_round_2 = True
-            if read_mr.consider_r1_unmapped_mate is True:
-                free_living_16s_unmapped_id.add('%s.2' % qualified_read)
-            if read_mr.consider_r2_unmapped_mate is True:
-                free_living_16s_unmapped_id.add('%s.1' % qualified_read)
-            if read_mr.consider_r1_clipping_part is True:
-                free_living_16s_clipping_seq_handle.write('>%s.1\n' % qualified_read)
-                free_living_16s_clipping_seq_handle.write('%s\n' % read_mr.r1_clipping_seq)
-            if read_mr.consider_r2_clipping_part is True:
-                free_living_16s_clipping_seq_handle.write('>%s.2\n' % qualified_read)
-                free_living_16s_clipping_seq_handle.write('%s\n' % read_mr.r2_clipping_seq)
-free_living_16s_clipping_seq_handle.close()
 
+            if (read_mr.consider_r1_unmapped_mate is True) and (read_mr.consider_r1_clipping_part is True):
 
-free_living_16s_unmapped_seq_handle = open(free_living_16s_unmapped_seq, 'w')
-for each_read in SeqIO.parse(pwd_samfile_reads, 'fasta'):
-    if each_read.id in free_living_16s_unmapped_id:
-        free_living_16s_unmapped_seq_handle.write('>%s\n' % each_read.id)
-        free_living_16s_unmapped_seq_handle.write('>%s\n' % str(each_read.seq))
-free_living_16s_unmapped_seq_handle.close()
+                if round2_fq is False:
+                    # write out R1 fa
+                    free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
+                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                    # write out R2 fa
+                    free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
+                    free_living_16s_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                else:
+                    # write out R1 fq
+                    free_living_16s_R1_handle.write('@%s.1\n' % qualified_read)
+                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                    free_living_16s_R1_handle.write('+\n')
+                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                    # write out R2 fq
+                    free_living_16s_R2_handle.write('@%s.2\n' % qualified_read)
+                    free_living_16s_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                    free_living_16s_R2_handle.write('+\n')
+                    free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
+
+            elif (read_mr.consider_r2_unmapped_mate is True) and (read_mr.consider_r2_clipping_part is True):
+
+                if round2_fq is False:
+                    # write out R1 fa
+                    free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
+                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
+                    # write out R2 fa
+                    free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
+                    free_living_16s_R2_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
+                else:
+                    # write out R1 fq
+                    free_living_16s_R1_handle.write('@%s.1\n' % qualified_read)
+                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
+                    free_living_16s_R1_handle.write('+\n')
+                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
+                    # write out R2 fq
+                    free_living_16s_R2_handle.write('@%s.2\n' % qualified_read)
+                    free_living_16s_R2_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
+                    free_living_16s_R2_handle.write('+\n')
+                    free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual[::-1])
+
+            else:
+                if read_mr.consider_r1_unmapped_mate is True:
+
+                    if round2_fq is False:
+                        free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                    else:
+                        free_living_16s_UP_handle.write('@%s.2\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                        free_living_16s_UP_handle.write('+\n')
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
+
+                elif read_mr.consider_r2_unmapped_mate is True:
+
+                    if round2_fq is False:
+                        free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
+                    else:
+                        free_living_16s_UP_handle.write('@%s.1\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
+                        free_living_16s_UP_handle.write('+\n')
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq_qual)
+
+                elif read_mr.consider_r1_clipping_part is True:
+
+                    if round2_fq is False:
+                        free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                    else:
+                        free_living_16s_UP_handle.write('@%s.1\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                        free_living_16s_UP_handle.write('+\n')
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+
+                elif read_mr.consider_r2_clipping_part is True:
+
+                    if round2_fq is False:
+                        free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
+                    else:
+                        free_living_16s_UP_handle.write('@%s.2\n' % qualified_read)
+                        free_living_16s_UP_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
+                        free_living_16s_UP_handle.write('+\n')
+                        free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual[::-1])
+
+free_living_16s_R1_handle.close()
+free_living_16s_R2_handle.close()
+free_living_16s_UP_handle.close()
 
 #################### extract sequences flanking ctg ends ####################
 

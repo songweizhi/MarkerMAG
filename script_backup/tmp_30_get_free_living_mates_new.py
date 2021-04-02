@@ -1,3 +1,6 @@
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+
 
 def get_max_clp_and_index(r1_cigar_list, r2_cigar_list):
     r1_cigar_list_split = [cigar_splitter(i) for i in r1_cigar_list]
@@ -43,6 +46,11 @@ def get_max_clp_and_index(r1_cigar_list, r2_cigar_list):
             max_value_index = 'r2_r'
 
     return max_value, max_value_index
+
+
+def get_rc(seq_in):
+    seq_in_rc = str(SeqRecord(Seq(seq_in)).reverse_complement().seq)
+    return seq_in_rc
 
 
 class MappingRecord:
@@ -152,10 +160,10 @@ free_living_ctg_R1 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_l
 free_living_ctg_R2 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_ctg_R2.%s' % free_living_ext
 free_living_ctg_UP = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_ctg_UP.%s' % free_living_ext
 
-# min_M_pct                           = 20
-min_M_len                           = 30
-min_clp_len_round2                         = 30
-# min_clp_M_len                       = 25
+# min_M_pct                             = 20
+min_M_len                               = 30
+min_clp_len_round2                      = 30
+# min_clp_M_len                         = 25
 max_mis_pct                             = 3
 end_seq_len                             = 1000  # bp
 
@@ -268,7 +276,7 @@ for read_basename in round_2_MappingRecord_dict.copy():
                         free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
                         # write out R2 fa
                         free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        free_living_ctg_R2_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
                     else:
                         # write out R1 fq
                         free_living_ctg_R1_handle.write('@%s.1\n' % read_basename)
@@ -277,9 +285,9 @@ for read_basename in round_2_MappingRecord_dict.copy():
                         free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
                         # write out R2 fq
                         free_living_ctg_R2_handle.write('@%s.2\n' % read_basename)
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        free_living_ctg_R2_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
                         free_living_ctg_R2_handle.write('+\n')
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual[::-1])
 
         else:  # r2 mapped to multiple refs, ignore
             round_2_MappingRecord_dict.pop(read_basename)
@@ -296,12 +304,12 @@ for read_basename in round_2_MappingRecord_dict.copy():
                 # write out sequence
                 if round2_fq is False:
                     free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
+                    free_living_ctg_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
                 else:
                     free_living_ctg_UP_handle.write('@%s.2\n' % read_basename)
-                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
+                    free_living_ctg_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
                     free_living_ctg_UP_handle.write('+\n')
-                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
+                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
 
             # consider both of unmapped mate and clipping part
             else:
@@ -336,7 +344,7 @@ for read_basename in round_2_MappingRecord_dict.copy():
                         free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
                         # write out R2 fa
                         free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
+                        free_living_ctg_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
                     else:
                         # write out R1 fq
                         free_living_ctg_R1_handle.write('@%s.1\n' % read_basename)
@@ -345,9 +353,9 @@ for read_basename in round_2_MappingRecord_dict.copy():
                         free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
                         # write out R2 fq
                         free_living_ctg_R2_handle.write('@%s.2\n' % read_basename)
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
+                        free_living_ctg_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
                         free_living_ctg_R2_handle.write('+\n')
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
+                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
 
         else:  # r1 mapped to multiple refs, ignore
             round_2_MappingRecord_dict.pop(read_basename)
@@ -414,12 +422,12 @@ for read_basename in round_2_MappingRecord_dict.copy():
                                 if read_mr.consider_r2_clipping_part is True:
                                     if round2_fq is False:
                                         free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
                                     else:
                                         free_living_ctg_UP_handle.write('@%s.2\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % get_rc(read_mr.r2_clipping_seq))
                                         free_living_ctg_UP_handle.write('+\n')
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual[::-1])
 
                     else:  # mapped to unwanted end, ignore
                         round_2_MappingRecord_dict.pop(read_basename)
