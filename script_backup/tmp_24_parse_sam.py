@@ -55,6 +55,7 @@ def blast_results_to_pairwise_16s_iden_dict(blastn_output, align_len_cutoff, cov
 
 
 def get_max_clp_and_index(r1_cigar_list, r2_cigar_list):
+
     r1_cigar_list_split = [cigar_splitter(i) for i in r1_cigar_list]
     r2_cigar_list_split = [cigar_splitter(i) for i in r2_cigar_list]
 
@@ -101,6 +102,8 @@ def get_max_clp_and_index(r1_cigar_list, r2_cigar_list):
 
 
 class MappingRecord:
+
+    #  sequences store in r1_seq and r2_seq should NOT been reverse complemented
 
     def __init__(self):
 
@@ -319,6 +322,7 @@ for each_read in open(pwd_samfile):
         read_id = each_read_split[0]
         read_id_base = '.'.join(read_id.split('.')[:-1])
         read_strand = read_id.split('.')[-1]
+        read_flag = int(each_read_split[1])
         read_seq = each_read_split[9]
         read_seq_qual = each_read_split[10]
         cigar = each_read_split[5]
@@ -346,6 +350,9 @@ for each_read in open(pwd_samfile):
 
         # store_read_seq into dict
         if store_read_seq is True:
+
+            read_rc = sam_flag_to_rc(read_flag)
+
             if read_id_base not in MappingRecord_dict:
                 MappingRecord_dict[read_id_base] = MappingRecord()
             if read_strand == '1':

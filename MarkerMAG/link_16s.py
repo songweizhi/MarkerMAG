@@ -47,6 +47,19 @@ is the last character. You can rename your reads with "Rename_reads".
 '''
 
 
+def sam_flag_to_rc(flag_value):
+
+    binary_flag = "{0:b}".format(int(flag_value))
+    binary_flag_len = len(str(binary_flag))
+    binary_flag_polished = '0' * (12 - binary_flag_len) + str(binary_flag)
+
+    read_rced = False
+    if binary_flag_polished[7] == '1':
+        read_rced = True
+
+    return read_rced
+
+
 def get_rc(seq_in):
     seq_in_rc = str(SeqRecord(Seq(seq_in)).reverse_complement().seq)
     return seq_in_rc
@@ -2060,7 +2073,7 @@ def link_16s(args, config_dict):
                         free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
                         # write out R2 fa
                         free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
-                        free_living_16s_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
                     else:
                         # write out R1 fq
                         free_living_16s_R1_handle.write('@%s.1\n' % qualified_read)
@@ -2069,9 +2082,9 @@ def link_16s(args, config_dict):
                         free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
                         # write out R2 fq
                         free_living_16s_R2_handle.write('@%s.2\n' % qualified_read)
-                        free_living_16s_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
                         free_living_16s_R2_handle.write('+\n')
-                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                 elif (read_mr.consider_r2_unmapped_mate is True) and (read_mr.consider_r2_clipping_part is True):
 
@@ -2099,12 +2112,12 @@ def link_16s(args, config_dict):
 
                         if round2_fq is False:
                             free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
-                            free_living_16s_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
                         else:
                             free_living_16s_UP_handle.write('@%s.2\n' % qualified_read)
-                            free_living_16s_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
                             free_living_16s_UP_handle.write('+\n')
-                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                     elif read_mr.consider_r2_unmapped_mate is True:
 
@@ -2287,12 +2300,12 @@ def link_16s(args, config_dict):
                     # write out sequence
                     if round2_fq is False:
                         free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                        free_living_ctg_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
                     else:
                         free_living_ctg_UP_handle.write('@%s.2\n' % read_basename)
-                        free_living_ctg_UP_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
                         free_living_ctg_UP_handle.write('+\n')
-                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                 # consider both of unmapped mate and clipping part
                 else:
@@ -2327,7 +2340,7 @@ def link_16s(args, config_dict):
                             free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
                             # write out R2 fa
                             free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                            free_living_ctg_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
                         else:
                             # write out R1 fq
                             free_living_ctg_R1_handle.write('@%s.1\n' % read_basename)
@@ -2336,9 +2349,9 @@ def link_16s(args, config_dict):
                             free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
                             # write out R2 fq
                             free_living_ctg_R2_handle.write('@%s.2\n' % read_basename)
-                            free_living_ctg_R2_handle.write('%s\n' % get_rc(read_mr.r2_seq))
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
                             free_living_ctg_R2_handle.write('+\n')
-                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq_qual[::-1])
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
             else:  # r1 mapped to multiple refs, ignore
                 round_2_MappingRecord_dict.pop(read_basename)
@@ -2742,89 +2755,23 @@ To_do = '''
 
 1. where do the mates of clipping mapped read mapped to? (should take into consideration!!!)
 2. how to incorporate the taxonomy of MAGs and 16S sequences
-4. the depth of 16S sequences always not lower than the genome they come from
-5. split sam file
-6. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
-9. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
-10. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
-11. add "16S_reads" to SortMeRNA's output prefix
-12. which depth to use, genome level or contig level
-14. check if spades failed 
-16. check Mira tmp_dir at the beginning
-17. BH_ER_050417_refined_bins_combined.sam: >Kelp_659345.1__x__Refined_9___NODE_5430_length_12683_cov_6.017999 NODE_5430_length_12683_cov_6.017999__x__12552_r (space in ref id !!!)
-18. !!!!!! if isfile(mira_assembly) is False: report and only export first round linkages !!!!!!
-19. use wc -l to check if fastq and fasta match
-20. faster way to rename and extract reads: seqtk (test it)?
-21. estimate cutoffs to use based sensitive or specific
-22. get 
+3. the depth of 16S sequences always not lower than the genome they come from
+4. split sam file
+5. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
+6. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
+7. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
+8. add "16S_reads" to SortMeRNA's output prefix
+9. which depth to use, genome level or contig level
+10. check if spades failed 
+11. check Mira tmp_dir at the beginning
+12. BH_ER_050417_refined_bins_combined.sam: >Kelp_659345.1__x__Refined_9___NODE_5430_length_12683_cov_6.017999 NODE_5430_length_12683_cov_6.017999__x__12552_r (space in ref id !!!)
+13. !!!!!! if isfile(mira_assembly) is False: report and only export first round linkages !!!!!!
+14. use wc -l to check if fastq and fasta match
+15. faster way to rename and extract reads: seqtk (test it)?
+16. estimate cutoffs to use based sensitive or specific
+17. lower end_seq_len to 750bp? compare with 1000, 1500bp.
 
-# on Katana
-module load python/3.7.3
-source ~/mypython3env/bin/activate
-module load R/4.0.2
-module load blast+/2.11.0
-module load bowtie/2.3.5.1
-module load samtools/1.10
-module load spades/3.14.0
-module load gcc/8.4.0
-module load boost/1.73.0-gcc8   
-module load mira/v5rc2
-module load java/8u201-jdk
-module load bbmap/38.51
-
-cd /srv/scratch/z5039045/MarkerMAG_wd/Kelp
-python3 link_16s.py -p Kelp_0.999_bbmap -r1 Kelp_R1.fastq -r2 Kelp_R2.fastq -marker BH_ER_050417_Matam16S_wd/BH_ER_050417_assembled_16S_uclust_0.999.fasta -mag BH_ER_050417_refined_bins -x fasta -t 6 -tmp -force -mira_tmp $TMPDIR
-
-
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:136: MarkerGene__PS_m1,GenomicSeq__DA,18
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:151: MarkerGene__PS_m1,GenomicSeq__FP,16
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:210: MarkerGene__PS_m1,GenomicSeq__SS,12
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:293: MarkerGene__PS_m1,GenomicSeq__DM,7
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:368: MarkerGene__PS_m1,GenomicSeq__TC,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:402: MarkerGene__PS_m1,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:431: MarkerGene__PS_m1,GenomicSeq__FA,4
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:439: MarkerGene__PS_m1,GenomicSeq__DG,4
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:494: MarkerGene__PS_m1,GenomicSeq__MS,4
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:511: MarkerGene__PS_m1,GenomicSeq__OU,3
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:595: MarkerGene__PS_m1,GenomicSeq__PS,2
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:707: MarkerGene__PS_m1,GenomicSeq__NG,2
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:783: MarkerGene__PS_m1,GenomicSeq__HR,1
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:863: MarkerGene__PS_m1,GenomicSeq__NO,1
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:961: MarkerGene__PS_m1,GenomicSeq__TR,1
-
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:142: MarkerGene__DA_m3,GenomicSeq__CA,17
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:155: MarkerGene__DA_m1,GenomicSeq__CA,16
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:174: MarkerGene__DA_m2,GenomicSeq__CA,14
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:194: MarkerGene__DA_m7,GenomicSeq__CA,13
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:196: MarkerGene__DA_m6,GenomicSeq__CA,12
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:200: MarkerGene__DM_m1,GenomicSeq__CA,12
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:221: MarkerGene__DM_m2,GenomicSeq__CA,11
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:237: MarkerGene__DM_m3,GenomicSeq__CA,10
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:247: MarkerGene__DG_m8,GenomicSeq__CA,9
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:262: MarkerGene__DM_m9,GenomicSeq__CA,9
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:269: MarkerGene__DM_m5,GenomicSeq__CA,8
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:273: MarkerGene__DG_m7,GenomicSeq__CA,8
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:288: MarkerGene__TC_m1,GenomicSeq__CA,7
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:324: MarkerGene__TC_m2,GenomicSeq__CA,6
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:337: MarkerGene__DG_m1,GenomicSeq__CA,6
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:356: MarkerGene__DG_m10,GenomicSeq__CA,6
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:371: MarkerGene__SS_m1,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:383: MarkerGene__NO_m3,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:384: MarkerGene__FP_m2,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:385: MarkerGene__NG_m1,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:387: MarkerGene__NO_m1,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:402: MarkerGene__PS_m1,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:413: MarkerGene__FA_m1,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:414: MarkerGene__FA_m2,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:419: MarkerGene__MS_m1,GenomicSeq__CA,5
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:460: MarkerGene__DG_m5,GenomicSeq__CA,4
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:519: MarkerGene__DA_m5,GenomicSeq__CA,3
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:536: MarkerGene__HB_m1,GenomicSeq__CA,3
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:561: MarkerGene__NO_m2,GenomicSeq__CA,3
-~/Library/Caches/Transmit/E4749E2E-40C9-4EE0-9B33-475CC0D160FD/kdm.restech.unsw.edu.au/srv/scratch/z5039045/MarkerMAG_wd/MBARC26/MBARC26_mis_5_MarkerMAG_wd/MBARC26_mis_5_step_1_wd/stats_paired_sorted.txt:582: MarkerGene__TC_m4,GenomicSeq__CA,3
-
-MarkerGene__CA_m1,GenomicSeq__CA,2
-
-
+BioSAK select_seq -seq Kelp_R1.fasta -id id_1.txt -out id_1.fa -option 1
+BioSAK select_seq -seq Kelp_R2.fasta -id id_2.txt -out id_2.fa -option 1
 
 '''
