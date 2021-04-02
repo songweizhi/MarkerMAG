@@ -1091,8 +1091,6 @@ def link_16s(args, config_dict):
     reads_cov_cutoff    = 90              # %
     end_seq_len         = 1000            # bp
 
-    # for clipping reads
-    gnm_ctg_connector  = '___'
     dict_key_connector = '__|__'
     marker_to_ctg_Key_connector_str = '___M___'
     marker_to_gnm_Key_connector_str = '___M___'
@@ -1238,7 +1236,6 @@ def link_16s(args, config_dict):
     link_stats_combined                         = '%s/stats_combined.txt'                        % step_1_wd
     link_stats_combined_filtered_s1             = '%s/stats_combined_filtered.txt'               % step_1_wd
 
-    # file out
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
     bbmap_parameter  = 'local=t nodisk=t ambiguous=all keepnames=t saa=f trd=t silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
 
@@ -1364,9 +1361,8 @@ def link_16s(args, config_dict):
 
     marker_gene_seqs_in_wd  = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
 
-    report_and_log(('Round 1: Mapping reads to marker gene sequences with bbmap'), pwd_log_file, keep_quiet)
+    report_and_log(('Round 1: Mapping input reads to marker genes'), pwd_log_file, keep_quiet)
     bbmap_index_and_mapping_cmd = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, marker_gene_seqs_in_wd, reads_file_r1, reads_file_r2, input_reads_to_16s_sam, bbmap_parameter, input_reads_to_16s_sam_bbmap_stderr)
-    report_and_log(('Round 1: Command for running bbmap exported to log file'), pwd_log_file, keep_quiet)
     report_and_log((bbmap_index_and_mapping_cmd), pwd_log_file, True)
     os.system(bbmap_index_and_mapping_cmd)
 
@@ -1794,12 +1790,12 @@ def link_16s(args, config_dict):
     bbmap_cmd_clipping_to_mag = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, combined_input_gnms, clipping_parts_seq_file, clipping_to_gnm_sam, bbmap_parameter, clipping_to_gnm_bbmap_stderr)
 
     # map unmapped mates
-    report_and_log(('Round 1: Mapping unmapped mates to genomic sequences with bbmap'), pwd_log_file, keep_quiet)
+    report_and_log(('Round 1: Mapping unmapped mates to genomic sequences'), pwd_log_file, keep_quiet)
     report_and_log((bbmap_cmd_unmapped_to_mag), pwd_log_file, True)
     os.system(bbmap_cmd_unmapped_to_mag)
 
     # map clipping sequences
-    report_and_log(('Round 1: Mapping clipping sequences to genomic sequences with bbmap'), pwd_log_file, keep_quiet)
+    report_and_log(('Round 1: Mapping clipping sequences to genomic sequences'), pwd_log_file, keep_quiet)
     report_and_log((bbmap_cmd_clipping_to_mag), pwd_log_file, True)
     os.system(bbmap_cmd_clipping_to_mag)
 
@@ -2479,7 +2475,7 @@ To_do = '''
 18. !!!!!! if isfile(mira_assembly) is False: report and only export first round linkages !!!!!!
 19. use wc -l to check if fastq and fasta match
 20. faster way to rename and extract reads: seqtk (test it)?
-
+21. estimate cutoffs to use based sensitive or specific
 
 
 # on Katana

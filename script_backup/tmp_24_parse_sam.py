@@ -99,10 +99,13 @@ class MappingRecord:
 
         self.r1_seq = ''
         self.r2_seq = ''
+        self.r1_seq_qual = '*'
+        self.r2_seq_qual = '*'
         self.r1_refs = dict()
         self.r2_refs = dict()
 
         self.qualified_reads           = False
+        self.consider_round_2          = False
         self.consider_r1_unmapped_mate = False
         self.consider_r1_clipping_part = False
         self.consider_r2_unmapped_mate = False
@@ -113,6 +116,9 @@ class MappingRecord:
 
         self.r1_clipping_seq = ''
         self.r2_clipping_seq = ''
+
+        self.r1_clipping_seq_qual = '*'
+        self.r2_clipping_seq_qual = '*'
 
         self.unmapped_r1_refs = set()
         self.unmapped_r2_refs = set()
@@ -298,22 +304,19 @@ gnm_ctg_connector = '___'
 
 ########################################################################################################################
 
-pwd_samfile_reads_handle = open(pwd_samfile_reads, 'w')
-samfile_reads_wrote = set()
 MappingRecord_dict = {}
 for each_read in open(pwd_samfile):
     if not each_read.startswith('@'):
+        store_read_seq = False
         each_read_split = each_read.strip().split('\t')
         read_id = each_read_split[0]
+        read_id_base = '.'.join(read_id.split('.')[:-1])
+        read_strand = read_id.split('.')[-1]
         read_seq = each_read_split[9]
+        read_seq_qual = each_read_split[10]
         cigar = each_read_split[5]
-        if read_id not in samfile_reads_wrote:
-            pwd_samfile_reads_handle.write('>%s\n' % read_id)
-            pwd_samfile_reads_handle.write('%s\n' % read_seq)
-            samfile_reads_wrote.add(read_id)
+
         if cigar != '*':
-            read_id_base = '.'.join(read_id.split('.')[:-1])
-            read_strand = read_id.split('.')[-1]
             ref_id = each_read_split[2]
             ref_pos = each_read_split[3]
             ref_id_with_pos = '%s_pos_%s' % (ref_id, ref_pos)
@@ -325,11 +328,26 @@ for each_read in open(pwd_samfile):
                     MappingRecord_dict[read_id_base] = MappingRecord()
                 if read_strand == '1':
                     MappingRecord_dict[read_id_base].r1_refs[ref_id_with_pos] = cigar
-                    MappingRecord_dict[read_id_base].r1_seq = read_seq
+                    store_read_seq = True
                 if read_strand == '2':
                     MappingRecord_dict[read_id_base].r2_refs[ref_id_with_pos] = cigar
-                    MappingRecord_dict[read_id_base].r2_seq = read_seq
-pwd_samfile_reads_handle.close()
+                    store_read_seq = True
+            else:
+                store_read_seq = True
+        else:
+            store_read_seq = True
+
+        # store_read_seq into dict
+        if store_read_seq is True:
+            if read_id_base not in MappingRecord_dict:
+                MappingRecord_dict[read_id_base] = MappingRecord()
+            if read_strand == '1':
+                MappingRecord_dict[read_id_base].r1_seq = read_seq
+                MappingRecord_dict[read_id_base].r1_seq_qual = read_seq_qual
+            if read_strand == '2':
+                MappingRecord_dict[read_id_base].r2_seq = read_seq
+                MappingRecord_dict[read_id_base].r2_seq_qual = read_seq_qual
+
 
 for each_mp in MappingRecord_dict:
     current_mp_record = MappingRecord_dict[each_mp]
@@ -680,6 +698,7 @@ for each_mp in MappingRecord_dict.copy():
 
 
 # write out sequences of clipping parts and get id of unmapped reads to extract
+unmapped_mates_handle = open(unmapped_mates, 'w')
 clipping_part_seq_handle = open(clipping_part_seq, 'w')
 unmapped_reads_to_extract = set()
 for qualified_read in MappingRecord_dict:
@@ -689,25 +708,24 @@ for qualified_read in MappingRecord_dict:
     read_mr = MappingRecord_dict[qualified_read]
 
     if read_mr.consider_r1_unmapped_mate is True:
-        unmapped_reads_to_extract.add(r2_name)
+        unmapped_mates_handle.write('>%s\n' % r2_name)
+        unmapped_mates_handle.write('%s\n'  % read_mr.r2_seq)
+
     if read_mr.consider_r2_unmapped_mate is True:
-        unmapped_reads_to_extract.add(r1_name)
+        unmapped_mates_handle.write('>%s\n' % r1_name)
+        unmapped_mates_handle.write('%s\n'  % read_mr.r1_seq)
+
     if read_mr.consider_r1_clipping_part is True:
         clipping_part_seq_handle.write('>%s\n' % r1_name)
         clipping_part_seq_handle.write('%s\n'  % read_mr.r1_clipping_seq)
+
     if read_mr.consider_r2_clipping_part is True:
         clipping_part_seq_handle.write('>%s\n' % r2_name)
         clipping_part_seq_handle.write('%s\n'  % read_mr.r2_clipping_seq)
+
+unmapped_mates_handle.close()
 clipping_part_seq_handle.close()
 
-
-# extract unmapped_reads
-unmapped_mates_handle = open(unmapped_mates, 'w')
-for each_read in SeqIO.parse(pwd_samfile_reads, 'fasta'):
-    if each_read.id in unmapped_reads_to_extract:
-        unmapped_mates_handle.write('>%s\n' % each_read.id)
-        unmapped_mates_handle.write('%s\n'  % str(each_read.seq))
-unmapped_mates_handle.close()
 
 ########################################################################################################################
 
@@ -971,4 +989,75 @@ for each_linkage in open(mock_final_op):
                     mock_final_op_ctg_level_handle.write('%s___%s(%s)\t%s\t%s\t%s\t%s\n' % (clip_link_16s_id, clip_link_gnm_id, total_link_num, clip_link_ctg_id_no_gnm, current_pair_link_num, current_clip_link_num, link_step))
                     counted_16s_to_ctg_key.add(each_clip_link)
 mock_final_op_ctg_level_handle.close()
+
+
+########################################################################################################################
+####################################################### round 2 ########################################################
+########################################################################################################################
+
+#################### extract sequences flanking 16S ends ####################
+
+link_stats_combined_filtered_s1 = stats_combined_filtered
+free_living_16s_clipping_seq = '/Users/songweizhi/Desktop/new_algorithm_Kelp/free_living_16s_clipping.fa'
+free_living_16s_unmapped_seq = '/Users/songweizhi/Desktop/new_algorithm_Kelp/free_living_16s_unmapped.fa'
+round2_fq   = False
+
+free_living_ext = 'fa'
+if round2_fq is True:
+    free_living_ext = 'fq'
+
+free_living_16s_R1 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_16s_R1.%s' % free_living_ext
+free_living_16s_R2 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_16s_R2.%s' % free_living_ext
+free_living_16s_UP = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_16s_UP.%s' % free_living_ext
+
+
+# get linked marker genes and genomic sequences in step 1
+linked_marker_gene_set = set()
+linked_genomic_seq_set = set()
+for each_link in open(link_stats_combined_filtered_s1):
+    if not each_link.startswith('MarkerGene,GenomicSeq,Number'):
+        each_link_split = each_link.strip().split(',')
+        linked_marker_gene_set.add(each_link_split[0][12:])
+        linked_genomic_seq_set.add(each_link_split[1][12:])
+
+
+free_living_16s_unmapped_id = set()
+free_living_16s_clipping_seq_handle = open(free_living_16s_clipping_seq, 'w')
+for qualified_read in MappingRecord_dict:
+    read_mr = MappingRecord_dict[qualified_read]
+
+    if (len(read_mr.unmapped_r2_refs) == 0) and (len(read_mr.unmapped_r1_refs) == 0) and (len(read_mr.clipping_r1_refs) == 0) and (len(read_mr.clipping_r2_refs) == 0):
+
+        ref_been_linked = False
+        for r1_ref in read_mr.r1_filtered_refs:
+            if r1_ref in linked_marker_gene_set:
+                ref_been_linked = True
+        for r2_ref in read_mr.r2_filtered_refs:
+            if r2_ref in linked_marker_gene_set:
+                ref_been_linked = True
+
+        if ref_been_linked is False:
+            read_mr.consider_round_2 = True
+            if read_mr.consider_r1_unmapped_mate is True:
+                free_living_16s_unmapped_id.add('%s.2' % qualified_read)
+            if read_mr.consider_r2_unmapped_mate is True:
+                free_living_16s_unmapped_id.add('%s.1' % qualified_read)
+            if read_mr.consider_r1_clipping_part is True:
+                free_living_16s_clipping_seq_handle.write('>%s.1\n' % qualified_read)
+                free_living_16s_clipping_seq_handle.write('%s\n' % read_mr.r1_clipping_seq)
+            if read_mr.consider_r2_clipping_part is True:
+                free_living_16s_clipping_seq_handle.write('>%s.2\n' % qualified_read)
+                free_living_16s_clipping_seq_handle.write('%s\n' % read_mr.r2_clipping_seq)
+free_living_16s_clipping_seq_handle.close()
+
+
+free_living_16s_unmapped_seq_handle = open(free_living_16s_unmapped_seq, 'w')
+for each_read in SeqIO.parse(pwd_samfile_reads, 'fasta'):
+    if each_read.id in free_living_16s_unmapped_id:
+        free_living_16s_unmapped_seq_handle.write('>%s\n' % each_read.id)
+        free_living_16s_unmapped_seq_handle.write('>%s\n' % str(each_read.seq))
+free_living_16s_unmapped_seq_handle.close()
+
+#################### extract sequences flanking ctg ends ####################
+
 
