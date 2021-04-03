@@ -10,6 +10,22 @@ def get_rc(seq_in):
     return seq_in_rc
 
 
+def sam_flag_to_rc(flag_value):
+
+    read_rced = 'na'
+    if flag_value != '':
+        binary_flag = "{0:b}".format(int(flag_value))
+        binary_flag_len = len(str(binary_flag))
+        binary_flag_polished = '0' * (12 - binary_flag_len) + str(binary_flag)
+
+        if binary_flag_polished[7] == '0':
+            read_rced = False
+        if binary_flag_polished[7] == '1':
+            read_rced = True
+
+    return read_rced
+
+
 def sort_csv_by_col(file_in, file_out, col_header):
     df_in        = pd.read_csv(file_in)
     df_in_sorted = df_in.sort_values(by=[col_header], ascending=False)
@@ -98,7 +114,30 @@ def get_max_clp_and_index(r1_cigar_list, r2_cigar_list):
             max_value = num_list_2[1]
             max_value_index = 'r2_r'
 
-    return max_value, max_value_index
+    # get the best cigar
+    best_cigar = ''
+    if max_value_index == 'r1_l':
+        if best_cigar == '':
+            for each_cigar in r1_cigar_list:
+                if (each_cigar.startswith('%sS' % max_value)) or (each_cigar.startswith('%ss' % max_value)):
+                    best_cigar = each_cigar
+    elif max_value_index == 'r1_r':
+        if best_cigar == '':
+            for each_cigar in r1_cigar_list:
+                if (each_cigar.endswith('%sS' % max_value)) or (each_cigar.endswith('%ss' % max_value)):
+                    best_cigar = each_cigar
+    elif max_value_index == 'r2_l':
+        if best_cigar == '':
+            for each_cigar in r2_cigar_list:
+                if (each_cigar.startswith('%sS' % max_value)) or (each_cigar.startswith('%ss' % max_value)):
+                    best_cigar = each_cigar
+    elif max_value_index == 'r2_r':
+        if best_cigar == '':
+            for each_cigar in r2_cigar_list:
+                if (each_cigar.endswith('%sS' % max_value)) or (each_cigar.endswith('%ss' % max_value)):
+                    best_cigar = each_cigar
+
+    return best_cigar, max_value, max_value_index
 
 
 class MappingRecord:
@@ -111,8 +150,17 @@ class MappingRecord:
         self.r2_seq = ''
         self.r1_seq_qual = '*'
         self.r2_seq_qual = '*'
+
         self.r1_refs = dict()
         self.r2_refs = dict()
+
+        self.r1_cigar_to_flag = dict()
+        self.r2_cigar_to_flag = dict()
+
+        self.r1_longest_clp_cigar = ''
+        self.r1_longest_clp_falg  = ''
+        self.r2_longest_clp_cigar = ''
+        self.r2_longest_clp_falg  = ''
 
         self.qualified_reads           = False
         self.consider_round_2          = False
@@ -339,9 +387,11 @@ for each_read in open(pwd_samfile):
                     MappingRecord_dict[read_id_base] = MappingRecord()
                 if read_strand == '1':
                     MappingRecord_dict[read_id_base].r1_refs[ref_id_with_pos] = cigar
+                    MappingRecord_dict[read_id_base].r1_cigar_to_flag[cigar] = read_flag
                     store_read_seq = True
                 if read_strand == '2':
                     MappingRecord_dict[read_id_base].r2_refs[ref_id_with_pos] = cigar
+                    MappingRecord_dict[read_id_base].r2_cigar_to_flag[cigar] = read_flag
                     store_read_seq = True
             else:
                 store_read_seq = True
@@ -351,364 +401,258 @@ for each_read in open(pwd_samfile):
         # store_read_seq into dict
         if store_read_seq is True:
 
+            # turn back if read reverse complemented
             read_rc = sam_flag_to_rc(read_flag)
+            read_seq_to_store = read_seq
+            read_seq_qual_to_store = read_seq_qual
+            if read_rc is True:
+                read_seq_to_store = get_rc(read_seq)
+                read_seq_qual_to_store = read_seq_qual[::-1]
 
             if read_id_base not in MappingRecord_dict:
                 MappingRecord_dict[read_id_base] = MappingRecord()
+
             if read_strand == '1':
-                MappingRecord_dict[read_id_base].r1_seq = read_seq
-                MappingRecord_dict[read_id_base].r1_seq_qual = read_seq_qual
+                if MappingRecord_dict[read_id_base].r1_seq == '':
+                    MappingRecord_dict[read_id_base].r1_seq = read_seq_to_store
+                    MappingRecord_dict[read_id_base].r1_seq_qual = read_seq_qual_to_store
             if read_strand == '2':
-                MappingRecord_dict[read_id_base].r2_seq = read_seq
-                MappingRecord_dict[read_id_base].r2_seq_qual = read_seq_qual
+                if MappingRecord_dict[read_id_base].r2_seq == '':
+                    MappingRecord_dict[read_id_base].r2_seq = read_seq_to_store
+                    MappingRecord_dict[read_id_base].r2_seq_qual = read_seq_qual_to_store
 
 
 for each_mp in MappingRecord_dict:
-    current_mp_record       = MappingRecord_dict[each_mp]
-    current_mp_r1_seq       = current_mp_record.r1_seq
-    current_mp_r2_seq       = current_mp_record.r2_seq
-    current_mp_r1_seq_qual  = current_mp_record.r1_seq_qual
-    current_mp_r2_seq_qual  = current_mp_record.r2_seq_qual
-    current_mp_r1_refs      = current_mp_record.r1_refs
-    current_mp_r2_refs      = current_mp_record.r2_refs
+
+    current_mp_record           = MappingRecord_dict[each_mp]
+    current_mp_r1_seq           = current_mp_record.r1_seq
+    current_mp_r2_seq           = current_mp_record.r2_seq
+    current_mp_r1_seq_qual      = current_mp_record.r1_seq_qual
+    current_mp_r2_seq_qual      = current_mp_record.r2_seq_qual
+    current_mp_r1_refs          = current_mp_record.r1_refs
+    current_mp_r2_refs          = current_mp_record.r2_refs
+    current_mp_r1_refs_no_pos   = {i.split('_pos_')[0] for i in current_mp_r1_refs}
+    current_mp_r2_refs_no_pos   = {i.split('_pos_')[0] for i in current_mp_r2_refs}
+    current_mp_all_refs_no_pos  = current_mp_r1_refs_no_pos.union(current_mp_r2_refs_no_pos)
+    r1_cigar_list               = list(current_mp_r1_refs.values())
+    r2_cigar_list               = list(current_mp_r2_refs.values())
+    best_cigar, max_value, max_value_index = get_max_clp_and_index(r1_cigar_list, r2_cigar_list)
+
+    best_cigar_flag = ''
+    if max_value_index in ['r1_l', 'r1_r']:
+        best_cigar_flag         = current_mp_record.r1_cigar_to_flag.get(best_cigar, '')
+    if max_value_index in ['r2_l', 'r2_r']:
+        best_cigar_flag = current_mp_record.r2_cigar_to_flag.get(best_cigar, '')
+
+    best_cigar_rc           = sam_flag_to_rc(best_cigar_flag)
 
     # only r1 mapped
     if (current_mp_r1_refs != {}) and (current_mp_r2_refs == {}):
 
-        for matched_ref in current_mp_r1_refs:
+        # consider as paired
+        current_mp_record.qualified_reads = True
+        current_mp_record.consider_r1_unmapped_mate = True
+        current_mp_record.r1_filtered_refs = current_mp_r1_refs_no_pos
 
-            matched_ref_no_pos = matched_ref.split('_pos_')[0]
-            current_match_cigar = current_mp_r1_refs[matched_ref]
-            current_match_cigar_split = cigar_splitter(current_match_cigar)
-            aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(current_match_cigar_split)
+        # consider as clipping mapped
+        if max_value >= min_clp_len:
 
-            # consider as paired
-            current_mp_record.qualified_reads = True
-            current_mp_record.consider_r1_unmapped_mate = True
-            current_mp_record.r1_filtered_refs.add(matched_ref_no_pos)
+            current_clipping_seq = ''
+            current_clipping_seq_qual = '*'
+            if best_cigar_rc is False:
+                if max_value_index == 'r1_l':
+                    current_clipping_seq = current_mp_record.r1_seq[:max_value]
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r1_seq_qual[:max_value]
 
-            # consider as clipping mapped
-            if clipping_len >= min_clp_len:
+                if max_value_index == 'r1_r':
+                    current_clipping_seq = current_mp_record.r1_seq[-max_value:]
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r1_seq_qual[-max_value:]
 
-                if (current_match_cigar_split[0][-1] in ['S', 's']) and (current_match_cigar_split[-1][-1] not in ['S', 's']):
-                    current_mp_record.qualified_reads = True
-                    current_mp_record.consider_r1_clipping_part = True
-                    current_clipping_part_len = int(current_match_cigar_split[0][:-1])
-                    if current_clipping_part_len > len(current_mp_record.r1_clipping_seq):
-                        current_clipping_seq = current_mp_r1_seq[:int(current_match_cigar_split[0][:-1])]
-                        current_clipping_seq_qual = current_mp_r1_seq_qual[:int(current_match_cigar_split[0][:-1])]
-                        current_mp_record.r1_clipping_seq = current_clipping_seq
-                        current_mp_record.r1_clipping_seq_qual = current_clipping_seq_qual
+            if best_cigar_rc is True:
+                r1_seq_rc = get_rc(current_mp_record.r1_seq)
+                r1_seq_rc_qual = current_mp_record.r1_seq_qual[::-1]
 
-                elif (current_match_cigar_split[0][-1] not in ['S', 's']) and (current_match_cigar_split[-1][-1] in ['S', 's']):
-                    current_mp_record.qualified_reads = True
-                    current_mp_record.consider_r1_clipping_part = True
-                    current_clipping_part_len = int(current_match_cigar_split[-1][:-1])
-                    if current_clipping_part_len > len(current_mp_record.r1_clipping_seq):
-                        current_clipping_seq = current_mp_r1_seq[-int(current_match_cigar_split[-1][:-1]):]
-                        current_clipping_seq_qual = current_mp_r1_seq_qual[-int(current_match_cigar_split[-1][:-1]):]
-                        current_mp_record.r1_clipping_seq = current_clipping_seq
-                        current_mp_record.r1_clipping_seq_qual = current_clipping_seq_qual
+                if max_value_index == 'r1_l':
+                    current_clipping_seq_rc = r1_seq_rc[:max_value]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                elif (current_match_cigar_split[0][-1] in ['S', 's']) and (current_match_cigar_split[-1][-1] in ['S', 's']):
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r1_seq_rc_qual[:max_value]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                    clipping_len_l = int(current_match_cigar_split[0][:-1])
-                    clipping_len_r = int(current_match_cigar_split[-1][:-1])
-                    clipping_seq_l = current_mp_r1_seq[:int(current_match_cigar_split[0][:-1])]
-                    clipping_seq_r = current_mp_r1_seq[-int(current_match_cigar_split[-1][:-1]):]
+                if max_value_index == 'r1_r':
+                    current_clipping_seq_rc = r1_seq_rc[-max_value:]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                    # keep left ['75S', '125=', '1X', '7=', '1X', '7=', '3S']
-                    if (clipping_len_l >= min_clp_len) and (clipping_len_r <= 3):
-                        current_mp_record.qualified_reads = True
-                        current_mp_record.consider_r1_clipping_part = True
-                        if clipping_len_l > len(current_mp_record.r1_clipping_seq):
-                            current_mp_record.r1_clipping_seq = clipping_seq_l
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r1_seq_rc_qual[-max_value:]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                    # keep right ['2S', '125=', '1X', '7=', '1X', '7=', '56S']
-                    if (clipping_len_l <= 3) and (clipping_len_r >= min_clp_len):
-                        current_mp_record.qualified_reads = True
-                        current_mp_record.consider_r1_clipping_part = True
-                        if clipping_len_r > len(current_mp_record.r1_clipping_seq):
-                            current_mp_record.r1_clipping_seq = clipping_seq_r
+            current_mp_record.consider_r1_clipping_part = True
+            current_mp_record.r1_clipping_seq           = current_clipping_seq
+            current_mp_record.r1_clipping_seq_qual      = current_clipping_seq_qual
 
     # only r2 mapped
     elif (current_mp_r1_refs == {}) and (current_mp_r2_refs != {}):
 
-        for matched_ref in current_mp_r2_refs:
+        # consider as paired
+        current_mp_record.qualified_reads = True
+        current_mp_record.consider_r2_unmapped_mate = True
+        current_mp_record.r2_filtered_refs = current_mp_r2_refs_no_pos
 
-            matched_ref_no_pos = matched_ref.split('_pos_')[0]
-            current_match_cigar = current_mp_r2_refs[matched_ref]
-            current_match_cigar_split = cigar_splitter(current_match_cigar)
-            aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(current_match_cigar_split)
+        # consider as clipping mapped
+        if max_value >= min_clp_len:
 
-            # consider as paired
-            current_mp_record.qualified_reads = True
-            current_mp_record.consider_r2_unmapped_mate = True
-            current_mp_record.r2_filtered_refs.add(matched_ref_no_pos)
+            current_clipping_seq = ''
+            current_clipping_seq_qual = '*'
+            if best_cigar_rc is False:
+                if max_value_index == 'r2_l':
+                    current_clipping_seq = current_mp_record.r2_seq[:max_value]
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r2_seq_qual[:max_value]
 
-            # consider as clipping mapped
-            if clipping_len >= min_clp_len:
+                if max_value_index == 'r2_r':
+                    current_clipping_seq = current_mp_record.r2_seq[-max_value:]
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r2_seq_qual[-max_value:]
 
-                if (current_match_cigar_split[0][-1] in ['S', 's']) and (current_match_cigar_split[-1][-1] not in ['S', 's']):
-                    current_mp_record.qualified_reads = True
-                    current_mp_record.consider_r2_clipping_part = True
-                    current_clipping_part_len = int(current_match_cigar_split[0][:-1])
-                    if current_clipping_part_len > len(current_mp_record.r2_clipping_seq):
-                        current_clipping_seq = current_mp_r2_seq[:int(current_match_cigar_split[0][:-1])]
-                        current_mp_record.r2_clipping_seq = current_clipping_seq
+            if best_cigar_rc is True:
+                r2_seq_rc = get_rc(current_mp_record.r2_seq)
+                r2_seq_rc_qual = current_mp_record.r2_seq_qual[::-1]
 
-                elif (current_match_cigar_split[0][-1] not in ['S', 's']) and (current_match_cigar_split[-1][-1] in ['S', 's']):
-                    current_mp_record.qualified_reads = True
-                    current_mp_record.consider_r2_clipping_part = True
-                    current_clipping_part_len = int(current_match_cigar_split[-1][:-1])
-                    if current_clipping_part_len > len(current_mp_record.r2_clipping_seq):
-                        current_clipping_seq = current_mp_r2_seq[-int(current_match_cigar_split[-1][:-1]):]
-                        current_mp_record.r2_clipping_seq = current_clipping_seq
+                if max_value_index == 'r2_l':
+                    current_clipping_seq_rc = r2_seq_rc[:max_value]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                elif (current_match_cigar_split[0][-1] in ['S', 's']) and (current_match_cigar_split[-1][-1] in ['S', 's']):
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r2_seq_rc_qual[:max_value]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                    clipping_len_l = int(current_match_cigar_split[0][:-1])
-                    clipping_len_r = int(current_match_cigar_split[-1][:-1])
-                    clipping_seq_l = current_mp_r2_seq[:int(current_match_cigar_split[0][:-1])]
-                    clipping_seq_r = current_mp_r2_seq[-int(current_match_cigar_split[-1][:-1]):]
+                if max_value_index == 'r2_r':
+                    current_clipping_seq_rc = r2_seq_rc[-max_value:]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                    # keep left ['75S', '125=', '1X', '7=', '1X', '7=', '3S']
-                    if (clipping_len_l >= min_clp_len) and (clipping_len_r <= 3):
-                        current_mp_record.qualified_reads = True
-                        current_mp_record.consider_r2_clipping_part = True
-                        if clipping_len_l > len(current_mp_record.r2_clipping_seq):
-                            current_mp_record.r2_clipping_seq = clipping_seq_l
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r2_seq_rc_qual[-max_value:]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                    # keep right ['2S', '125=', '1X', '7=', '1X', '7=', '56S']
-                    if (clipping_len_l <= 3) and (clipping_len_r >= min_clp_len):
-                        current_mp_record.qualified_reads = True
-                        current_mp_record.consider_r2_clipping_part = True
-                        if clipping_len_r > len(current_mp_record.r2_clipping_seq):
-                            current_mp_record.r2_clipping_seq = clipping_seq_r
+            current_mp_record.consider_r2_clipping_part = True
+            current_mp_record.r2_clipping_seq           = current_clipping_seq
+            current_mp_record.r2_clipping_seq_qual      = current_clipping_seq_qual
+
+
 
     # both of r1 and r2 mapped
     else:
-        clipping_mapped_r1_len = 0
-        for matched_r1_ref in current_mp_r1_refs:
-            if ('S' in current_mp_r1_refs[matched_r1_ref]) or ('s' in current_mp_r1_refs[matched_r1_ref]):
-                for cigmar_element in cigar_splitter(current_mp_r1_refs[matched_r1_ref]):
-                    if ('S' in cigmar_element) or ('s' in cigmar_element):
-                        current_clipping_len = int(cigmar_element[:-1])
-                        if current_clipping_len > clipping_mapped_r1_len:
-                            clipping_mapped_r1_len = current_clipping_len
+        if max_value >= min_clp_len:
 
-        clipping_mapped_r2_len = 0
-        for matched_r2_ref in current_mp_r2_refs:
-            if ('S' in current_mp_r2_refs[matched_r2_ref]) or ('s' in current_mp_r2_refs[matched_r2_ref]):
-                for cigmar_element in cigar_splitter(current_mp_r2_refs[matched_r2_ref]):
-                    if ('S' in cigmar_element) or ('s' in cigmar_element):
-                        current_clipping_len = int(cigmar_element[:-1])
-                        if current_clipping_len > clipping_mapped_r2_len:
-                            clipping_mapped_r2_len = current_clipping_len
+            current_mp_record.qualified_reads = True
 
-        if (clipping_mapped_r1_len > min_clp_len) or (clipping_mapped_r2_len > min_clp_len):
+            # print('%s r1_seq: %s' % (each_mp, current_mp_record.r1_seq))
+            # print('%s r1_seq: %s' % (each_mp, current_mp_record.r1_seq_qual))
+            # print('%s r2_seq: %s' % (each_mp, current_mp_record.r2_seq))
+            # print('%s r2_seq: %s' % (each_mp, current_mp_record.r2_seq_qual))
+            # print('%s r1_refs: %s' % (each_mp, current_mp_record.r1_refs))
+            # print('%s r2_refs: %s' % (each_mp, current_mp_record.r2_refs))
+            # #print('%s all_refs: %s' % (each_mp, current_mp_all_refs_no_pos))
+            # #print('%s r1_cigar_to_flag: %s' % (each_mp, current_mp_record.r1_cigar_to_flag))
+            # #print('%s r2_cigar_to_flag: %s' % (each_mp, current_mp_record.r2_cigar_to_flag))
+            # #print('r1_cigar_list: %s' % r1_cigar_list)
+            # #print('r2_cigar_list: %s' % r2_cigar_list)
+            # print('best_cigar: %s' % best_cigar)
+            # #print('best_cigar_flag: %s' % best_cigar_flag)
+            # print('best_cigar_rc: %s' % best_cigar_rc)
+            # print('best_cigar_len: %s' % max_value)
+            # print('best_cigar_loc: %s' % max_value_index)
 
-            if (len(current_mp_r1_refs) == 1) and (len(current_mp_r2_refs) == 1):
-                r1_ref_with_pos = list(current_mp_r1_refs.keys())[0]
-                r2_ref_with_pos = list(current_mp_r1_refs.keys())[0]
-                r1_ref_no_pos = r1_ref_with_pos.split('_pos_')[0]
-                r2_ref_no_pos = r2_ref_with_pos.split('_pos_')[0]
-                r1_cigar = list(current_mp_r1_refs.values())[0]
-                r2_cigar = list(current_mp_r2_refs.values())[0]
-                r1_cigar_split = cigar_splitter(r1_cigar)
-                r2_cigar_split = cigar_splitter(r2_cigar)
+            # for clipping part, the refs from its mate are also considered !!!
+            current_clipping_seq = ''
+            current_clipping_seq_qual = '*'
+            if best_cigar_rc is False:
 
-                if r1_ref_no_pos == r2_ref_no_pos:
+                if max_value_index == 'r1_l':
+                    current_clipping_seq = current_mp_record.r1_seq[:max_value]
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r1_seq_qual[:max_value]
 
-                    current_mp_record.qualified_reads = True
-                    longest_clipping_len = max([clipping_mapped_r1_len, clipping_mapped_r2_len])
+                if max_value_index == 'r1_r':
+                    current_clipping_seq = current_mp_record.r1_seq[-max_value:]
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r1_seq_qual[-max_value:]
 
-                    if (r1_cigar_split[0][-1] == 'S') and (int(r1_cigar_split[0][:-1]) == longest_clipping_len):
-                        longest_clipping_seq = current_mp_r1_seq[:int(r1_cigar_split[0][:-1])]
-                        current_mp_record.consider_r1_clipping_part = True
-                        current_mp_record.r1_clipping_seq = longest_clipping_seq
-                        current_mp_record.r1_filtered_refs.add(r1_ref_no_pos)
+                if max_value_index == 'r2_l':
+                    current_clipping_seq = current_mp_record.r2_seq[:max_value]
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r2_seq_qual[:max_value]
 
-                    elif (r1_cigar_split[-1][-1] == 'S') and (int(r1_cigar_split[-1][:-1]) == longest_clipping_len):
-                        longest_clipping_seq = current_mp_r1_seq[-int(r1_cigar_split[-1][:-1]):]
-                        current_mp_record.consider_r1_clipping_part = True
-                        current_mp_record.r1_clipping_seq = longest_clipping_seq
-                        current_mp_record.r1_filtered_refs.add(r1_ref_no_pos)
+                if max_value_index == 'r2_r':
+                    current_clipping_seq = current_mp_record.r2_seq[-max_value:]
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_qual = current_mp_record.r2_seq_qual[-max_value:]
 
-                    elif (r2_cigar_split[0][-1] == 'S') and (int(r2_cigar_split[0][:-1]) == longest_clipping_len):
-                        longest_clipping_seq = current_mp_r2_seq[:int(r2_cigar_split[0][:-1])]
-                        current_mp_record.consider_r2_clipping_part = True
-                        current_mp_record.r2_clipping_seq = longest_clipping_seq
-                        current_mp_record.r2_filtered_refs.add(r2_ref_no_pos)
+            if best_cigar_rc is True:
 
-                    elif (r2_cigar_split[-1][-1] == 'S') and (int(r2_cigar_split[-1][:-1]) == longest_clipping_len):
-                        longest_clipping_seq = current_mp_r2_seq[-int(r2_cigar_split[-1][:-1]):]
-                        current_mp_record.consider_r2_clipping_part = True
-                        current_mp_record.r2_clipping_seq = longest_clipping_seq
-                        current_mp_record.r2_filtered_refs.add(r2_ref_no_pos)
-                else:
-                    pass  # ignore
+                r1_seq_rc       = get_rc(current_mp_record.r1_seq)
+                r2_seq_rc       = get_rc(current_mp_record.r2_seq)
+                r1_seq_rc_qual  = current_mp_record.r1_seq_qual[::-1]
+                r2_seq_rc_qual  = current_mp_record.r2_seq_qual[::-1]
 
-            # at least one mate mapped to multiple refs
-            else:
-                r1_ref_list_with_pos = list(current_mp_r1_refs.keys())
-                r2_ref_list_with_pos = list(current_mp_r2_refs.keys())
-                r1_ref_list_no_pos = {ref1.split('_pos_')[0] for ref1 in r1_ref_list_with_pos}
-                r2_ref_list_no_pos = {ref2.split('_pos_')[0] for ref2 in r2_ref_list_with_pos}
-                r1_cigar_list = list(current_mp_r1_refs.values())
-                r2_cigar_list = list(current_mp_r2_refs.values())
+                if max_value_index == 'r1_l':
+                    current_clipping_seq_rc = r1_seq_rc[:max_value]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                if r1_ref_list_no_pos == r2_ref_list_no_pos:
-                    current_mp_record.qualified_reads = True
-                    max_clp, max_clp_location = get_max_clp_and_index(r1_cigar_list, r2_cigar_list)
-                    if max_clp_location == 'r1_l':
-                        current_mp_record.consider_r1_clipping_part = True
-                        current_mp_record.r1_clipping_seq = current_mp_record.r1_seq[:max_clp]
-                        current_mp_record.r1_filtered_refs = r1_ref_list_no_pos
-                    if max_clp_location == 'r1_r':
-                        current_mp_record.consider_r1_clipping_part = True
-                        current_mp_record.r1_clipping_seq = current_mp_record.r1_seq[-max_clp:]
-                        current_mp_record.r1_filtered_refs = r1_ref_list_no_pos
-                    if max_clp_location == 'r2_l':
-                        current_mp_record.consider_r2_clipping_part = True
-                        current_mp_record.r2_clipping_seq = current_mp_record.r2_seq[:max_clp]
-                        current_mp_record.r2_filtered_refs = r2_ref_list_no_pos
-                    if max_clp_location == 'r2_r':
-                        current_mp_record.consider_r2_clipping_part = True
-                        current_mp_record.r2_clipping_seq = current_mp_record.r2_seq[-max_clp:]
-                        current_mp_record.r2_filtered_refs = r2_ref_list_no_pos
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r1_seq_rc_qual[:max_value]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                # important !!!
-                else:
-                    current_mp_r1_refs_no_pos = [i.split('_pos_')[0] for i in current_mp_r1_refs]
-                    current_mp_r2_refs_no_pos = [i.split('_pos_')[0] for i in current_mp_r2_refs]
-                    r1_r2_shared_refs = set(current_mp_r1_refs_no_pos).intersection(current_mp_r2_refs_no_pos)
+                if max_value_index == 'r1_r':
+                    current_clipping_seq_rc = r1_seq_rc[-max_value:]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                    if len(r1_r2_shared_refs) > 0:
+                    if current_mp_record.r1_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r1_seq_rc_qual[-max_value:]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                        # get shared refs mean mismatch pct
-                        shared_refs_mismatch_list = []
-                        r1_ref_to_mismatch_pct_dict = {}
-                        for r1_ref in current_mp_r1_refs:
-                            r1_ref_no_pos = r1_ref.split('_pos_')[0]
-                            r1_ref_cigar = current_mp_r1_refs[r1_ref]
-                            aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitter(r1_ref_cigar))
-                            r1_ref_to_mismatch_pct_dict[r1_ref] = mismatch_pct
-                            if r1_ref_no_pos in r1_r2_shared_refs:
-                                shared_refs_mismatch_list.append(mismatch_pct)
+                if max_value_index == 'r2_l':
+                    current_clipping_seq_rc = r2_seq_rc[:max_value]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                        r2_ref_to_mismatch_pct_dict = {}
-                        for r2_ref in current_mp_r2_refs:
-                            r2_ref_no_pos = r2_ref.split('_pos_')[0]
-                            r2_ref_cigar = current_mp_r2_refs[r2_ref]
-                            aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitter(r2_ref_cigar))
-                            r2_ref_to_mismatch_pct_dict[r2_ref] = mismatch_pct
-                            if r2_ref_no_pos in r1_r2_shared_refs:
-                                shared_refs_mismatch_list.append(mismatch_pct)
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r2_seq_rc_qual[:max_value]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                        shared_refs_mean_mismatch_pct = sum(shared_refs_mismatch_list)/len(shared_refs_mismatch_list)
+                if max_value_index == 'r2_r':
+                    current_clipping_seq_rc = r2_seq_rc[-max_value:]
+                    current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                        current_mp_filtered_refs_r1_r2_no_pos = set()
-                        current_mp_r1_refs_filtered = {}
-                        for r1_ref in current_mp_r1_refs:
-                            r1_ref_no_pos = r1_ref.split('_pos_')[0]
-                            if r1_ref_no_pos in r1_r2_shared_refs:
-                                current_mp_r1_refs_filtered[r1_ref] = current_mp_r1_refs[r1_ref]
-                                current_mp_filtered_refs_r1_r2_no_pos.add(r1_ref_no_pos)
-                            else:
-                                r1_ref_mismatch = r1_ref_to_mismatch_pct_dict[r1_ref]
-                                if r1_ref_mismatch <= shared_refs_mean_mismatch_pct:
-                                    current_mp_r1_refs_filtered[r1_ref] = current_mp_r1_refs[r1_ref]
-                                    current_mp_filtered_refs_r1_r2_no_pos.add(r1_ref_no_pos)
+                    if current_mp_record.r2_seq_qual != '*':
+                        current_clipping_seq_rc_qual = r2_seq_rc_qual[-max_value:]
+                        current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
-                        current_mp_r2_refs_filtered = {}
-                        for r2_ref in current_mp_r2_refs:
-                            r2_ref_no_pos = r2_ref.split('_pos_')[0]
-                            if r2_ref_no_pos in r1_r2_shared_refs:
-                                current_mp_r2_refs_filtered[r2_ref] = current_mp_r2_refs[r2_ref]
-                                current_mp_filtered_refs_r1_r2_no_pos.add(r2_ref_no_pos)
-                            else:
-                                r2_ref_mismatch = r2_ref_to_mismatch_pct_dict[r2_ref]
-                                if r2_ref_mismatch <= shared_refs_mean_mismatch_pct:
-                                    current_mp_r2_refs_filtered[r2_ref] = current_mp_r2_refs[r2_ref]
-                                    current_mp_filtered_refs_r1_r2_no_pos.add(r2_ref_no_pos)
+            if max_value_index in ['r1_l', 'r1_r']:
+                current_mp_record.consider_r1_clipping_part = True
+                current_mp_record.r1_clipping_seq = current_clipping_seq
+                current_mp_record.r1_clipping_seq_qual = current_clipping_seq_qual
+                current_mp_record.r1_filtered_refs = current_mp_all_refs_no_pos
+            if max_value_index in ['r2_l', 'r2_r']:
+                current_mp_record.consider_r2_clipping_part = True
+                current_mp_record.r2_clipping_seq = current_clipping_seq
+                current_mp_record.r2_clipping_seq_qual = current_clipping_seq_qual
+                current_mp_record.r2_filtered_refs = current_mp_all_refs_no_pos
 
-                        r1_cigar_list_filtered = list(current_mp_r1_refs_filtered.values())
-                        r2_cigar_list_filtered = list(current_mp_r2_refs_filtered.values())
-                        max_clp, max_clp_location = get_max_clp_and_index(r1_cigar_list_filtered, r2_cigar_list_filtered)
-                        if max_clp >= min_clp_len:
-                            current_mp_record.qualified_reads = True
-
-                            if max_clp_location == 'r1_l':
-                                current_mp_record.consider_r1_clipping_part = True
-                                current_mp_record.r1_clipping_seq = current_mp_record.r1_seq[:max_clp]
-                                current_mp_record.r1_filtered_refs = current_mp_filtered_refs_r1_r2_no_pos
-
-                            if max_clp_location == 'r1_r':
-                                current_mp_record.consider_r1_clipping_part = True
-                                current_mp_record.r1_clipping_seq = current_mp_record.r1_seq[-max_clp:]
-                                current_mp_record.r1_filtered_refs = current_mp_filtered_refs_r1_r2_no_pos
-
-                            if max_clp_location == 'r2_l':
-                                current_mp_record.consider_r2_clipping_part = True
-                                current_mp_record.r2_clipping_seq = current_mp_record.r2_seq[:max_clp]
-                                current_mp_record.r2_filtered_refs = current_mp_filtered_refs_r1_r2_no_pos
-
-                            if max_clp_location == 'r2_r':
-                                current_mp_record.consider_r2_clipping_part = True
-                                current_mp_record.r2_clipping_seq = current_mp_record.r2_seq[-max_clp:]
-                                current_mp_record.r2_filtered_refs = current_mp_filtered_refs_r1_r2_no_pos
-
-                    # no shared refs between r1 and r2, need more stringent settings? current not.
-                    else:
-                        # print('current_mp_r1_refs: %s' % current_mp_r1_refs)
-                        # print('current_mp_r2_refs: %s' % current_mp_r2_refs)
-                        max_clp, max_clp_location = get_max_clp_and_index(r1_cigar_list, r2_cigar_list)
-
-                        current_mp_refs_r1_r2_no_pos = set()
-                        for r1_ref in current_mp_r1_refs:
-                            r1_ref_no_pos = r1_ref.split('_pos_')[0]
-                            current_mp_refs_r1_r2_no_pos.add(r1_ref_no_pos)
-                        for r2_ref in current_mp_r2_refs:
-                            r2_ref_no_pos = r2_ref.split('_pos_')[0]
-                            current_mp_refs_r1_r2_no_pos.add(r2_ref_no_pos)
-
-                        current_mp_record.qualified_reads = True
-
-                        if max_clp_location == 'r1_l':
-                            current_mp_record.consider_r1_clipping_part = True
-                            current_mp_record.r1_clipping_seq = current_mp_record.r1_seq[:max_clp]
-                            current_mp_record.r1_filtered_refs = current_mp_refs_r1_r2_no_pos
-
-                        if max_clp_location == 'r1_r':
-                            current_mp_record.consider_r1_clipping_part = True
-                            current_mp_record.r1_clipping_seq = current_mp_record.r1_seq[-max_clp:]
-                            current_mp_record.r1_filtered_refs = current_mp_refs_r1_r2_no_pos
-
-                        if max_clp_location == 'r2_l':
-                            current_mp_record.consider_r2_clipping_part = True
-                            current_mp_record.r2_clipping_seq = current_mp_record.r2_seq[:max_clp]
-                            current_mp_record.r2_filtered_refs = current_mp_refs_r1_r2_no_pos
-
-                        if max_clp_location == 'r2_r':
-                            current_mp_record.consider_r2_clipping_part = True
-                            current_mp_record.r2_clipping_seq = current_mp_record.r2_seq[-max_clp:]
-                            current_mp_record.r2_filtered_refs = current_mp_refs_r1_r2_no_pos
-        else:
-            pass  # to check, most likely to ignore
-
-#     if (MappingRecord_dict[each_mp].qualified_reads is True):
-#         print('Summary:')
-#         print('qualified_reads: %s'                             % current_mp_record.qualified_reads)
-#         print('consider_r1_unmapped_mate: %s'                   % current_mp_record.consider_r1_unmapped_mate)
-#         print('consider_r1_clipping_part: %s'                   % current_mp_record.consider_r1_clipping_part)
-#         print('consider_r2_unmapped_mate: %s'                   % current_mp_record.consider_r2_unmapped_mate)
-#         print('consider_r2_clipping_part: %s'                   % current_mp_record.consider_r2_clipping_part)
-#         print('r1_clipping_seq: %s'                             % current_mp_record.r1_clipping_seq)
-#         print('r2_clipping_seq: %s'                             % current_mp_record.r2_clipping_seq)
-#         print('r1_filtered_refs: %s'                            % current_mp_record.r1_filtered_refs)
-#         print('r2_filtered_refs: %s'                            % current_mp_record.r2_filtered_refs)
-#     print()
+            # print('r1_clipping_seq: %s' % current_mp_record.r1_clipping_seq)
+            # print('r1_clipping_seq: %s' % current_mp_record.r1_clipping_seq_qual)
+            # print('r2_clipping_seq: %s' % current_mp_record.r2_clipping_seq)
+            # print('r2_clipping_seq: %s' % current_mp_record.r2_clipping_seq_qual)
+            # print('consider_r1_unmapped_mate: %s' % current_mp_record.consider_r1_unmapped_mate)
+            # print('consider_r1_clipping_part: %s' % current_mp_record.consider_r1_clipping_part)
+            # print('consider_r2_unmapped_mate: %s' % current_mp_record.consider_r2_unmapped_mate)
+            # print('consider_r2_clipping_part: %s' % current_mp_record.consider_r2_clipping_part)
+            # print('r1_filtered_refs: %s' % current_mp_record.r1_filtered_refs)
+            # print('r2_filtered_refs: %s' % current_mp_record.r2_filtered_refs)
+            # print()
 
 
 # remove unqualified mapping record from dict
@@ -717,7 +661,7 @@ for each_mp in MappingRecord_dict.copy():
         MappingRecord_dict.pop(each_mp)
 
 
-# write out sequences of clipping parts and get id of unmapped reads to extract
+# write out sequences
 unmapped_mates_handle = open(unmapped_mates, 'w')
 clipping_part_seq_handle = open(clipping_part_seq, 'w')
 unmapped_reads_to_extract = set()

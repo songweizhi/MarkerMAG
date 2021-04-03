@@ -37,11 +37,19 @@ class MappingRecord:
 
         self.r1_seq = ''
         self.r2_seq = ''
-
         self.r1_seq_qual = '*'
         self.r2_seq_qual = '*'
+
         self.r1_refs = dict()
         self.r2_refs = dict()
+
+        self.r1_cigar_to_flag = dict()
+        self.r2_cigar_to_flag = dict()
+
+        self.r1_longest_clp_cigar = ''
+        self.r1_longest_clp_falg  = ''
+        self.r2_longest_clp_cigar = ''
+        self.r2_longest_clp_falg  = ''
 
         self.qualified_reads           = False
         self.consider_round_2          = False
@@ -178,10 +186,16 @@ for each_read in open(pwd_samfile):
                     MappingRecord_dict[read_id_base] = MappingRecord()
                 if read_strand == '1':
                     MappingRecord_dict[read_id_base].r1_refs[ref_id_with_pos] = cigar
+                    MappingRecord_dict[read_id_base].r1_cigar_to_flag[cigar] = read_flag
                     store_read_seq = True
                 if read_strand == '2':
                     MappingRecord_dict[read_id_base].r2_refs[ref_id_with_pos] = cigar
+                    MappingRecord_dict[read_id_base].r2_cigar_to_flag[cigar] = read_flag
                     store_read_seq = True
+
+
+
+
             else:
                 store_read_seq = True
         else:
@@ -208,4 +222,9 @@ for each_read in open(pwd_samfile):
                 MappingRecord_dict[read_id_base].r2_seq = read_seq_to_store
                 MappingRecord_dict[read_id_base].r2_seq_qual = read_seq_qual_to_store
 
+
+        print(each_read_split)
+        print(MappingRecord_dict[read_id_base].r1_cigar_to_flag)
+        print(MappingRecord_dict[read_id_base].r2_cigar_to_flag)
+        print()
 
