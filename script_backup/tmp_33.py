@@ -105,11 +105,12 @@ print(max_value)
 print(max_value_index)
 
 
+hydrogen = {
+	"name": "Hydrogen",
+	"atomic_weight": 1.008,
+	"atomic_number": 1
+}
 
-set_a = {'a', 'b', 'c'}
-set_b = {'c', 'd'}
-set_c = set_a.union(set_b)
-
-
-print(set_c)
-
+for key, value in hydrogen:
+	print("Key:", key)
+	print("Value:", str(value))
