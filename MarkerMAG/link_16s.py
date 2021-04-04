@@ -1983,16 +1983,19 @@ def link_16s(args, config_dict):
                     if round2_fq is False:
                         # write out R1 fa
                         free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
-                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                        #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
                         # write out R2 fa
                         free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
                         free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
                     else:
                         # write out R1 fq
                         free_living_16s_R1_handle.write('@%s.1\n' % qualified_read)
-                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                        #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
                         free_living_16s_R1_handle.write('+\n')
-                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                        #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
                         # write out R2 fq
                         free_living_16s_R2_handle.write('@%s.2\n' % qualified_read)
                         free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
@@ -2007,7 +2010,8 @@ def link_16s(args, config_dict):
                         free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
                         # write out R2 fa
                         free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
-                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
                     else:
                         # write out R1 fq
                         free_living_16s_R1_handle.write('@%s.1\n' % qualified_read)
@@ -2016,9 +2020,11 @@ def link_16s(args, config_dict):
                         free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
                         # write out R2 fq
                         free_living_16s_R2_handle.write('@%s.2\n' % qualified_read)
-                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
                         free_living_16s_R2_handle.write('+\n')
-                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                        #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                 else:
                     if read_mr.consider_r1_unmapped_mate is True:
@@ -2047,23 +2053,29 @@ def link_16s(args, config_dict):
 
                         if round2_fq is False:
                             free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
-                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
                         else:
                             free_living_16s_UP_handle.write('@%s.1\n' % qualified_read)
-                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
                             free_living_16s_UP_handle.write('+\n')
-                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq_qual)
 
                     elif read_mr.consider_r2_clipping_part is True:
 
                         if round2_fq is False:
                             free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
-                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
                         else:
                             free_living_16s_UP_handle.write('@%s.2\n' % qualified_read)
-                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
                             free_living_16s_UP_handle.write('+\n')
-                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
     free_living_16s_R1_handle.close()
     free_living_16s_R2_handle.close()
@@ -2103,10 +2115,12 @@ def link_16s(args, config_dict):
                     if read_strand == '1':
                         round_2_MappingRecord_dict[read_id_base].r1_refs[ref_id_with_pos] = cigar
                         round_2_MappingRecord_dict[read_id_base].r1_cigar_to_flag[cigar] = read_flag
+                        round_2_MappingRecord_dict[read_id_base].r1_filtered_refs.add(ref_id)
 
                     if read_strand == '2':
                         round_2_MappingRecord_dict[read_id_base].r2_refs[ref_id_with_pos] = cigar
                         round_2_MappingRecord_dict[read_id_base].r2_cigar_to_flag[cigar] = read_flag
+                        round_2_MappingRecord_dict[read_id_base].r2_filtered_refs.add(ref_id)
 
                     if clipping_len >= min_clp_len_round2:
                         store_read_seq = True
@@ -2226,7 +2240,8 @@ def link_16s(args, config_dict):
                             free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
                             # write out R2 fa
                             free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
                         else:
                             # write out R1 fq
                             free_living_ctg_R1_handle.write('@%s.1\n' % read_basename)
@@ -2235,9 +2250,11 @@ def link_16s(args, config_dict):
                             free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
                             # write out R2 fq
                             free_living_ctg_R2_handle.write('@%s.2\n' % read_basename)
-                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
                             free_living_ctg_R2_handle.write('+\n')
-                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                            #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
             else:  # r2 mapped to multiple refs, ignore
                 round_2_MappingRecord_dict.pop(read_basename)
@@ -2317,16 +2334,19 @@ def link_16s(args, config_dict):
                         if round2_fq is False:
                             # write out R1 fa
                             free_living_ctg_R1_handle.write('>%s.1\n' % read_basename)
-                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            #free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
                             # write out R2 fa
                             free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
                             free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
                         else:
                             # write out R1 fq
                             free_living_ctg_R1_handle.write('@%s.1\n' % read_basename)
-                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            #free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
                             free_living_ctg_R1_handle.write('+\n')
-                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                            #free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
                             # write out R2 fq
                             free_living_ctg_R2_handle.write('@%s.2\n' % read_basename)
                             free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
@@ -2434,22 +2454,28 @@ def link_16s(args, config_dict):
                                 if read_mr.consider_r1_clipping_part is True:
                                     if round2_fq is False:
                                         free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
                                     else:
                                         free_living_ctg_UP_handle.write('@%s.1\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
                                         free_living_ctg_UP_handle.write('+\n')
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq_qual)
 
                                 if read_mr.consider_r2_clipping_part is True:
                                     if round2_fq is False:
                                         free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
                                     else:
                                         free_living_ctg_UP_handle.write('@%s.2\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
                                         free_living_ctg_UP_handle.write('+\n')
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                         else:  # mapped to unwanted end, ignore
                             round_2_MappingRecord_dict.pop(read_basename)
@@ -2506,81 +2532,82 @@ def link_16s(args, config_dict):
     os.system('cat %s %s > %s' % (sam_file_mini_assembly_P, sam_file_mini_assembly_UP, sam_file_mini_assembly_combined))
 
     report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
-    sam_file_mini_assembly = ''
+    # remove reads mapped to multiple miniassembly? check later
     gap_seq_to_reads_dict = {}
-    for each_line in open(sam_file_mini_assembly_combined):
-        if not each_line.startswith('@'):
-            each_line_split = each_line.strip().split('\t')
-            read_id = each_line_split[0]
-            ref_id = each_line_split[2]
-            cigar = each_line_split[5]
-            cigar_match_pct, cigar_mismatch_pct = get_cigar_matched_and_mismatch_pct(cigar)
-
-            qualified_mapping = False
-            if (cigar_match_pct >= min_M_pct) and (cigar_mismatch_pct <= max_mis_pct):
-                qualified_mapping = True
-
-            if qualified_mapping is True:
-                if ref_id not in gap_seq_to_reads_dict:
-                    gap_seq_to_reads_dict[ref_id] = [read_id]
-                else:
-                    gap_seq_to_reads_dict[ref_id].append(read_id)
-
+    for each_read in open(sam_file_mini_assembly_combined):
+        if not each_read.startswith('@'):
+            each_read_split = each_read.strip().split('\t')
+            cigar = each_read_split[5]
+            if cigar != '*':
+                read_id = each_read_split[0]
+                ref_id = each_read_split[2]
+                cigar_splitted = cigar_splitter(cigar)
+                aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
+                if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= (max_mis_pct)):
+                    if ref_id not in gap_seq_to_reads_dict:
+                        gap_seq_to_reads_dict[ref_id] = [read_id]
+                    else:
+                        gap_seq_to_reads_dict[ref_id].append(read_id)
 
     report_and_log(('Round 2: linking genomes/16Ss to Spades assemblies'), pwd_log_file, keep_quiet)
-
-    reads_to_extract_to_ref_dict_gnm = {}
-    reads_to_extract_to_ref_dict_16s = {}
-
     stats_GapFilling_file_16s_handle = open(stats_GapFilling_file_16s, 'w')
     stats_GapFilling_file_ctg_handle = open(stats_GapFilling_file_ctg, 'w')
     stats_GapFilling_file_16s_handle.write('Gap_seq,s16,Number\n')
     stats_GapFilling_file_ctg_handle.write('Gap_seq,ctg,Number\n')
     for gap_seq in gap_seq_to_reads_dict:
         gap_seq_mapped_reads = gap_seq_to_reads_dict[gap_seq]
-        gap_seq_mapped_reads_linkages_16s = {}
-        gap_seq_mapped_reads_linkages_ctg = {}
-        gap_seq_mapped_reads_linkages_gnm = {}
+        gap_seq_to_16s_linkage_dict = {}
+        gap_seq_to_ctg_linkage_dict = {}
+        gap_seq_to_gnm_linkage_dict = {}
         for mapped_read in gap_seq_mapped_reads:
+            mapped_read_basename = mapped_read[:-2]
+            mapped_read_strand   = mapped_read[-1]
 
-            # get mate ref
-            mapped_read_mate_ref = ''
-            mapped_read_mate_ref_gnm = ''
-            mate_ref_is_16s = False
-            mate_ref_is_ctg = False
-            if mapped_read in reads_to_extract_to_ref_dict_gnm:
-                mapped_read_mate_ref = reads_to_extract_to_ref_dict_gnm[mapped_read]
-                mapped_read_mate_ref_gnm = mapped_read_mate_ref.split(gnm_ctg_connector)[0]
-                mate_ref_is_ctg = True
-            if mapped_read in reads_to_extract_to_ref_dict_16s:
-                mapped_read_mate_ref = reads_to_extract_to_ref_dict_16s[mapped_read]
-                mate_ref_is_16s = True
+            mapped_read_mate_or_clp_refs_16s = set()
+            if mapped_read_basename in MappingRecord_dict:
+                read_mr_round_1 = MappingRecord_dict[mapped_read_basename]
+                if read_mr_round_1.consider_round_2 is True:
+                    if mapped_read_strand == '1':
+                        if read_mr_round_1.consider_r1_unmapped_mate is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
+                        if read_mr_round_1.consider_r1_clipping_part is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
+                    if mapped_read_strand == '2':
+                        if read_mr_round_1.consider_r2_unmapped_mate is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
+                        if read_mr_round_1.consider_r2_clipping_part is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
 
-            # store 16s mate in dict
-            if (mate_ref_is_16s is True) and (mate_ref_is_ctg is False):
-                if mapped_read_mate_ref not in gap_seq_mapped_reads_linkages_16s:
-                    gap_seq_mapped_reads_linkages_16s[mapped_read_mate_ref] = 1
+            for each_mate_or_clp_ref_16s in mapped_read_mate_or_clp_refs_16s:
+                if each_mate_or_clp_ref_16s not in gap_seq_to_16s_linkage_dict:
+                    gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] = 1
                 else:
-                    gap_seq_mapped_reads_linkages_16s[mapped_read_mate_ref] += 1
+                    gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] += 1
 
-            # store ctg mate in dict
-            if (mate_ref_is_16s is False) and (mate_ref_is_ctg is True):
+            mapped_read_mate_or_clp_refs_ctg = set()
+            if mapped_read_basename in round_2_MappingRecord_dict:
+                read_mr_round_2 = round_2_MappingRecord_dict[mapped_read_basename]
+                if mapped_read_strand == '1':
+                    if read_mr_round_2.consider_r1_unmapped_mate is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
+                    if read_mr_round_2.consider_r1_clipping_part is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
+                if mapped_read_strand == '2':
+                    if read_mr_round_2.consider_r2_unmapped_mate is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
+                    if read_mr_round_2.consider_r2_clipping_part is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
 
-                if mapped_read_mate_ref not in gap_seq_mapped_reads_linkages_ctg:
-                    gap_seq_mapped_reads_linkages_ctg[mapped_read_mate_ref] = 1
+            for each_mate_or_clp_ref_ctg in mapped_read_mate_or_clp_refs_ctg:
+                if each_mate_or_clp_ref_ctg not in gap_seq_to_ctg_linkage_dict:
+                    gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] = 1
                 else:
-                    gap_seq_mapped_reads_linkages_ctg[mapped_read_mate_ref] += 1
+                    gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] += 1
 
-                if mapped_read_mate_ref_gnm not in gap_seq_mapped_reads_linkages_gnm:
-                    gap_seq_mapped_reads_linkages_gnm[mapped_read_mate_ref_gnm] = 1
-                else:
-                    gap_seq_mapped_reads_linkages_gnm[mapped_read_mate_ref_gnm] += 1
-
-        for each_16s in gap_seq_mapped_reads_linkages_16s:
-            stats_GapFilling_file_16s_handle.write('%s,%s,%s\n' % (gap_seq, each_16s, gap_seq_mapped_reads_linkages_16s[each_16s]))
-
-        for each_ctg in gap_seq_mapped_reads_linkages_ctg:
-            stats_GapFilling_file_ctg_handle.write('%s,%s,%s\n' % (gap_seq, each_ctg, gap_seq_mapped_reads_linkages_ctg[each_ctg]))
+            for each_16s in gap_seq_to_16s_linkage_dict:
+                stats_GapFilling_file_16s_handle.write('%s,%s,%s\n' % (gap_seq, each_16s, gap_seq_to_16s_linkage_dict[each_16s]))
+            for each_ctg in gap_seq_to_ctg_linkage_dict:
+                stats_GapFilling_file_ctg_handle.write('%s,%s,%s\n' % (gap_seq, each_ctg, gap_seq_to_ctg_linkage_dict[each_ctg]))
 
     stats_GapFilling_file_16s_handle.close()
     stats_GapFilling_file_ctg_handle.close()

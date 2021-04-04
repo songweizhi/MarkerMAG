@@ -174,13 +174,11 @@ class MappingRecord:
 
         self.r1_clipping_seq = ''
         self.r2_clipping_seq = ''
-
         self.r1_clipping_seq_qual = '*'
         self.r2_clipping_seq_qual = '*'
 
         self.unmapped_r1_refs = set()
         self.unmapped_r2_refs = set()
-
         self.clipping_r1_refs = set()
         self.clipping_r2_refs = set()
 
@@ -342,6 +340,8 @@ min_M_len                           = 30
 min_clp_len                         = 30
 min_clp_M_len                       = 25
 max_mis_pct                         = 3
+min_clp_len_round2                  = 30
+end_seq_len                         = 1000
 
 # file out
 pwd_samfile_reads                   = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_reads.fa'
@@ -973,7 +973,6 @@ free_living_16s_R1 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_l
 free_living_16s_R2 = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_16s_R2.%s' % free_living_ext
 free_living_16s_UP = '/Users/songweizhi/Desktop/new_algorithm_Kelp/round2_free_living_16s_UP.%s' % free_living_ext
 
-
 # get linked marker genes and genomic sequences in step 1
 linked_marker_gene_set = set()
 linked_genomic_seq_set = set()
@@ -1095,5 +1094,350 @@ free_living_16s_R2_handle.close()
 free_living_16s_UP_handle.close()
 
 #################### extract sequences flanking ctg ends ####################
+
+combined_1st_round_unlinked_mags_sam = '/Users/songweizhi/Desktop/round2/round_1_unlinked_gnm.sam'
+
+# parse sam file
+round_2_MappingRecord_dict = {}
+for each_line in open(combined_1st_round_unlinked_mags_sam):
+    each_line_split = each_line.strip().split('\t')
+    if not each_line.startswith('@'):
+        store_read_seq = False
+        read_id = each_line_split[0]
+        read_id_base = '.'.join(read_id.split('.')[:-1])
+        read_strand = read_id.split('.')[-1]
+        read_flag = int(each_line_split[1])
+        cigar = each_line_split[5]
+        read_seq = each_line_split[9]
+        read_seq_qual = each_line_split[10]
+        if cigar != '*':
+            ref_id = each_line_split[2]
+            ref_pos = each_line_split[3]
+            ref_id_with_pos = '%s_pos_%s' % (ref_id, ref_pos)
+            cigar_splitted = cigar_splitter(cigar)
+            aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
+            if mismatch_pct <= max_mis_pct:
+
+                if read_id_base not in round_2_MappingRecord_dict:
+                    round_2_MappingRecord_dict[read_id_base] = MappingRecord()
+
+                if read_strand == '1':
+                    round_2_MappingRecord_dict[read_id_base].r1_refs[ref_id_with_pos] = cigar
+                    round_2_MappingRecord_dict[read_id_base].r1_cigar_to_flag[cigar] = read_flag
+                    round_2_MappingRecord_dict[read_id_base].r1_filtered_refs.add(ref_id)
+
+                if read_strand == '2':
+                    round_2_MappingRecord_dict[read_id_base].r2_refs[ref_id_with_pos] = cigar
+                    round_2_MappingRecord_dict[read_id_base].r2_cigar_to_flag[cigar] = read_flag
+                    round_2_MappingRecord_dict[read_id_base].r2_filtered_refs.add(ref_id)
+
+                if clipping_len >= min_clp_len_round2:
+                    store_read_seq = True
+            else:
+                store_read_seq = True
+        else:
+            store_read_seq = True
+
+        # store_read_seq into dict
+        if store_read_seq is True:
+
+            # turn back if read reverse complemented
+            read_rc = sam_flag_to_rc(read_flag)
+            read_seq_to_store = read_seq
+            read_seq_qual_to_store = read_seq_qual
+            if read_rc is True:
+                read_seq_to_store = get_rc(read_seq)
+                read_seq_qual_to_store = read_seq_qual[::-1]
+
+            if read_id_base not in round_2_MappingRecord_dict:
+                round_2_MappingRecord_dict[read_id_base] = MappingRecord()
+            if read_strand == '1':
+                if round_2_MappingRecord_dict[read_id_base].r1_seq == '':
+                    round_2_MappingRecord_dict[read_id_base].r1_seq = read_seq_to_store
+                    round_2_MappingRecord_dict[read_id_base].r1_seq_qual = read_seq_qual_to_store
+            if read_strand == '2':
+                if round_2_MappingRecord_dict[read_id_base].r2_seq == '':
+                    round_2_MappingRecord_dict[read_id_base].r2_seq = read_seq_to_store
+                    round_2_MappingRecord_dict[read_id_base].r2_seq_qual = read_seq_qual_to_store
+
+# parse round_2_MappingRecord_dict
+for read_basename in round_2_MappingRecord_dict.copy():
+    read_mr = round_2_MappingRecord_dict[read_basename]
+    r1_ref_cigar_list = list(read_mr.r1_refs.values())
+    r2_ref_cigar_list = list(read_mr.r2_refs.values())
+    best_cigar, max_clp, max_clp_location = get_max_clp_and_index(r1_ref_cigar_list, r2_ref_cigar_list)
+
+    if (read_mr.r1_refs == {}) and (read_mr.r2_refs != {}):
+
+        if len(read_mr.r2_refs) == 1:
+
+            r2_ref_cigar = r2_ref_cigar_list[0]
+            r2_ref_flag = read_mr.r2_cigar_to_flag[r2_ref_cigar]
+            r2_ref_cigar_rc = sam_flag_to_rc(r2_ref_flag)
+
+            # consider the unmapped mate only
+            if max_clp < min_clp_len_round2:
+                read_mr.consider_round_2 = True
+                read_mr.consider_r2_unmapped_mate = True
+
+            # consider both of unmapped mate and clipping part
+            else:
+                r2_ref_no_pos = list(read_mr.r2_refs.keys())[0].split('_pos_')[0]
+                r2_ref_pos = int(list(read_mr.r2_refs.keys())[0].split('_pos_')[1])
+
+                if (r2_ref_no_pos[-1]) == (max_clp_location[-1]) == 'l':
+                    read_mr.consider_round_2 = True
+                    read_mr.consider_r2_unmapped_mate = True
+                    read_mr.consider_r2_clipping_part = True
+
+                    if r2_ref_cigar_rc is False:
+                        read_mr.r2_clipping_seq = read_mr.r2_seq[:max_clp]
+                        if read_mr.r2_seq_qual != '*':
+                            read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[:max_clp]
+
+                    if r2_ref_cigar_rc is True:
+                        r2_seq_rc = get_rc(read_mr.r2_seq)
+                        r2_clipping_seq_rc = r2_seq_rc[:max_clp]
+                        read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                        if read_mr.r2_seq_qual != '*':
+                            r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                            r2_clipping_seq_rc_qual = r2_seq_rc_qual[:max_clp]
+                            read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
+
+                elif (r2_ref_no_pos[-1]) == (max_clp_location[-1]) == 'r':
+                    read_mr.consider_round_2 = True
+                    read_mr.consider_r2_unmapped_mate = True
+                    read_mr.consider_r2_clipping_part = True
+
+                    if r2_ref_cigar_rc is False:
+                        read_mr.r2_clipping_seq = read_mr.r2_seq[-max_clp:]
+                        if read_mr.r2_seq_qual != '*':
+                            read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[-max_clp:]
+
+                    if r2_ref_cigar_rc is True:
+                        r2_seq_rc = get_rc(read_mr.r2_seq)
+                        r2_clipping_seq_rc = r2_seq_rc[-max_clp:]
+                        read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                        if read_mr.r2_seq_qual != '*':
+                            r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                            r2_clipping_seq_rc_qual = r2_seq_rc_qual[-max_clp:]
+                            read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
+
+                else:  # mapped to unwanted end, ignore
+                    round_2_MappingRecord_dict.pop(read_basename)
+
+        else:  # r2 mapped to multiple refs, ignore
+            round_2_MappingRecord_dict.pop(read_basename)
+
+    elif (read_mr.r1_refs != {}) and (read_mr.r2_refs == {}):
+
+        if len(read_mr.r1_refs) == 1:
+
+            r1_ref_cigar = r1_ref_cigar_list[0]
+            r1_ref_flag = read_mr.r1_cigar_to_flag[r1_ref_cigar]
+            r1_ref_cigar_rc = sam_flag_to_rc(r1_ref_flag)
+
+            # consider the unmapped mate only
+            if max_clp < min_clp_len_round2:
+                read_mr.consider_round_2 = True
+                read_mr.consider_r1_unmapped_mate = True
+
+            # consider both of unmapped mate and clipping part
+            else:
+                r1_ref_no_pos = list(read_mr.r1_refs.keys())[0].split('_pos_')[0]
+                r1_ref_pos = int(list(read_mr.r1_refs.keys())[0].split('_pos_')[1])
+
+                if (r1_ref_no_pos[-1]) == (max_clp_location[-1]) == 'l':
+                    read_mr.consider_round_2 = True
+                    read_mr.consider_r1_unmapped_mate = True
+                    read_mr.consider_r1_clipping_part = True
+
+                    if r1_ref_cigar_rc is False:
+                        read_mr.r1_clipping_seq = read_mr.r1_seq[:max_clp]
+                        if read_mr.r1_seq_qual != '*':
+                            read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[:max_clp]
+
+                    if r1_ref_cigar_rc is True:
+                        r1_seq_rc = get_rc(read_mr.r1_seq)
+                        r1_clipping_seq_rc = r1_seq_rc[:max_clp]
+                        read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                        if read_mr.r1_seq_qual != '*':
+                            r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                            r1_clipping_seq_rc_qual = r1_seq_rc_qual[:max_clp]
+                            read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
+
+                elif (r1_ref_no_pos[-1]) == (max_clp_location[-1]) == 'r':
+                    read_mr.consider_round_2 = True
+                    read_mr.consider_r1_unmapped_mate = True
+                    read_mr.consider_r1_clipping_part = True
+
+                    if r1_ref_cigar_rc is False:
+                        read_mr.r1_clipping_seq = read_mr.r1_seq[-max_clp:]
+                        if read_mr.r1_seq_qual != '*':
+                            read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[-max_clp:]
+
+                    if r1_ref_cigar_rc is True:
+                        r1_seq_rc = get_rc(read_mr.r1_seq)
+                        r1_clipping_seq_rc = r1_seq_rc[-max_clp:]
+                        read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                        if read_mr.r1_seq_qual != '*':
+                            r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                            r1_clipping_seq_rc_qual = r1_seq_rc_qual[-max_clp:]
+                            read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
+
+                else:  # mapped to unwanted end, ignore
+                    round_2_MappingRecord_dict.pop(read_basename)
+
+        else:  # r1 mapped to multiple refs, ignore
+            round_2_MappingRecord_dict.pop(read_basename)
+
+    elif (read_mr.r1_refs != {}) and (read_mr.r2_refs != {}):
+        if max_clp >= min_M_len:
+            if (len(read_mr.r1_refs) == 1) and (len(read_mr.r2_refs) == 1):
+                r1_ref_no_pos = list(read_mr.r1_refs.keys())[0].split('_pos_')[0]
+                r2_ref_no_pos = list(read_mr.r2_refs.keys())[0].split('_pos_')[0]
+                r1_ref_pos = int(list(read_mr.r1_refs.keys())[0].split('_pos_')[1])
+                r2_ref_pos = int(list(read_mr.r2_refs.keys())[0].split('_pos_')[1])
+
+                if r1_ref_no_pos == r2_ref_no_pos:
+                    if (r1_ref_no_pos[-1]) == (r2_ref_no_pos[-1]) == (max_clp_location[-1]):
+
+                        if (max_clp_location == 'r1_l') and (r1_ref_pos <= 5):
+                            read_mr.consider_round_2 = True
+                            read_mr.consider_r1_clipping_part = True
+                            best_cigar_flag = read_mr.r1_cigar_to_flag[best_cigar]
+                            best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
+
+                            if best_cigar_rc is False:
+                                read_mr.r1_clipping_seq = read_mr.r1_seq[:max_clp]
+                                if read_mr.r1_seq_qual != '*':
+                                    read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[:max_clp]
+                            if best_cigar_rc is True:
+                                r1_seq_rc = get_rc(read_mr.r1_seq)
+                                r1_clipping_seq_rc = r1_seq_rc[:max_clp]
+                                read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                                if read_mr.r1_seq_qual != '*':
+                                    r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                                    r1_clipping_seq_rc_qual = r1_seq_rc_qual[:max_clp]
+                                    read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
+
+                        elif (max_clp_location == 'r2_l') and (r2_ref_pos <= 5):
+                            read_mr.consider_round_2 = True
+                            read_mr.consider_r2_clipping_part = True
+                            best_cigar_flag = read_mr.r2_cigar_to_flag[best_cigar]
+                            best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
+
+                            if best_cigar_rc is False:
+                                read_mr.r2_clipping_seq = read_mr.r2_seq[:max_clp]
+                                if read_mr.r2_seq_qual != '*':
+                                    read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[:max_clp]
+                            if best_cigar_rc is True:
+                                r2_seq_rc = get_rc(read_mr.r2_seq)
+                                r2_clipping_seq_rc = r2_seq_rc[:max_clp]
+                                read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                                if read_mr.r2_seq_qual != '*':
+                                    r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                                    r2_clipping_seq_rc_qual = r2_seq_rc_qual[:max_clp]
+                                    read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
+
+                        elif (max_clp_location == 'r1_r') and (r1_ref_pos >= (end_seq_len / 2)):
+                            read_mr.consider_round_2 = True
+                            read_mr.consider_r1_clipping_part = True
+                            best_cigar_flag = read_mr.r1_cigar_to_flag[best_cigar]
+                            best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
+
+                            if best_cigar_rc is False:
+                                read_mr.r1_clipping_seq = read_mr.r1_seq[-max_clp:]
+                                if read_mr.r1_seq_qual != '*':
+                                    read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[-max_clp:]
+                            if best_cigar_rc is True:
+                                r1_seq_rc = get_rc(read_mr.r1_seq)
+                                r1_clipping_seq_rc = r1_seq_rc[-max_clp:]
+                                read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                                if read_mr.r1_seq_qual != '*':
+                                    r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                                    r1_clipping_seq_rc_qual = r1_seq_rc_qual[-max_clp:]
+                                    read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
+
+                        elif (max_clp_location == 'r2_r') and (r2_ref_pos >= (end_seq_len / 2)):
+                            read_mr.consider_round_2 = True
+                            read_mr.consider_r2_clipping_part = True
+                            best_cigar_flag = read_mr.r2_cigar_to_flag[best_cigar]
+                            best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
+
+                            if best_cigar_rc is False:
+                                read_mr.r2_clipping_seq = read_mr.r2_seq[-max_clp:]
+                                if read_mr.r2_seq_qual != '*':
+                                    read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[-max_clp:]
+                            if best_cigar_rc is True:
+                                r2_seq_rc = get_rc(read_mr.r2_seq)
+                                r2_clipping_seq_rc = r2_seq_rc[-max_clp:]
+                                read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                                if read_mr.r2_seq_qual != '*':
+                                    r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                                    r2_clipping_seq_rc_qual = r2_seq_rc_qual[-max_clp:]
+                                    read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
+
+                        else:  # not too many of them, ignore now, maybe worth check later,
+                            round_2_MappingRecord_dict.pop(read_basename)
+                            # print('%s\tr1_refs:\t%s\t%s' % (read_basename, read_mr.r1_refs, read_mr.r1_seq))
+                            # print('%s\tr2_refs:\t%s\t%s' % (read_basename, read_mr.r2_refs, read_mr.r2_seq))
+
+                    else:  # mapped to unwanted end, ignore
+                        round_2_MappingRecord_dict.pop(read_basename)
+
+                else:  # r1 and r2 mapped to different refs
+                    # not too many of them, ignore now
+                    round_2_MappingRecord_dict.pop(read_basename)
+
+            else:  # r1 or r2 mapped to multiple refs
+                # not too many of them, ignore now
+                round_2_MappingRecord_dict.pop(read_basename)
+
+        else:  # ignore and remove element from dict
+            round_2_MappingRecord_dict.pop(read_basename)
+
+    else:  # ignore and remove element from dict
+        round_2_MappingRecord_dict.pop(read_basename)
+
+
+########################################################################################################################
+
+sam_file_mini_assembly_combined     = '/Users/songweizhi/Desktop/round2/scaffolds_combined.sam'
+
+# remove reads mapped to multiple miniassembly? check later
+gap_seq_to_reads_dict = {}
+for each_read in open(sam_file_mini_assembly_combined):
+    if not each_read.startswith('@'):
+        each_read_split = each_read.strip().split('\t')
+        cigar = each_read_split[5]
+        if cigar != '*':
+            read_id = each_read_split[0]
+            ref_id = each_read_split[2]
+            cigar_splitted = cigar_splitter(cigar)
+            aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
+            if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= (max_mis_pct)):
+                if ref_id not in gap_seq_to_reads_dict:
+                    gap_seq_to_reads_dict[ref_id] = [read_id]
+                else:
+                    gap_seq_to_reads_dict[ref_id].append(read_id)
+
+
+for gap_seq in gap_seq_to_reads_dict:
+    gap_seq_mapped_reads = gap_seq_to_reads_dict[gap_seq]
+    gap_seq_mapped_reads_linked_to_16s = {}
+    gap_seq_mapped_reads_linked_to_ctg = {}
+
+    print('%s\t%s' % (gap_seq, gap_seq_mapped_reads))
+
+    for mapped_read in gap_seq_mapped_reads:
+        mapped_read_basename = mapped_read[:-2]
+        mapped_read_strand = mapped_read[-1]
+        print(mapped_read)
+        print(mapped_read_basename)
+        print(mapped_read_strand)
+
+    print()
+
 
 
