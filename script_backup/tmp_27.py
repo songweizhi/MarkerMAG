@@ -225,3 +225,43 @@ MarkerGene__Kelp_SILVA138_id99_subsample_50_518,GenomicSeq__Refined_32,5
 Kelp_SILVA138_id99_subsample_5_147	Refined_54	42	S2	1	1	1	1	1	d__Bacteria;p__Planctomycetota;c__Planctomycetes;o__Pirellulales;f__Pirellulaceae;g__Mariniblastus;s__	d__Bacteria;p__Planctomycetota;c__Planctomycetes;o__Pirellulales;f__Pirellulaceae;g__Mariniblastus;s__Mariniblastus_fucicola	Bacteria(100.0);Planctomycetota(100.0);Planctomycetes(100.0);Pirellulales(100.0);Pirellulaceae(100.0);Mariniblastus(100.0);Mariniblastus fucicola(100.0)
 '''
 
+'''
+500
+Kelp_SILVA138_id99_subsample_25_303	Refined_48	518	S2
+Kelp_SILVA138_id99_subsample_50_418	Refined_31	27	S2
+Kelp_SILVA138_id99_subsample_25_389	Refined_42	24	S2
+Kelp_SILVA138_id99_subsample_100_694	Refined_31	24	S2
+Kelp_SILVA138_id99_subsample_75_575	Refined_31	24	S2
+Kelp_SILVA138_id99_subsample_100_575	Refined_14	15	S2
+Kelp_SILVA138_id99_subsample_25_264	Refined_49	6	S2
+Kelp_SILVA138_id99_subsample_100_515	Refined_49	6	S2
+Kelp_SILVA138_id99_subsample_10_228	Refined_54	6	S2
+Kelp_SILVA138_id99_subsample_100_487	Refined_31	4	S2
+Kelp_SILVA138_id99_subsample_100_784	Refined_42	3	S2
+Kelp_SILVA138_id99_subsample_50_487	Refined_31	3	S2
+Kelp_SILVA138_id99_subsample_75_388	Refined_63	3	S2
+Kelp_SILVA138_id99_subsample_100_459	Refined_63	3	S2
+
+750
+Kelp_SILVA138_id99_subsample_25_303	Refined_48	518	S2
+Kelp_SILVA138_id99_subsample_50_418	Refined_31	27	S2
+Kelp_SILVA138_id99_subsample_25_389	Refined_42	25	S2
+Kelp_SILVA138_id99_subsample_100_694	Refined_31	24	S2
+Kelp_SILVA138_id99_subsample_75_575	Refined_31	24	S2
+Kelp_SILVA138_id99_subsample_100_575	Refined_14	15	S2
+Kelp_SILVA138_id99_subsample_100_515	Refined_49	6	S2
+Kelp_SILVA138_id99_subsample_25_264	Refined_49	6	S2
+Kelp_SILVA138_id99_subsample_10_228	Refined_54	5	S2
+Kelp_SILVA138_id99_subsample_100_487	Refined_31	4	S2
+Kelp_SILVA138_id99_subsample_50_487	Refined_31	3	S2
+Kelp_SILVA138_id99_subsample_100_784	Refined_42	3	S2
+Kelp_SILVA138_id99_subsample_75_388	Refined_63	3	S2
+Kelp_SILVA138_id99_subsample_100_459	Refined_63	3	S2
+
+
+1000
+
+
+
+
+'''

@@ -945,6 +945,8 @@ class MappingRecord:
 
         self.r1_seq = ''
         self.r2_seq = ''
+        self.r1_seq_qual = '*'
+        self.r2_seq_qual = '*'
 
         self.r1_refs = dict()
         self.r2_refs = dict()
@@ -969,6 +971,9 @@ class MappingRecord:
 
         self.r1_clipping_seq = ''
         self.r2_clipping_seq = ''
+
+        self.r1_clipping_seq_qual = '*'
+        self.r2_clipping_seq_qual = '*'
 
         self.unmapped_r1_refs = set()
         self.unmapped_r2_refs = set()
@@ -1012,6 +1017,32 @@ def get_cigar_stats(cigar_splitted):
     return aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct
 
 
+def run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, unpaired_fastq, mira_stdout, force_overwrite):
+
+    # prepare manifest file
+    mira_manifest_handle = open(mira_manifest, 'w')
+    mira_manifest_handle.write('project = %s_mira_est_no_chimera\n' % output_prefix)
+    mira_manifest_handle.write('job=est,denovo,accurate\n')
+    mira_manifest_handle.write('parameters = -CL:ascdc\n')
+    mira_manifest_handle.write('readgroup = SomeUnpairedIlluminaReadsIGotFromTheLab\n')
+    mira_manifest_handle.write('data = %s\n' % os.path.abspath(unpaired_fastq))
+    mira_manifest_handle.write('technology = solexa\n')
+    mira_manifest_handle.close()
+
+    if os.path.isdir(mira_tmp_dir) is False:
+        os.mkdir(mira_tmp_dir)
+
+    # run Mira
+    mira_cmd = 'mira -c %s %s > %s' % (step_2_wd, os.path.abspath(mira_manifest), mira_stdout)
+    if mira_tmp_dir is not None:
+        mira_cmd = 'mira -c %s %s > %s' % (mira_tmp_dir, os.path.abspath(mira_manifest), mira_stdout)
+    os.system(mira_cmd)
+
+    # parse mira output
+    if (mira_tmp_dir is not None) and (mira_tmp_dir != step_2_wd):
+        os.system('cp -r %s/%s_mira_est_no_chimera_assembly %s/' % (mira_tmp_dir, output_prefix, step_2_wd))
+
+
 def link_16s(args, config_dict):
 
     ###################################################### file in/out #####################################################
@@ -1031,12 +1062,15 @@ def link_16s(args, config_dict):
     aln16s                              = args['s1_ma']
     min_paired_linkages                 = args['s1_mpl']
     min_paired_linkages_for_uniq_linked_16s  = args['s1_mplu']
+    max_gap_to_end                      = args['s2_g']
     min_read_num                        = args['s2_r']
     num_threads                         = args['t']
     keep_quiet                          = args['quiet']
     force_overwrite                     = args['force']
     keep_temp                           = args['tmp']
     test_mode                           = args['test_mode']
+    round_2_spades                      = args['spades']
+    mira_tmp_dir                        = args['mira_tmp']
     bbmap_memory                        = args['bbmap_mem']
     max_mis_pct                         = args['mismatch']
     min_M_len                           = args['min_M_len']
@@ -1050,16 +1084,23 @@ def link_16s(args, config_dict):
     pwd_bowtie2_build_exe               = 'bowtie2-build'
     pwd_bowtie2_exe                     = 'bowtie2'
     pwd_samtools_exe                    = 'samtools'
+    pwd_spades_exe                      = 'spades.py'
     pwd_bbmap_exe                       = 'bbmap.sh'
 
-    end_seq_len                         = 500
-    min_clp_len_round2                  = 30
-    marker_to_ctg_gnm_Key_connector     = '___M___'
-    gnm_to_ctg_connector                = '___'
-    round_2_min_aln_len                 = 50
-    round_2_min_cov                     = 35
-    round_2_min_iden                    = 99.5
+    reads_iden_cutoff   = 100             # %
+    reads_cov_cutoff    = 90              # %
+    end_seq_len         = 500            # bp
+    min_clp_len_round2 = 30
+    dict_key_connector = '__|__'
+    marker_to_ctg_Key_connector_str = '___M___'
+    marker_to_gnm_Key_connector_str = '___M___'
+    gnm_ctg_connector = '___'
 
+    round_2_min_aln_len             = 50
+    round_2_min_cov                 = 25
+    round_2_min_iden                = 99.5
+
+    round_2_free_living_16s_to_ctg_connector = '__f__'
 
     ################################################ check dependencies ################################################
 
@@ -1093,11 +1134,44 @@ def link_16s(args, config_dict):
 
     step_1_wd = '%s/%s_step_1_wd' % (working_directory, output_prefix)
     step_2_wd = '%s/%s_step_2_wd' % (working_directory, output_prefix)
+
     os.mkdir(step_1_wd)
+
+    ############################################## check input reads format ############################################
+
+    r1_path, r1_basename, r1_ext = sep_path_basename_ext(reads_file_r1)
+    r2_path, r2_basename, r2_ext = sep_path_basename_ext(reads_file_r2)
+
+    reads_file_r1_fasta = reads_file_r1
+    reads_file_r2_fasta = reads_file_r2
+    if 'q' in r1_ext:
+
+        reads_file_r1_fasta_to_check = '%s/%s.fasta' % (r1_path, r1_basename)
+        reads_file_r2_fasta_to_check = '%s/%s.fasta' % (r2_path, r2_basename)
+
+        if (os.path.isfile(reads_file_r1_fasta_to_check) is True) and (os.path.isfile(reads_file_r2_fasta_to_check) is True):
+            reads_file_r1_fasta = reads_file_r1_fasta_to_check
+            reads_file_r2_fasta = reads_file_r2_fasta_to_check
+
+        else:
+            reads_file_r1_fasta = '%s/%s.fasta' % (step_1_wd, r1_basename)
+            reads_file_r2_fasta = '%s/%s.fasta' % (step_1_wd, r2_basename)
+
+            if num_threads >= 2:
+                num_threads_SeqIO_convert_worker = 2
+            else:
+                num_threads_SeqIO_convert_worker = 1
+
+            pool = mp.Pool(processes=num_threads_SeqIO_convert_worker)
+            pool.map(SeqIO_convert_worker, [[reads_file_r1, 'fastq', reads_file_r1_fasta, 'fasta-2line'], [reads_file_r2, 'fastq', reads_file_r2_fasta, 'fasta-2line']])
+            pool.close()
+            pool.join()
+
 
     ######################## check genomic sequence type and prepare files for making blast db #########################
 
     combined_input_gnms           = ''
+    blast_db_no_ext    = ''
     genomic_seq_type   = ''  # ctg or mag
     renamed_mag_folder = ''
 
@@ -1107,6 +1181,7 @@ def link_16s(args, config_dict):
         metagenomic_assemblies_file_path, metagenomic_assemblies_file_basename, metagenomic_assemblies_file_extension = sep_path_basename_ext(genomic_assemblies)
         blast_db_dir = '%s/%s_%s_db' % (step_1_wd, output_prefix, metagenomic_assemblies_file_basename)
         combined_input_gnms     = '%s/%s%s'     % (blast_db_dir, metagenomic_assemblies_file_basename, metagenomic_assemblies_file_extension)
+        blast_db_no_ext = '%s/%s'     % (blast_db_dir, metagenomic_assemblies_file_basename)
 
         os.mkdir(blast_db_dir)
         os.system('cp %s %s/' % (genomic_assemblies, blast_db_dir))
@@ -1131,10 +1206,11 @@ def link_16s(args, config_dict):
             pwd_mag_in      = '%s/%s' % (mag_folder, mag_in)
             pwd_mag_renamed = '%s/%s' % (renamed_mag_folder, mag_in)
             mag_basename    = '.'.join(mag_in.split('.')[:-1])
-            rename_seq(pwd_mag_in, pwd_mag_renamed, mag_basename, gnm_to_ctg_connector)
+            rename_seq(pwd_mag_in, pwd_mag_renamed, mag_basename, gnm_ctg_connector)
 
         # combine renamed MAGs
         combined_input_gnms = '%s/%s_combined.fa' % (blast_db_dir, mag_folder_name)
+        blast_db_no_ext = '%s/%s_combined' % (blast_db_dir, mag_folder_name)
         os.system('cat %s/*%s > %s' % (renamed_mag_folder, mag_file_extension, combined_input_gnms))
 
     else:
@@ -1170,27 +1246,50 @@ def link_16s(args, config_dict):
 
     ################################################# step 2 #################################################
 
-    marker_gene_seqs_1st_round_unlinked         = '%s/round_1_unlinked_16s.fa'                      % step_2_wd
-    combined_1st_round_unlinked_mags            = '%s/round_1_unlinked_gnm.fa'                      % step_2_wd
-    combined_1st_round_unlinked_mags_sam        = '%s/round_1_unlinked_gnm.sam'                     % step_2_wd
-    combined_1st_round_unlinked_ctgs            = '%s/round_1_unlinked_ctg.fa'                      % step_2_wd
-    stats_GapFilling_file                       = '%s/stats_GapFilling.txt'                         % step_2_wd
-    stats_GapFilling_file_filtered              = '%s/stats_GapFilling_filtered.txt'                % step_2_wd
-    combined_linkage_file_tmp                   = '%s/combined_linkages_tmp.txt'                    % step_2_wd
-    combined_linkage_file_tmp_html              = '%s/combined_linkages_tmp.html'                   % step_2_wd
-    combined_linkage_file                       = '%s/%s_combined_linkages.txt'                     % (working_directory, output_prefix)
-    combined_linkage_file_html                  = '%s/%s_combined_linkages.html'                    % (working_directory, output_prefix)
-    free_living_16s_R1                          = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
-    free_living_16s_R2                          = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
-    free_living_16s_UP                          = '%s/round2_free_living_16s_UP.fa'                 % step_2_wd
-    free_living_ctg_R1                          = '%s/round2_free_living_ctg_R1.fa'                 % step_2_wd
-    free_living_ctg_R2                          = '%s/round2_free_living_ctg_R2.fa'                 % step_2_wd
-    free_living_ctg_UP                          = '%s/round2_free_living_ctg_UP.fa'                 % step_2_wd
-    free_living_16s                             = '%s/round2_free_living_16s.fa'                    % step_2_wd
-    free_living_ctg                             = '%s/round2_free_living_ctg.fa'                    % step_2_wd
-    free_living_16s_ref_file                    = '%s/round2_free_living_16s_refs.txt'              % step_2_wd
-    free_living_ctg_ref_file                    = '%s/round2_free_living_ctg_refs.txt'              % step_2_wd
-    free_living_blast_result                    = '%s/free_living_reads_blastn.tab'                 % step_2_wd
+    marker_gene_seqs_1st_round_unlinked         = '%s/round_1_unlinked_16s.fa'                   % step_2_wd
+    combined_1st_round_unlinked_mags            = '%s/round_1_unlinked_gnm.fa'                   % step_2_wd
+    combined_1st_round_unlinked_mags_sam        = '%s/round_1_unlinked_gnm.sam'                  % step_2_wd
+    combined_1st_round_unlinked_ctgs            = '%s/round_1_unlinked_ctg.fa'                   % step_2_wd
+    spades_wd                                   = '%s/mini_assembly_SPAdes_wd'                   % step_2_wd
+    mira_manifest                               = '%s/mira_manifest.txt'                         % step_2_wd
+    mira_stdout                                 = '%s/mira_stdout.txt'                           % step_2_wd
+    sam_file_mini_assembly_P                    = '%s/scaffolds_P.sam'                           % step_2_wd
+    sam_file_mini_assembly_UP                   = '%s/scaffolds_UP.sam'                          % step_2_wd
+    sam_file_mini_assembly_stderr_P             = '%s/scaffolds_bbmap_stderr_P.txt'              % step_2_wd
+    sam_file_mini_assembly_stderr_UP            = '%s/scaffolds_bbmap_stderr_UP.txt'             % step_2_wd
+    sam_file_mini_assembly_combined             = '%s/scaffolds_combined.sam'                    % step_2_wd
+    stats_GapFilling_file_16s                   = '%s/stats_GapFilling_16s.txt'                  % step_2_wd
+    stats_GapFilling_file_ctg                   = '%s/stats_GapFilling_ctg.txt'                  % step_2_wd
+    stats_GapFilling_file_filtered_16s          = '%s/stats_GapFilling_16s_filtered.txt'         % step_2_wd
+    stats_GapFilling_file_filtered_ctg          = '%s/stats_GapFilling_ctg_filtered.txt'         % step_2_wd
+    stats_GapFilling_file                       = '%s/stats_GapFilling.txt'                      % step_2_wd
+    stats_GapFilling_file_filtered              = '%s/stats_GapFilling_filtered.txt'             % step_2_wd
+    spades_log                                  = '%s/SPAdes_stdout.txt'                         % step_2_wd
+    combined_linkage_file_tmp                   = '%s/combined_linkages_tmp.txt'                 % step_2_wd
+    combined_linkage_file_tmp_html              = '%s/combined_linkages_tmp.html'                % step_2_wd
+    combined_linkage_file                       = '%s/%s_combined_linkages.txt'                  % (working_directory, output_prefix)
+    combined_linkage_file_html                  = '%s/%s_combined_linkages.html'                 % (working_directory, output_prefix)
+
+    round2_fq = False
+    free_living_reads_ext = 'fa'
+    if round2_fq is True:
+        free_living_reads_ext = 'fq'
+
+    free_living_16s_R1          = '%s/round2_free_living_16s_R1.%s'     % (step_2_wd, free_living_reads_ext)
+    free_living_16s_R2          = '%s/round2_free_living_16s_R2.%s'     % (step_2_wd, free_living_reads_ext)
+    free_living_16s_UP          = '%s/round2_free_living_16s_UP.%s'     % (step_2_wd, free_living_reads_ext)
+    free_living_ctg_R1          = '%s/round2_free_living_ctg_R1.%s'     % (step_2_wd, free_living_reads_ext)
+    free_living_ctg_R2          = '%s/round2_free_living_ctg_R2.%s'     % (step_2_wd, free_living_reads_ext)
+    free_living_ctg_UP          = '%s/round2_free_living_ctg_UP.%s'     % (step_2_wd, free_living_reads_ext)
+    free_living_R1              = '%s/round2_free_living_R1.%s'         % (step_2_wd, free_living_reads_ext)
+    free_living_R2              = '%s/round2_free_living_R2.%s'         % (step_2_wd, free_living_reads_ext)
+    free_living_UP              = '%s/round2_free_living_UP.%s'         % (step_2_wd, free_living_reads_ext)
+
+    round2_free_living_16s_ref_file = '%s/round2_free_living_16s_refs.txt' % step_2_wd
+    round2_free_living_ctg_ref_file = '%s/round2_free_living_ctg_refs.txt' % step_2_wd
+    round_2_free_living_ctg         = '%s/round2_free_living_ctg.fa'        % step_2_wd
+    round_2_free_living_16s         = '%s/round2_free_living_16s.fa'        % step_2_wd
+    round_2_free_living_blast_result = '%s/free_living_reads_blastn.tab' % step_2_wd
 
 
     #################################### calculate mean depth for genome/assemblies ####################################
@@ -1205,7 +1304,7 @@ def link_16s(args, config_dict):
             report_and_log(('Round 1: calculating depth for genomes in %s' % mag_folder), pwd_log_file, keep_quiet)
 
         # get mean depth for contig
-        mean_depth_dict_ctg, ctg_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, combined_input_gnms, reads_file_r1, reads_file_r2, '', num_threads)
+        mean_depth_dict_ctg, ctg_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, combined_input_gnms, reads_file_r1_fasta, reads_file_r2_fasta, '', num_threads)
 
         # write out ctg depth
         depth_file_ctg_handle = open(depth_file_ctg, 'w')
@@ -1218,7 +1317,7 @@ def link_16s(args, config_dict):
 
             gnm_len_total_depth_dict = {}
             for ctg in mean_depth_dict_ctg:
-                ctg_genome = ctg.split(gnm_to_ctg_connector)[0]
+                ctg_genome = ctg.split(gnm_ctg_connector)[0]
                 ctg_len = ctg_len_dict[ctg]
                 ctg_depth = mean_depth_dict_ctg[ctg]
                 ctg_total_depth = ctg_depth * ctg_len
@@ -1306,6 +1405,7 @@ def link_16s(args, config_dict):
             read_strand = read_id.split('.')[-1]
             read_flag = int(each_read_split[1])
             read_seq = each_read_split[9]
+            read_seq_qual = each_read_split[10]
             cigar = each_read_split[5]
 
             if cigar != '*':
@@ -1337,8 +1437,10 @@ def link_16s(args, config_dict):
                 # turn back if read reverse complemented
                 read_rc = sam_flag_to_rc(read_flag)
                 read_seq_to_store = read_seq
+                read_seq_qual_to_store = read_seq_qual
                 if read_rc is True:
                     read_seq_to_store = get_rc(read_seq)
+                    read_seq_qual_to_store = read_seq_qual[::-1]
 
                 if read_id_base not in MappingRecord_dict:
                     MappingRecord_dict[read_id_base] = MappingRecord()
@@ -1346,9 +1448,11 @@ def link_16s(args, config_dict):
                 if read_strand == '1':
                     if MappingRecord_dict[read_id_base].r1_seq == '':
                         MappingRecord_dict[read_id_base].r1_seq = read_seq_to_store
+                        MappingRecord_dict[read_id_base].r1_seq_qual = read_seq_qual_to_store
                 if read_strand == '2':
                     if MappingRecord_dict[read_id_base].r2_seq == '':
                         MappingRecord_dict[read_id_base].r2_seq = read_seq_to_store
+                        MappingRecord_dict[read_id_base].r2_seq_qual = read_seq_qual_to_store
 
 
     ##################################################### parse MappingRecord_dict ####################################################
@@ -1358,6 +1462,8 @@ def link_16s(args, config_dict):
         current_mp_record = MappingRecord_dict[each_mp]
         current_mp_r1_seq = current_mp_record.r1_seq
         current_mp_r2_seq = current_mp_record.r2_seq
+        current_mp_r1_seq_qual = current_mp_record.r1_seq_qual
+        current_mp_r2_seq_qual = current_mp_record.r2_seq_qual
         current_mp_r1_refs = current_mp_record.r1_refs
         current_mp_r2_refs = current_mp_record.r2_refs
         current_mp_r1_refs_no_pos = {i.split('_pos_')[0] for i in current_mp_r1_refs}
@@ -1387,25 +1493,41 @@ def link_16s(args, config_dict):
             if max_value >= min_clp_len:
 
                 current_clipping_seq = ''
+                current_clipping_seq_qual = '*'
                 if best_cigar_rc is False:
                     if max_value_index == 'r1_l':
                         current_clipping_seq = current_mp_record.r1_seq[:max_value]
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r1_seq_qual[:max_value]
+
                     if max_value_index == 'r1_r':
                         current_clipping_seq = current_mp_record.r1_seq[-max_value:]
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r1_seq_qual[-max_value:]
 
                 if best_cigar_rc is True:
                     r1_seq_rc = get_rc(current_mp_record.r1_seq)
+                    r1_seq_rc_qual = current_mp_record.r1_seq_qual[::-1]
 
                     if max_value_index == 'r1_l':
                         current_clipping_seq_rc = r1_seq_rc[:max_value]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
 
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r1_seq_rc_qual[:max_value]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
+
                     if max_value_index == 'r1_r':
                         current_clipping_seq_rc = r1_seq_rc[-max_value:]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
 
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r1_seq_rc_qual[-max_value:]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
+
                 current_mp_record.consider_r1_clipping_part = True
                 current_mp_record.r1_clipping_seq = current_clipping_seq
+                current_mp_record.r1_clipping_seq_qual = current_clipping_seq_qual
 
         # only r2 mapped
         elif (current_mp_r1_refs == {}) and (current_mp_r2_refs != {}):
@@ -1419,25 +1541,41 @@ def link_16s(args, config_dict):
             if max_value >= min_clp_len:
 
                 current_clipping_seq = ''
+                current_clipping_seq_qual = '*'
                 if best_cigar_rc is False:
                     if max_value_index == 'r2_l':
                         current_clipping_seq = current_mp_record.r2_seq[:max_value]
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r2_seq_qual[:max_value]
+
                     if max_value_index == 'r2_r':
                         current_clipping_seq = current_mp_record.r2_seq[-max_value:]
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r2_seq_qual[-max_value:]
 
                 if best_cigar_rc is True:
                     r2_seq_rc = get_rc(current_mp_record.r2_seq)
+                    r2_seq_rc_qual = current_mp_record.r2_seq_qual[::-1]
 
                     if max_value_index == 'r2_l':
                         current_clipping_seq_rc = r2_seq_rc[:max_value]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
 
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r2_seq_rc_qual[:max_value]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
+
                     if max_value_index == 'r2_r':
                         current_clipping_seq_rc = r2_seq_rc[-max_value:]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
 
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r2_seq_rc_qual[-max_value:]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
+
                 current_mp_record.consider_r2_clipping_part = True
                 current_mp_record.r2_clipping_seq = current_clipping_seq
+                current_mp_record.r2_clipping_seq_qual = current_clipping_seq_qual
 
         # both of r1 and r2 mapped
         else:
@@ -1446,48 +1584,77 @@ def link_16s(args, config_dict):
 
                 # for clipping part, the refs from its mate are also considered !!!
                 current_clipping_seq = ''
+                current_clipping_seq_qual = '*'
                 if best_cigar_rc is False:
 
                     if max_value_index == 'r1_l':
                         current_clipping_seq = current_mp_record.r1_seq[:max_value]
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r1_seq_qual[:max_value]
 
                     if max_value_index == 'r1_r':
                         current_clipping_seq = current_mp_record.r1_seq[-max_value:]
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r1_seq_qual[-max_value:]
 
                     if max_value_index == 'r2_l':
                         current_clipping_seq = current_mp_record.r2_seq[:max_value]
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r2_seq_qual[:max_value]
 
                     if max_value_index == 'r2_r':
                         current_clipping_seq = current_mp_record.r2_seq[-max_value:]
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_qual = current_mp_record.r2_seq_qual[-max_value:]
 
                 if best_cigar_rc is True:
 
                     r1_seq_rc = get_rc(current_mp_record.r1_seq)
                     r2_seq_rc = get_rc(current_mp_record.r2_seq)
+                    r1_seq_rc_qual = current_mp_record.r1_seq_qual[::-1]
+                    r2_seq_rc_qual = current_mp_record.r2_seq_qual[::-1]
 
                     if max_value_index == 'r1_l':
                         current_clipping_seq_rc = r1_seq_rc[:max_value]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
 
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r1_seq_rc_qual[:max_value]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
+
                     if max_value_index == 'r1_r':
                         current_clipping_seq_rc = r1_seq_rc[-max_value:]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
+
+                        if current_mp_record.r1_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r1_seq_rc_qual[-max_value:]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
 
                     if max_value_index == 'r2_l':
                         current_clipping_seq_rc = r2_seq_rc[:max_value]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
 
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r2_seq_rc_qual[:max_value]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
+
                     if max_value_index == 'r2_r':
                         current_clipping_seq_rc = r2_seq_rc[-max_value:]
                         current_clipping_seq = get_rc(current_clipping_seq_rc)
 
+                        if current_mp_record.r2_seq_qual != '*':
+                            current_clipping_seq_rc_qual = r2_seq_rc_qual[-max_value:]
+                            current_clipping_seq_qual = current_clipping_seq_rc_qual[::-1]
+
                 if max_value_index in ['r1_l', 'r1_r']:
                     current_mp_record.consider_r1_clipping_part = True
                     current_mp_record.r1_clipping_seq = current_clipping_seq
+                    current_mp_record.r1_clipping_seq_qual = current_clipping_seq_qual
                     current_mp_record.r1_filtered_refs = current_mp_all_refs_no_pos
                 if max_value_index in ['r2_l', 'r2_r']:
                     current_mp_record.consider_r2_clipping_part = True
                     current_mp_record.r2_clipping_seq = current_clipping_seq
+                    current_mp_record.r2_clipping_seq_qual = current_clipping_seq_qual
                     current_mp_record.r2_filtered_refs = current_mp_all_refs_no_pos
 
     # remove unqualified mapping record from dict
@@ -1621,7 +1788,7 @@ def link_16s(args, config_dict):
 
             for r1_ref in read_mr.r1_filtered_refs:
                 for unmapped_r2_ref in read_mr.unmapped_r2_refs:
-                    marker_to_ctg_key = '%s%s%s' % (r1_ref, marker_to_ctg_gnm_Key_connector, unmapped_r2_ref)
+                    marker_to_ctg_key = '%s%s%s' % (r1_ref, marker_to_ctg_Key_connector_str, unmapped_r2_ref)
                     if marker_to_ctg_key not in marker_to_ctg_link_num_dict_pair:
                         marker_to_ctg_link_num_dict_pair[marker_to_ctg_key] = 1
                     else:
@@ -1631,7 +1798,7 @@ def link_16s(args, config_dict):
 
             for r2_ref in read_mr.r2_filtered_refs:
                 for unmapped_r1_ref in read_mr.unmapped_r1_refs:
-                    marker_to_ctg_key = '%s%s%s' % (r2_ref, marker_to_ctg_gnm_Key_connector, unmapped_r1_ref)
+                    marker_to_ctg_key = '%s%s%s' % (r2_ref, marker_to_ctg_Key_connector_str, unmapped_r1_ref)
                     if marker_to_ctg_key not in marker_to_ctg_link_num_dict_pair:
                         marker_to_ctg_link_num_dict_pair[marker_to_ctg_key] = 1
                     else:
@@ -1641,7 +1808,7 @@ def link_16s(args, config_dict):
 
             for r1_ref in read_mr.r1_filtered_refs:
                 for r1_clipping_ref in read_mr.clipping_r1_refs:
-                    marker_to_ctg_key = '%s%s%s' % (r1_ref, marker_to_ctg_gnm_Key_connector, r1_clipping_ref)
+                    marker_to_ctg_key = '%s%s%s' % (r1_ref, marker_to_ctg_Key_connector_str, r1_clipping_ref)
                     if marker_to_ctg_key not in marker_to_ctg_link_num_dict_clip:
                         marker_to_ctg_link_num_dict_clip[marker_to_ctg_key] = 1
                     else:
@@ -1651,7 +1818,7 @@ def link_16s(args, config_dict):
 
             for r2_ref in read_mr.r2_filtered_refs:
                 for r2_clipping_ref in read_mr.clipping_r2_refs:
-                    marker_to_ctg_key = '%s%s%s' % (r2_ref, marker_to_ctg_gnm_Key_connector, r2_clipping_ref)
+                    marker_to_ctg_key = '%s%s%s' % (r2_ref, marker_to_ctg_Key_connector_str, r2_clipping_ref)
                     if marker_to_ctg_key not in marker_to_ctg_link_num_dict_clip:
                         marker_to_ctg_link_num_dict_clip[marker_to_ctg_key] = 1
                     else:
@@ -1663,7 +1830,7 @@ def link_16s(args, config_dict):
 
             for r1_ref in read_mr.r1_filtered_refs:
                 for shared_ref in shared_refs:
-                    marker_to_ctg_key = '%s%s%s' % (r1_ref, marker_to_ctg_gnm_Key_connector, shared_ref)
+                    marker_to_ctg_key = '%s%s%s' % (r1_ref, marker_to_ctg_Key_connector_str, shared_ref)
 
                     # add to marker_to_ctg_link_num_dict_pair
                     if marker_to_ctg_key not in marker_to_ctg_link_num_dict_pair:
@@ -1683,7 +1850,7 @@ def link_16s(args, config_dict):
 
             for r2_ref in read_mr.r2_filtered_refs:
                 for shared_ref in shared_refs:
-                    marker_to_ctg_key = '%s%s%s' % (r2_ref, marker_to_ctg_gnm_Key_connector, shared_ref)
+                    marker_to_ctg_key = '%s%s%s' % (r2_ref, marker_to_ctg_Key_connector_str, shared_ref)
 
                     # add to marker_to_ctg_link_num_dict_pair
                     if marker_to_ctg_key not in marker_to_ctg_link_num_dict_pair:
@@ -1697,6 +1864,21 @@ def link_16s(args, config_dict):
                     else:
                         marker_to_ctg_link_num_dict_clip[marker_to_ctg_key] += 1
 
+        # elif (len(read_mr.unmapped_r2_refs) > 0) or (len(read_mr.unmapped_r1_refs) > 0) or (len(read_mr.clipping_r1_refs) > 0) or (len(read_mr.clipping_r2_refs) > 0):
+        #
+        #     print('\n%s\tr1_filtered_refs:\t%s'         % (qualified_read, read_mr.r1_filtered_refs))
+        #     print('%s\tr2_filtered_refs:\t%s\n'         % (qualified_read, read_mr.r2_filtered_refs))
+        #     print('%s\tconsider_r1_unmapped_mate:\t%s'  % (qualified_read, read_mr.consider_r1_unmapped_mate))
+        #     print('%s\tunmapped_r2_refs:\t%s\n'         % (qualified_read, read_mr.unmapped_r2_refs))
+        #     print('%s\tconsider_r2_unmapped_mate:\t%s'  % (qualified_read, read_mr.consider_r2_unmapped_mate))
+        #     print('%s\tunmapped_r1_refs:\t%s\n'         % (qualified_read, read_mr.unmapped_r1_refs))
+        #     print('%s\tconsider_r1_clipping_part:\t%s'  % (qualified_read, read_mr.consider_r1_clipping_part))
+        #     print('%s\tclipping_r1_refs:\t%s\n'         % (qualified_read, read_mr.clipping_r1_refs))
+        #     print('%s\tconsider_r2_clipping_part:\t%s'  % (qualified_read, read_mr.consider_r2_clipping_part))
+        #     print('%s\tclipping_r2_refs:\t%s\n'         % (qualified_read, read_mr.clipping_r2_refs))
+        #     print('---------------\n')
+
+
     # combine clip and pair dict
     marker_to_ctg_link_num_combined = {}
     for each_marker_to_ctg_key in marker_to_ctg_link_num_dict_pair:
@@ -1707,13 +1889,14 @@ def link_16s(args, config_dict):
         else:
             marker_to_ctg_link_num_combined[each_marker_to_ctg_key] += marker_to_ctg_link_num_dict_clip[each_marker_to_ctg_key]
 
+
     # get number of linkages at genome level
     marker_to_gnm_link_num_combined = {}
     for each_marker_to_ctg_key in marker_to_ctg_link_num_combined:
-        marker_id = each_marker_to_ctg_key.split(marker_to_ctg_gnm_Key_connector)[0]
-        ctg_id = each_marker_to_ctg_key.split(marker_to_ctg_gnm_Key_connector)[1]
-        gnm_id = ctg_id.split(gnm_to_ctg_connector)[0]
-        marker_to_gnm_key = '%s%s%s' % (marker_id, marker_to_ctg_gnm_Key_connector, gnm_id)
+        marker_id = each_marker_to_ctg_key.split(marker_to_ctg_Key_connector_str)[0]
+        ctg_id = each_marker_to_ctg_key.split(marker_to_ctg_Key_connector_str)[1]
+        gnm_id = ctg_id.split(gnm_ctg_connector)[0]
+        marker_to_gnm_key = '%s%s%s' % (marker_id, marker_to_gnm_Key_connector_str, gnm_id)
         if marker_to_gnm_key not in marker_to_gnm_link_num_combined:
             marker_to_gnm_link_num_combined[marker_to_gnm_key] = marker_to_ctg_link_num_combined[each_marker_to_ctg_key]
         else:
@@ -1724,8 +1907,8 @@ def link_16s(args, config_dict):
     sankey_file_in_clipping_handle.write('MarkerGene,GenomicSeq,Number\n')
     for each_clipping in marker_to_gnm_link_num_combined:
         sankey_file_in_clipping_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (
-        each_clipping.split(marker_to_ctg_gnm_Key_connector)[0],
-        each_clipping.split(marker_to_ctg_gnm_Key_connector)[1],
+        each_clipping.split(marker_to_gnm_Key_connector_str)[0],
+        each_clipping.split(marker_to_gnm_Key_connector_str)[1],
         marker_to_gnm_link_num_combined[each_clipping]))
     sankey_file_in_clipping_handle.close()
 
@@ -1783,7 +1966,7 @@ def link_16s(args, config_dict):
 
     ######################################## extract sequences flanking 16S ends #######################################
 
-    free_living_16s_refs_file_handle = open(free_living_16s_ref_file, 'w')
+    free_living_16s_refs_file_handle = open(round2_free_living_16s_ref_file, 'w')
     free_living_16s_R1_handle = open(free_living_16s_R1, 'w')
     free_living_16s_R2_handle = open(free_living_16s_R2, 'w')
     free_living_16s_UP_handle = open(free_living_16s_UP, 'w')
@@ -1809,14 +1992,27 @@ def link_16s(args, config_dict):
                     free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
                     free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
 
-                    # write out R1 fa
-                    free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
-                    #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
-                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
-                    # write out R2 fa
-                    free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
-                    free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
-
+                    if round2_fq is False:
+                        # write out R1 fa
+                        free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
+                        #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
+                        # write out R2 fa
+                        free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
+                    else:
+                        # write out R1 fq
+                        free_living_16s_R1_handle.write('@%s.1\n' % qualified_read)
+                        #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
+                        free_living_16s_R1_handle.write('+\n')
+                        #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
+                        # write out R2 fq
+                        free_living_16s_R2_handle.write('@%s.2\n' % qualified_read)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
+                        free_living_16s_R2_handle.write('+\n')
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                 elif (read_mr.consider_r2_unmapped_mate is True) and (read_mr.consider_r2_clipping_part is True):
 
@@ -1824,14 +2020,27 @@ def link_16s(args, config_dict):
                     free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
                     free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
 
-                    # write out R1 fa
-                    free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
-                    free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
-                    # write out R2 fa
-                    free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
-                    #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
-                    free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
-
+                    if round2_fq is False:
+                        # write out R1 fa
+                        free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
+                        # write out R2 fa
+                        free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
+                        #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
+                    else:
+                        # write out R1 fq
+                        free_living_16s_R1_handle.write('@%s.1\n' % qualified_read)
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
+                        free_living_16s_R1_handle.write('+\n')
+                        free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
+                        # write out R2 fq
+                        free_living_16s_R2_handle.write('@%s.2\n' % qualified_read)
+                        #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
+                        free_living_16s_R2_handle.write('+\n')
+                        #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                        free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                 else:
                     if read_mr.consider_r1_unmapped_mate is True:
@@ -1839,33 +2048,62 @@ def link_16s(args, config_dict):
                         # write out refs
                         free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
 
-                        free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
-                        free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
-
+                        if round2_fq is False:
+                            free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
+                        else:
+                            free_living_16s_UP_handle.write('@%s.2\n' % qualified_read)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
+                            free_living_16s_UP_handle.write('+\n')
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                     elif read_mr.consider_r2_unmapped_mate is True:
+
                         # write out refs
                         free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
-                        free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
-                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
 
+                        if round2_fq is False:
+                            free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
+                        else:
+                            free_living_16s_UP_handle.write('@%s.1\n' % qualified_read)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
+                            free_living_16s_UP_handle.write('+\n')
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq_qual)
 
                     elif read_mr.consider_r1_clipping_part is True:
+
                         # write out refs
                         free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
 
-                        free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
-                        #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
-                        free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
-
+                        if round2_fq is False:
+                            free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
+                        else:
+                            free_living_16s_UP_handle.write('@%s.1\n' % qualified_read)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
+                            free_living_16s_UP_handle.write('+\n')
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq_qual)
 
                     elif read_mr.consider_r2_clipping_part is True:
+
                         # write out refs
                         free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
 
-                        free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
-                        #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
-                        free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
+                        if round2_fq is False:
+                            free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
+                        else:
+                            free_living_16s_UP_handle.write('@%s.2\n' % qualified_read)
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
+                            free_living_16s_UP_handle.write('+\n')
+                            #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                            free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
     free_living_16s_refs_file_handle.close()
     free_living_16s_R1_handle.close()
@@ -1876,7 +2114,7 @@ def link_16s(args, config_dict):
 
     # mapping
     report_and_log(('Round 2: get unmapped reads with mates mapped to contig ends'), pwd_log_file, keep_quiet)
-    get_free_living_mate(combined_1st_round_unlinked_mags, combined_1st_round_unlinked_mags_sam, reads_file_r1, reads_file_r2, end_seq_len, num_threads, pwd_bbmap_exe, bbmap_memory)
+    get_free_living_mate(combined_1st_round_unlinked_mags, combined_1st_round_unlinked_mags_sam, reads_file_r1_fasta, reads_file_r2_fasta, end_seq_len, num_threads, pwd_bbmap_exe, bbmap_memory)
 
     report_and_log(('Round 2: parse mapping results'), pwd_log_file, keep_quiet)
     # parse sam file
@@ -1891,6 +2129,7 @@ def link_16s(args, config_dict):
             read_flag = int(each_line_split[1])
             cigar = each_line_split[5]
             read_seq = each_line_split[9]
+            read_seq_qual = each_line_split[10]
             if cigar != '*':
                 ref_id = each_line_split[2]
                 ref_pos = each_line_split[3]
@@ -1925,21 +2164,25 @@ def link_16s(args, config_dict):
                 # turn back if read reverse complemented
                 read_rc = sam_flag_to_rc(read_flag)
                 read_seq_to_store = read_seq
+                read_seq_qual_to_store = read_seq_qual
                 if read_rc is True:
                     read_seq_to_store = get_rc(read_seq)
+                    read_seq_qual_to_store = read_seq_qual[::-1]
 
                 if read_id_base not in round_2_MappingRecord_dict:
                     round_2_MappingRecord_dict[read_id_base] = MappingRecord()
                 if read_strand == '1':
                     if round_2_MappingRecord_dict[read_id_base].r1_seq == '':
                         round_2_MappingRecord_dict[read_id_base].r1_seq = read_seq_to_store
+                        round_2_MappingRecord_dict[read_id_base].r1_seq_qual = read_seq_qual_to_store
                 if read_strand == '2':
                     if round_2_MappingRecord_dict[read_id_base].r2_seq == '':
                         round_2_MappingRecord_dict[read_id_base].r2_seq = read_seq_to_store
+                        round_2_MappingRecord_dict[read_id_base].r2_seq_qual = read_seq_qual_to_store
 
 
     # parse round_2_MappingRecord_dict
-    free_living_ctg_refs_file_handle = open(free_living_ctg_ref_file, 'w')
+    free_living_ctg_refs_file_handle = open(round2_free_living_ctg_ref_file, 'w')
     free_living_ctg_R1_handle = open(free_living_ctg_R1, 'w')
     free_living_ctg_R2_handle = open(free_living_ctg_R2, 'w')
     free_living_ctg_UP_handle = open(free_living_ctg_UP, 'w')
@@ -1966,9 +2209,14 @@ def link_16s(args, config_dict):
                     free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
 
                     # write out sequence
-                    free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
-                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
-
+                    if round2_fq is False:
+                        free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
+                    else:
+                        free_living_ctg_UP_handle.write('@%s.1\n' % read_basename)
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
+                        free_living_ctg_UP_handle.write('+\n')
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq_qual)
 
                 # consider both of unmapped mate and clipping part
                 else:
@@ -1986,10 +2234,17 @@ def link_16s(args, config_dict):
 
                         if r2_ref_cigar_rc is False:
                             read_mr.r2_clipping_seq = read_mr.r2_seq[:max_clp]
+                            if read_mr.r2_seq_qual != '*':
+                                read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[:max_clp]
+
                         if r2_ref_cigar_rc is True:
                             r2_seq_rc = get_rc(read_mr.r2_seq)
                             r2_clipping_seq_rc = r2_seq_rc[:max_clp]
                             read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                            if read_mr.r2_seq_qual != '*':
+                                r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                                r2_clipping_seq_rc_qual = r2_seq_rc_qual[:max_clp]
+                                read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
 
                     elif (r2_ref_no_pos[-1]) == (max_clp_location[-1]) == 'r':
                         read_mr.consider_round_2 = True
@@ -2002,24 +2257,45 @@ def link_16s(args, config_dict):
 
                         if r2_ref_cigar_rc is False:
                             read_mr.r2_clipping_seq = read_mr.r2_seq[-max_clp:]
+                            if read_mr.r2_seq_qual != '*':
+                                read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[-max_clp:]
+
                         if r2_ref_cigar_rc is True:
                             r2_seq_rc = get_rc(read_mr.r2_seq)
                             r2_clipping_seq_rc = r2_seq_rc[-max_clp:]
                             read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                            if read_mr.r2_seq_qual != '*':
+                                r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                                r2_clipping_seq_rc_qual = r2_seq_rc_qual[-max_clp:]
+                                read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
 
                     else:  # mapped to unwanted end, ignore
                         round_2_MappingRecord_dict.pop(read_basename)
 
                     # write out sequence
                     if read_mr.consider_round_2 is True:
-                        # write out R1 fa
-                        free_living_ctg_R1_handle.write('>%s.1\n' % read_basename)
-                        free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
-                        # write out R2 fa
-                        free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                        #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
 
+                        if round2_fq is False:
+                            # write out R1 fa
+                            free_living_ctg_R1_handle.write('>%s.1\n' % read_basename)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
+                            # write out R2 fa
+                            free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
+                            #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
+                        else:
+                            # write out R1 fq
+                            free_living_ctg_R1_handle.write('@%s.1\n' % read_basename)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
+                            free_living_ctg_R1_handle.write('+\n')
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
+                            # write out R2 fq
+                            free_living_ctg_R2_handle.write('@%s.2\n' % read_basename)
+                            #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
+                            free_living_ctg_R2_handle.write('+\n')
+                            #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
             else:  # r2 mapped to multiple refs, ignore
                 round_2_MappingRecord_dict.pop(read_basename)
@@ -2041,9 +2317,14 @@ def link_16s(args, config_dict):
                     free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
 
                     # write out sequence
-                    free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
-
+                    if round2_fq is False:
+                        free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
+                    else:
+                        free_living_ctg_UP_handle.write('@%s.2\n' % read_basename)
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
+                        free_living_ctg_UP_handle.write('+\n')
+                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                 # consider both of unmapped mate and clipping part
                 else:
@@ -2061,10 +2342,17 @@ def link_16s(args, config_dict):
 
                         if r1_ref_cigar_rc is False:
                             read_mr.r1_clipping_seq = read_mr.r1_seq[:max_clp]
+                            if read_mr.r1_seq_qual != '*':
+                                read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[:max_clp]
+
                         if r1_ref_cigar_rc is True:
                             r1_seq_rc = get_rc(read_mr.r1_seq)
                             r1_clipping_seq_rc = r1_seq_rc[:max_clp]
                             read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                            if read_mr.r1_seq_qual != '*':
+                                r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                                r1_clipping_seq_rc_qual = r1_seq_rc_qual[:max_clp]
+                                read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
 
                     elif (r1_ref_no_pos[-1]) == (max_clp_location[-1]) == 'r':
                         read_mr.consider_round_2 = True
@@ -2077,24 +2365,45 @@ def link_16s(args, config_dict):
 
                         if r1_ref_cigar_rc is False:
                             read_mr.r1_clipping_seq = read_mr.r1_seq[-max_clp:]
+                            if read_mr.r1_seq_qual != '*':
+                                read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[-max_clp:]
+
                         if r1_ref_cigar_rc is True:
                             r1_seq_rc = get_rc(read_mr.r1_seq)
                             r1_clipping_seq_rc = r1_seq_rc[-max_clp:]
                             read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                            if read_mr.r1_seq_qual != '*':
+                                r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                                r1_clipping_seq_rc_qual = r1_seq_rc_qual[-max_clp:]
+                                read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
 
                     else:  # mapped to unwanted end, ignore
                         round_2_MappingRecord_dict.pop(read_basename)
 
                     # write out sequence
                     if read_mr.consider_round_2 is True:
-                        # write out R1 fa
-                        free_living_ctg_R1_handle.write('>%s.1\n' % read_basename)
-                        #free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
-                        free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
-                        # write out R2 fa
-                        free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                        free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
 
+                        if round2_fq is False:
+                            # write out R1 fa
+                            free_living_ctg_R1_handle.write('>%s.1\n' % read_basename)
+                            #free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
+                            # write out R2 fa
+                            free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
+                        else:
+                            # write out R1 fq
+                            free_living_ctg_R1_handle.write('@%s.1\n' % read_basename)
+                            #free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
+                            free_living_ctg_R1_handle.write('+\n')
+                            #free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq_qual)
+                            # write out R2 fq
+                            free_living_ctg_R2_handle.write('@%s.2\n' % read_basename)
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
+                            free_living_ctg_R2_handle.write('+\n')
+                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq_qual)
 
             else:  # r1 mapped to multiple refs, ignore
                 round_2_MappingRecord_dict.pop(read_basename)
@@ -2122,10 +2431,16 @@ def link_16s(args, config_dict):
 
                                 if best_cigar_rc is False:
                                     read_mr.r1_clipping_seq = read_mr.r1_seq[:max_clp]
+                                    if read_mr.r1_seq_qual != '*':
+                                        read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[:max_clp]
                                 if best_cigar_rc is True:
                                     r1_seq_rc = get_rc(read_mr.r1_seq)
                                     r1_clipping_seq_rc = r1_seq_rc[:max_clp]
                                     read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                                    if read_mr.r1_seq_qual != '*':
+                                        r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                                        r1_clipping_seq_rc_qual = r1_seq_rc_qual[:max_clp]
+                                        read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
 
                             elif (max_clp_location == 'r2_l') and (r2_ref_pos <= 5):
                                 read_mr.consider_round_2 = True
@@ -2139,10 +2454,16 @@ def link_16s(args, config_dict):
 
                                 if best_cigar_rc is False:
                                     read_mr.r2_clipping_seq = read_mr.r2_seq[:max_clp]
+                                    if read_mr.r2_seq_qual != '*':
+                                        read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[:max_clp]
                                 if best_cigar_rc is True:
                                     r2_seq_rc = get_rc(read_mr.r2_seq)
                                     r2_clipping_seq_rc = r2_seq_rc[:max_clp]
                                     read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                                    if read_mr.r2_seq_qual != '*':
+                                        r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                                        r2_clipping_seq_rc_qual = r2_seq_rc_qual[:max_clp]
+                                        read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
 
                             elif (max_clp_location == 'r1_r') and (r1_ref_pos >= (end_seq_len / 5)):
                                 read_mr.consider_round_2 = True
@@ -2156,10 +2477,16 @@ def link_16s(args, config_dict):
 
                                 if best_cigar_rc is False:
                                     read_mr.r1_clipping_seq = read_mr.r1_seq[-max_clp:]
+                                    if read_mr.r1_seq_qual != '*':
+                                        read_mr.r1_clipping_seq_qual = read_mr.r1_seq_qual[-max_clp:]
                                 if best_cigar_rc is True:
                                     r1_seq_rc = get_rc(read_mr.r1_seq)
                                     r1_clipping_seq_rc = r1_seq_rc[-max_clp:]
                                     read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
+                                    if read_mr.r1_seq_qual != '*':
+                                        r1_seq_rc_qual = read_mr.r1_seq_qual[::-1]
+                                        r1_clipping_seq_rc_qual = r1_seq_rc_qual[-max_clp:]
+                                        read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
 
                             elif (max_clp_location == 'r2_r') and (r2_ref_pos >= (end_seq_len / 5)):
                                 read_mr.consider_round_2 = True
@@ -2173,10 +2500,16 @@ def link_16s(args, config_dict):
 
                                 if best_cigar_rc is False:
                                     read_mr.r2_clipping_seq = read_mr.r2_seq[-max_clp:]
+                                    if read_mr.r2_seq_qual != '*':
+                                        read_mr.r2_clipping_seq_qual = read_mr.r2_seq_qual[-max_clp:]
                                 if best_cigar_rc is True:
                                     r2_seq_rc = get_rc(read_mr.r2_seq)
                                     r2_clipping_seq_rc = r2_seq_rc[-max_clp:]
                                     read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
+                                    if read_mr.r2_seq_qual != '*':
+                                        r2_seq_rc_qual = read_mr.r2_seq_qual[::-1]
+                                        r2_clipping_seq_rc_qual = r2_seq_rc_qual[-max_clp:]
+                                        read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
 
                             else:  # not too many of them, ignore now, maybe worth check later,
                                 round_2_MappingRecord_dict.pop(read_basename)
@@ -2187,14 +2520,30 @@ def link_16s(args, config_dict):
                             if read_mr.consider_round_2 is True:
 
                                 if read_mr.consider_r1_clipping_part is True:
-                                    free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
-                                    #free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
-                                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
+                                    if round2_fq is False:
+                                        free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
+                                    else:
+                                        free_living_ctg_UP_handle.write('@%s.1\n' % read_basename)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
+                                        free_living_ctg_UP_handle.write('+\n')
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_clipping_seq_qual)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq_qual)
 
                                 if read_mr.consider_r2_clipping_part is True:
-                                    free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                                    #free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
-                                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
+                                    if round2_fq is False:
+                                        free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
+                                    else:
+                                        free_living_ctg_UP_handle.write('@%s.2\n' % read_basename)
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
+                                        free_living_ctg_UP_handle.write('+\n')
+                                        #free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_clipping_seq_qual)
+                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq_qual)
 
                         else:  # mapped to unwanted end, ignore
                             round_2_MappingRecord_dict.pop(read_basename)
@@ -2220,24 +2569,24 @@ def link_16s(args, config_dict):
 
     ############################################### round 2 by blast ###############################################
 
-    os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, free_living_16s))
-    os.system('cat %s %s %s > %s' % (free_living_ctg_R1, free_living_ctg_R2, free_living_ctg_UP, free_living_ctg))
+    os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, round_2_free_living_16s))
+    os.system('cat %s %s %s > %s' % (free_living_ctg_R1, free_living_ctg_R2, free_living_ctg_UP, round_2_free_living_ctg))
 
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % 4
-    makeblastdb_cmd = 'makeblastdb -in %s -dbtype nucl -parse_seqids' % free_living_ctg
-    blastn_cmd = 'blastn -query %s -db %s -out %s %s' % (free_living_16s, free_living_ctg, free_living_blast_result, blast_parameters)
+    makeblastdb_cmd = 'makeblastdb -in %s -dbtype nucl -parse_seqids' % round_2_free_living_ctg
+    blastn_cmd = 'blastn -query %s -db %s -out %s %s' % (round_2_free_living_16s, round_2_free_living_ctg, round_2_free_living_blast_result, blast_parameters)
     os.system(makeblastdb_cmd)
     os.system(blastn_cmd)
 
     round2_free_living_16s_ref_dict = {}
-    for free_living_read_16s in open(free_living_16s_ref_file):
+    for free_living_read_16s in open(round2_free_living_16s_ref_file):
         free_living_read_16s_split = free_living_read_16s.strip().split('\t')
         read_16s_id = free_living_read_16s_split[0]
         read_16s_refs = free_living_read_16s_split[1].split(',')
         round2_free_living_16s_ref_dict[read_16s_id] = read_16s_refs
 
     round2_free_living_ctg_ref_dict = {}
-    for free_living_read_ctg in open(free_living_ctg_ref_file):
+    for free_living_read_ctg in open(round2_free_living_ctg_ref_file):
         free_living_read_ctg_split = free_living_read_ctg.strip().split('\t')
         read_ctg_id = free_living_read_ctg_split[0]
         read_ctg_refs = free_living_read_ctg_split[1].split(',')
@@ -2245,7 +2594,7 @@ def link_16s(args, config_dict):
 
     free_living_16s_to_ctg_linkage_dict = {}
     free_living_16s_to_gnm_linkage_dict = {}
-    for each_hit in open(free_living_blast_result):
+    for each_hit in open(round_2_free_living_blast_result):
         match_split = each_hit.strip().split('\t')
         query = match_split[0]
         subject = match_split[1]
@@ -2272,10 +2621,10 @@ def link_16s(args, config_dict):
                         if each_subject_ref[-2:] in ['_l', '_r']:
                             each_subject_ref = each_subject_ref[:-2]
 
-                        subject_ref_gnm = each_subject_ref.split(gnm_to_ctg_connector)[0]
+                        subject_ref_gnm = each_subject_ref.split(gnm_ctg_connector)[0]
 
-                        q_ref_to_s_ref_key = '%s%s%s' % (each_query_ref, marker_to_ctg_gnm_Key_connector, each_subject_ref)
-                        q_ref_to_s_ref_gnm_key = '%s%s%s' % (each_query_ref, marker_to_ctg_gnm_Key_connector, subject_ref_gnm)
+                        q_ref_to_s_ref_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, each_subject_ref)
+                        q_ref_to_s_ref_gnm_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, subject_ref_gnm)
 
                         if q_ref_to_s_ref_key not in free_living_16s_to_ctg_linkage_dict:
                             free_living_16s_to_ctg_linkage_dict[q_ref_to_s_ref_key] = 1
@@ -2290,7 +2639,7 @@ def link_16s(args, config_dict):
     stats_GapFilling_file_handle = open(stats_GapFilling_file, 'w')
     stats_GapFilling_file_handle.write('MarkerGene,GenomicSeq,Number\n')
     for each_round2_linkage in free_living_16s_to_gnm_linkage_dict:
-        each_round2_linkage_split = each_round2_linkage.split(marker_to_ctg_gnm_Key_connector)
+        each_round2_linkage_split = each_round2_linkage.split(round_2_free_living_16s_to_ctg_connector)
         id_16s = each_round2_linkage_split[0]
         id_gnm = each_round2_linkage_split[1]
         linkage_num = free_living_16s_to_gnm_linkage_dict[each_round2_linkage]
@@ -2298,6 +2647,172 @@ def link_16s(args, config_dict):
     stats_GapFilling_file_handle.close()
 
     filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
+
+
+    ############################################### assemble and mapping ###############################################
+
+    # # combine extracted reads
+    # os.system('cat %s %s > %s' % (free_living_16s_R1, free_living_ctg_R1, free_living_R1))
+    # os.system('cat %s %s > %s' % (free_living_16s_R2, free_living_ctg_R2, free_living_R2))
+    # os.system('cat %s %s > %s' % (free_living_16s_UP, free_living_ctg_UP, free_living_UP))
+    #
+    # # assemble
+    # if round_2_spades is False:
+    #     extracted_reads_cbd = ''
+    #     report_and_log(('Round 2: running Mira on extracted reads'), pwd_log_file, keep_quiet)
+    #     run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, extracted_reads_cbd, mira_stdout, force_overwrite)
+    #     mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
+    # else:
+    #     report_and_log(('Round 2: running SPAdes on extracted reads'), pwd_log_file, keep_quiet)
+    #     spades_cmd = '%s --meta --only-assembler -1 %s -2 %s -s %s -o %s -t %s -k 49,75,99,127 > %s' % (pwd_spades_exe, free_living_R1, free_living_R2, free_living_UP, spades_wd, num_threads, spades_log)
+    #     os.system(spades_cmd)
+    #     mini_assemblies = '%s/scaffolds.fasta' % spades_wd
+    #
+    # # mapping extracted reads to mini assemblies with bbmap
+    # report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
+    # bbmap_cmd_miniassembly_paired   = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, free_living_R1, free_living_R2, sam_file_mini_assembly_P, bbmap_parameter, sam_file_mini_assembly_stderr_P)
+    # bbmap_cmd_miniassembly_unpaired = '%s ref=%s in=%s outm=%s %s 2> %s'        % (pwd_bbmap_exe, mini_assemblies, free_living_UP, sam_file_mini_assembly_UP, bbmap_parameter, sam_file_mini_assembly_stderr_UP)
+    # os.system(bbmap_cmd_miniassembly_paired)
+    # os.system(bbmap_cmd_miniassembly_unpaired)
+
+
+    #################################################### parse sam file ####################################################
+
+    # # combine sam files
+    # os.system('cat %s %s > %s' % (sam_file_mini_assembly_P, sam_file_mini_assembly_UP, sam_file_mini_assembly_combined))
+    #
+    # report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
+    # # remove reads mapped to multiple miniassembly? check later
+    # gap_seq_to_reads_dict = {}
+    # for each_read in open(sam_file_mini_assembly_combined):
+    #     if not each_read.startswith('@'):
+    #         each_read_split = each_read.strip().split('\t')
+    #         cigar = each_read_split[5]
+    #         if cigar != '*':
+    #             read_id = each_read_split[0]
+    #             ref_id = each_read_split[2]
+    #             cigar_splitted = cigar_splitter(cigar)
+    #             aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
+    #             if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= (max_mis_pct)):
+    #                 if ref_id not in gap_seq_to_reads_dict:
+    #                     gap_seq_to_reads_dict[ref_id] = [read_id]
+    #                 else:
+    #                     gap_seq_to_reads_dict[ref_id].append(read_id)
+    #
+    # report_and_log(('Round 2: linking genomes/16Ss to Spades assemblies'), pwd_log_file, keep_quiet)
+    # stats_GapFilling_file_16s_handle = open(stats_GapFilling_file_16s, 'w')
+    # stats_GapFilling_file_ctg_handle = open(stats_GapFilling_file_ctg, 'w')
+    # stats_GapFilling_file_16s_handle.write('Gap_seq,s16,Number\n')
+    # stats_GapFilling_file_ctg_handle.write('Gap_seq,ctg,Number\n')
+    # for gap_seq in gap_seq_to_reads_dict:
+    #     gap_seq_mapped_reads = gap_seq_to_reads_dict[gap_seq]
+    #     gap_seq_to_16s_linkage_dict = {}
+    #     gap_seq_to_ctg_linkage_dict = {}
+    #     gap_seq_to_gnm_linkage_dict = {}
+    #     for mapped_read in gap_seq_mapped_reads:
+    #         mapped_read_basename = mapped_read[:-2]
+    #         mapped_read_strand   = mapped_read[-1]
+    #
+    #         mapped_read_mate_or_clp_refs_16s = set()
+    #         if mapped_read_basename in MappingRecord_dict:
+    #             read_mr_round_1 = MappingRecord_dict[mapped_read_basename]
+    #             if read_mr_round_1.consider_round_2 is True:
+    #                 if mapped_read_strand == '1':
+    #                     if read_mr_round_1.consider_r1_unmapped_mate is True:
+    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
+    #                     if read_mr_round_1.consider_r1_clipping_part is True:
+    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
+    #                 if mapped_read_strand == '2':
+    #                     if read_mr_round_1.consider_r2_unmapped_mate is True:
+    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
+    #                     if read_mr_round_1.consider_r2_clipping_part is True:
+    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
+    #
+    #         for each_mate_or_clp_ref_16s in mapped_read_mate_or_clp_refs_16s:
+    #             if each_mate_or_clp_ref_16s not in gap_seq_to_16s_linkage_dict:
+    #                 gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] = 1
+    #             else:
+    #                 gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] += 1
+    #
+    #         mapped_read_mate_or_clp_refs_ctg = set()
+    #         if mapped_read_basename in round_2_MappingRecord_dict:
+    #             read_mr_round_2 = round_2_MappingRecord_dict[mapped_read_basename]
+    #             if mapped_read_strand == '1':
+    #                 if read_mr_round_2.consider_r1_unmapped_mate is True:
+    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
+    #                 if read_mr_round_2.consider_r1_clipping_part is True:
+    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
+    #             if mapped_read_strand == '2':
+    #                 if read_mr_round_2.consider_r2_unmapped_mate is True:
+    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
+    #                 if read_mr_round_2.consider_r2_clipping_part is True:
+    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
+    #
+    #         for each_mate_or_clp_ref_ctg in mapped_read_mate_or_clp_refs_ctg:
+    #             if each_mate_or_clp_ref_ctg not in gap_seq_to_ctg_linkage_dict:
+    #                 gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] = 1
+    #             else:
+    #                 gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] += 1
+    #
+    #     for each_16s in gap_seq_to_16s_linkage_dict:
+    #         stats_GapFilling_file_16s_handle.write('%s,%s,%s\n' % (gap_seq, each_16s, gap_seq_to_16s_linkage_dict[each_16s]))
+    #     for each_ctg in gap_seq_to_ctg_linkage_dict:
+    #         stats_GapFilling_file_ctg_handle.write('%s,%s,%s\n' % (gap_seq, each_ctg, gap_seq_to_ctg_linkage_dict[each_ctg]))
+    #
+    # stats_GapFilling_file_16s_handle.close()
+    # stats_GapFilling_file_ctg_handle.close()
+    #
+    # get_best_ctg_or_16s_for_gap_seq_iteratively(stats_GapFilling_file_16s, 'Number', min_read_num, stats_GapFilling_file_filtered_16s)
+    # get_best_ctg_or_16s_for_gap_seq_iteratively(stats_GapFilling_file_ctg, 'Number', min_read_num, stats_GapFilling_file_filtered_ctg)
+    #
+    # gap_seq_to_16s_dict = {}
+    # for each_line in open(stats_GapFilling_file_filtered_16s):
+    #     if not each_line.startswith('Gap_seq,'):
+    #         each_line_split = each_line.strip().split(',')
+    #         gap_seq_id = each_line_split[0]
+    #         s16_id = each_line_split[1]
+    #         link_num = int(each_line_split[2])
+    #         gap_seq_to_16s_dict[gap_seq_id] = {s16_id: link_num}
+    #
+    # gap_seq_to_gnm_dict = {}
+    # for each_match in open(stats_GapFilling_file_filtered_ctg):
+    #     if not each_match.startswith('Gap_seq,'):
+    #         match_split = each_match.strip().split(',')
+    #         gap_seq_id = match_split[0]
+    #         ctg_id = match_split[1]
+    #         ctg_gnm = ctg_id.split(gnm_ctg_connector)[0]
+    #         linkage_num = int(match_split[2])
+    #         gap_seq_to_gnm_dict[gap_seq_id] = {ctg_gnm: linkage_num}
+    #
+    # gnm_to_16s_linkage_dict = {}
+    # for gap_seq in gap_seq_to_gnm_dict:
+    #     if gap_seq in gap_seq_to_16s_dict:
+    #         current_gap_seq_matched_gnm = list(gap_seq_to_gnm_dict[gap_seq].items())[0][0]
+    #         current_gap_seq_matched_gnm_link_num = list(gap_seq_to_gnm_dict[gap_seq].items())[0][1]
+    #         current_gap_seq_matched_16s = list(gap_seq_to_16s_dict[gap_seq].items())[0][0]
+    #         current_gap_seq_matched_16s_link_num = list(gap_seq_to_16s_dict[gap_seq].items())[0][1]
+    #         gnm_to_16s_key = '%s%s%s' % (current_gap_seq_matched_gnm, dict_key_connector, current_gap_seq_matched_16s)
+    #         gnm_to_16s_link_num = current_gap_seq_matched_gnm_link_num + current_gap_seq_matched_16s_link_num
+    #
+    #         # check num difference
+    #         link_num_max = max(int(current_gap_seq_matched_gnm_link_num), int(current_gap_seq_matched_16s_link_num))
+    #         link_num_min = min(int(current_gap_seq_matched_gnm_link_num), int(current_gap_seq_matched_16s_link_num))
+    #         if (link_num_min*100/link_num_max) >= 33.3:
+    #             if gnm_to_16s_key not in gnm_to_16s_linkage_dict:
+    #                 gnm_to_16s_linkage_dict[gnm_to_16s_key] = gnm_to_16s_link_num
+    #             else:
+    #                 gnm_to_16s_linkage_dict[gnm_to_16s_key] += gnm_to_16s_link_num
+    #
+    # stats_GapFilling_file_handle = open(stats_GapFilling_file, 'w')
+    # stats_GapFilling_file_handle.write('MarkerGene,GenomicSeq,Number\n')
+    # for gnm_to_16s in gnm_to_16s_linkage_dict:
+    #     id_gnm = gnm_to_16s.split(dict_key_connector)[0]
+    #     id_16s = gnm_to_16s.split(dict_key_connector)[1]
+    #     stats_GapFilling_file_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, gnm_to_16s_linkage_dict[gnm_to_16s]))
+    # stats_GapFilling_file_handle.close()
+    #
+    #
+    # filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
 
 
     ####################################################################################################################
@@ -2424,6 +2939,7 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-s1_ma',           required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
     link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=10,          help='minimum number of paired reads provided linkages to report, default: 10')
     link_16s_parser.add_argument('-s1_mplu',         required=False, type=int,      default=5,          help='minimum number of paired reads provided linkages to report (for uniq linked 16S, default: 5')
+    link_16s_parser.add_argument('-s2_g',            required=False, type=int,      default=300,        help='max_gap_to_end, default: 300')
     link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
     link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
     link_16s_parser.add_argument('-quiet',           required=False, action="store_true",               help='not report progress')
@@ -2431,6 +2947,8 @@ if __name__ == '__main__':
     link_16s_parser.add_argument('-tmp',             required=False, action="store_true",               help='keep temporary files')
     link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",               help='only for debugging, do not provide')
     link_16s_parser.add_argument('-bbmap_mem',       required=False, type=int,      default=10,         help='bbmap memory allocation (in gigabyte), default: 10')
+    link_16s_parser.add_argument('-mira_tmp',        required=False, default=None,                      help='tmp dir for mira')
+    link_16s_parser.add_argument('-spades',          required=False, action="store_true",               help='run spades, instead of Mira')
     link_16s_parser.add_argument('-min_M_len',       required=False, type=int,      default=30,         help='minimum aligned length (bp), default: 30')
     link_16s_parser.add_argument('-min_M_pct',       required=False, type=float,    default=25,         help='minimum aligned percentage (%), default: 25')
     link_16s_parser.add_argument('-min_clp_len',     required=False, type=int,      default=30,         help='minimum clipping sequence length (bp), default: 30')
@@ -2444,13 +2962,23 @@ if __name__ == '__main__':
 
 To_do = '''
 
-1. how to incorporate the taxonomy of MAGs and 16S sequences
-2. the depth of 16S sequences always not lower than the genome they come from
-3. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
-4. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
-5. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
-6. add "16S_reads" to SortMeRNA's output prefix
-7. estimate cutoffs to use based sensitive or specific
+1. where do the mates of clipping mapped read mapped to? (should take into consideration!!!)
+2. how to incorporate the taxonomy of MAGs and 16S sequences
+3. the depth of 16S sequences always not lower than the genome they come from
+4. split sam file
+5. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
+6. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
+7. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
+8. add "16S_reads" to SortMeRNA's output prefix
+9. which depth to use, genome level or contig level
+10. check if spades failed 
+11. check Mira tmp_dir at the beginning
+12. BH_ER_050417_refined_bins_combined.sam: >Kelp_659345.1__x__Refined_9___NODE_5430_length_12683_cov_6.017999 NODE_5430_length_12683_cov_6.017999__x__12552_r (space in ref id !!!)
+13. !!!!!! if isfile(mira_assembly) is False: report and only export first round linkages !!!!!!
+14. use wc -l to check if fastq and fasta match
+15. faster way to rename and extract reads: seqtk (test it)?
+16. estimate cutoffs to use based sensitive or specific
+17. lower end_seq_len to 750bp? compare with 1000, 1500bp.
 
 BioSAK select_seq -seq Kelp_R1.fasta -id id_1.txt -out id_1.fa -option 1
 BioSAK select_seq -seq Kelp_R2.fasta -id id_2.txt -out id_2.fa -option 1

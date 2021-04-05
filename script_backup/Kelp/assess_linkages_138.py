@@ -12,6 +12,54 @@ def sep_path_basename_ext(file_in):
 
     return file_path, file_basename, file_extension
 
+'''
+=============================
+Linkage accuracy: Kelp_0405_combined_linkages
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	83	4	79	0	79(100.0)
+class	83	4	77	0	77(97.47)
+order	83	4	71	0	71(89.87)
+family	83	4	64	0	64(81.01)
+genus	83	4	48	8	56(70.89)
+=============================
+linked MAGs: 33
+
+=============================
+Linkage accuracy: Kelp_0405_500bp_combined_linkages
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	78	4	74	0	74(100.0)
+class	78	4	72	0	72(97.3)
+order	78	4	66	0	66(89.19)
+family	78	4	59	0	59(79.73)
+genus	78	4	43	8	51(68.92)
+=============================
+linked MAGs: 33
+
+cov25
+=============================
+Linkage accuracy: Kelp_0405_cov25_combined_linkages
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	83	4	79	0	79(100.0)
+class	83	4	77	0	77(97.47)
+order	83	4	71	0	71(89.87)
+family	83	4	62	0	62(78.48)
+genus	83	4	42	11	53(67.09)
+=============================
+linked MAGs: 36
+
+cov35
+=============================
+Linkage accuracy: Kelp_0405_cov35_combined_linkages
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	82	4	78	0	78(100.0)
+class	82	4	76	0	76(97.44)
+order	82	4	70	0	70(89.74)
+family	82	4	61	0	61(78.21)
+genus	82	4	42	10	52(66.67)
+=============================
+linked MAGs: 35
+
+'''
 
 ###################################################### file in/out #####################################################
 
@@ -29,7 +77,7 @@ linkage_file        = '%s/file_in/manual_linkages.txt'      % wd
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/mock_final_op.txt'
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0401_spades_combined_linkages.txt'
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0404_combined_linkages.txt'
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0405_combined_linkages.txt'
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0405_cov35_combined_linkages.txt'
 
 
 '''
