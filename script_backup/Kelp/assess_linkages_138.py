@@ -29,6 +29,7 @@ linkage_file        = '%s/file_in/manual_linkages.txt'      % wd
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/mock_final_op.txt'
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0401_spades_combined_linkages.txt'
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0404_combined_linkages.txt'
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0405_combined_linkages.txt'
 
 
 '''

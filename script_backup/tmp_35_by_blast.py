@@ -41,15 +41,40 @@ for free_living_read_ctg in open(round2_free_living_ctg_ref_file):
     read_ctg_refs = free_living_read_ctg_split[1].split(',')
     round2_free_living_ctg_ref_dict[read_ctg_id] = read_ctg_refs
 
+round_2_min_aln_len = 50
+round_2_min_iden = 99.9
+round_2_min_cov = 35
+m = 0
 free_living_16s_to_ctg_linkage_dict = {}
 free_living_16s_to_gnm_linkage_dict = {}
 for each_hit in open(round_2_free_living_blast_result):
     match_split = each_hit.strip().split('\t')
-    query = match_split[0]
-    subject = match_split[1]
-    identity = float(match_split[2])
-    align_len = int(match_split[3])
-    if (align_len >= round_2_align_len_cutoff) and (identity >= round_2_iden_cutoff):
+    query       = match_split[0]
+    subject     = match_split[1]
+    identity    = float(match_split[2])
+    align_len   = int(match_split[3])
+    query_len   = int(match_split[12])
+    subject_len = int(match_split[13])
+    coverage_q  = float(align_len) * 100 / float(query_len)
+    coverage_s  = float(align_len) * 100 / float(subject_len)
+    qstart      = int(match_split[6])
+    qend        = int(match_split[7])
+    sstart      = int(match_split[8])
+    send        = int(match_split[9])
+
+    if (align_len >= round_2_min_aln_len) and (identity >= round_2_min_iden) and (coverage_q >= round_2_min_cov) and (coverage_s >= round_2_min_cov):
+
+        if ((1 in [qstart, qend]) or (query_len in [qstart, qend])) and ((1 in [sstart, send]) or (subject_len in [sstart, send])):
+
+            print(each_hit.strip())
+            print(qstart)
+            print(qend)
+            print(sstart)
+            print(send)
+            print()
+            m += 1
+
+
         query_16s_refs = round2_free_living_16s_ref_dict.get(query, [])
         subject_ctg_refs = round2_free_living_ctg_ref_dict.get(subject, [])
         for each_query_ref in query_16s_refs:
@@ -73,15 +98,4 @@ for each_hit in open(round_2_free_living_blast_result):
                 else:
                     free_living_16s_to_gnm_linkage_dict[q_ref_to_s_ref_gnm_key] += 1
 
-stats_GapFilling_file_handle = open(stats_GapFilling_file, 'w')
-for each_round2_linkage in free_living_16s_to_gnm_linkage_dict:
-    each_round2_linkage_split = each_round2_linkage.split(round_2_free_living_16s_to_ctg_connector)
-    id_16s = each_round2_linkage_split[0]
-    id_gnm = each_round2_linkage_split[1]
-    linkage_num = free_living_16s_to_gnm_linkage_dict[each_round2_linkage]
-    stats_GapFilling_file_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
-stats_GapFilling_file_handle.close()
-
-
-print(len(free_living_16s_to_ctg_linkage_dict))
-print(len(free_living_16s_to_gnm_linkage_dict))
+print(m)

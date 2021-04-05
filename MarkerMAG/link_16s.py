@@ -1089,7 +1089,7 @@ def link_16s(args, config_dict):
 
     reads_iden_cutoff   = 100             # %
     reads_cov_cutoff    = 90              # %
-    end_seq_len         = 1000            # bp
+    end_seq_len         = 750            # bp
     min_clp_len_round2 = 30
     dict_key_connector = '__|__'
     marker_to_ctg_Key_connector_str = '___M___'
@@ -1285,8 +1285,9 @@ def link_16s(args, config_dict):
     round_2_free_living_ctg         = '%s/round2_free_living_ctg.fa'        % step_2_wd
     round_2_free_living_16s         = '%s/round2_free_living_16s.fa'        % step_2_wd
     round_2_free_living_blast_result = '%s/free_living_reads_blastn.tab' % step_2_wd
-    round_2_align_len_cutoff        = 50
-    round_2_iden_cutoff             = 99.5
+    round_2_min_aln_len             = 50
+    round_2_min_cov                 = 50
+    round_2_min_iden                = 99.5
 
     round_2_free_living_16s_to_ctg_connector = '__f__'
 
@@ -2463,7 +2464,7 @@ def link_16s(args, config_dict):
                                         r2_clipping_seq_rc_qual = r2_seq_rc_qual[:max_clp]
                                         read_mr.r2_clipping_seq_qual = r2_clipping_seq_rc_qual[::-1]
 
-                            elif (max_clp_location == 'r1_r') and (r1_ref_pos >= (end_seq_len / 2)):
+                            elif (max_clp_location == 'r1_r') and (r1_ref_pos >= (end_seq_len / 5)):
                                 read_mr.consider_round_2 = True
                                 read_mr.consider_r1_clipping_part = True
 
@@ -2486,7 +2487,7 @@ def link_16s(args, config_dict):
                                         r1_clipping_seq_rc_qual = r1_seq_rc_qual[-max_clp:]
                                         read_mr.r1_clipping_seq_qual = r1_clipping_seq_rc_qual[::-1]
 
-                            elif (max_clp_location == 'r2_r') and (r2_ref_pos >= (end_seq_len / 2)):
+                            elif (max_clp_location == 'r2_r') and (r2_ref_pos >= (end_seq_len / 5)):
                                 read_mr.consider_round_2 = True
                                 read_mr.consider_r2_clipping_part = True
 
@@ -2570,7 +2571,6 @@ def link_16s(args, config_dict):
     os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, round_2_free_living_16s))
     os.system('cat %s %s %s > %s' % (free_living_ctg_R1, free_living_ctg_R2, free_living_ctg_UP, round_2_free_living_ctg))
 
-
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % 4
     makeblastdb_cmd = 'makeblastdb -in %s -dbtype nucl -parse_seqids' % round_2_free_living_ctg
     blastn_cmd = 'blastn -query %s -db %s -out %s %s' % (round_2_free_living_16s, round_2_free_living_ctg, round_2_free_living_blast_result, blast_parameters)
@@ -2599,29 +2599,41 @@ def link_16s(args, config_dict):
         subject = match_split[1]
         identity = float(match_split[2])
         align_len = int(match_split[3])
-        if (align_len >= round_2_align_len_cutoff) and (identity >= round_2_iden_cutoff):
-            query_16s_refs = round2_free_living_16s_ref_dict.get(query, [])
-            subject_ctg_refs = round2_free_living_ctg_ref_dict.get(subject, [])
-            for each_query_ref in query_16s_refs:
-                for each_subject_ref in subject_ctg_refs:
+        query_len = int(match_split[12])
+        subject_len = int(match_split[13])
+        coverage_q = float(align_len) * 100 / float(query_len)
+        coverage_s = float(align_len) * 100 / float(subject_len)
+        qstart = int(match_split[6])
+        qend = int(match_split[7])
+        sstart = int(match_split[8])
+        send = int(match_split[9])
+        if (align_len >= round_2_min_aln_len) and (identity >= round_2_min_iden) and (coverage_q >= round_2_min_cov) and (coverage_s >= round_2_min_cov):
 
-                    if each_subject_ref[-2:] in ['_l', '_r']:
-                        each_subject_ref = each_subject_ref[:-2]
+            # make sure matched to one end for both query and subject
+            if ((1 in [qstart, qend]) or (query_len in [qstart, qend])) and ((1 in [sstart, send]) or (subject_len in [sstart, send])):
 
-                    subject_ref_gnm = each_subject_ref.split(gnm_ctg_connector)[0]
+                query_16s_refs = round2_free_living_16s_ref_dict.get(query, [])
+                subject_ctg_refs = round2_free_living_ctg_ref_dict.get(subject, [])
+                for each_query_ref in query_16s_refs:
+                    for each_subject_ref in subject_ctg_refs:
 
-                    q_ref_to_s_ref_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, each_subject_ref)
-                    q_ref_to_s_ref_gnm_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, subject_ref_gnm)
+                        if each_subject_ref[-2:] in ['_l', '_r']:
+                            each_subject_ref = each_subject_ref[:-2]
 
-                    if q_ref_to_s_ref_key not in free_living_16s_to_ctg_linkage_dict:
-                        free_living_16s_to_ctg_linkage_dict[q_ref_to_s_ref_key] = 1
-                    else:
-                        free_living_16s_to_ctg_linkage_dict[q_ref_to_s_ref_key] += 1
+                        subject_ref_gnm = each_subject_ref.split(gnm_ctg_connector)[0]
 
-                    if q_ref_to_s_ref_gnm_key not in free_living_16s_to_gnm_linkage_dict:
-                        free_living_16s_to_gnm_linkage_dict[q_ref_to_s_ref_gnm_key] = 1
-                    else:
-                        free_living_16s_to_gnm_linkage_dict[q_ref_to_s_ref_gnm_key] += 1
+                        q_ref_to_s_ref_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, each_subject_ref)
+                        q_ref_to_s_ref_gnm_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, subject_ref_gnm)
+
+                        if q_ref_to_s_ref_key not in free_living_16s_to_ctg_linkage_dict:
+                            free_living_16s_to_ctg_linkage_dict[q_ref_to_s_ref_key] = 1
+                        else:
+                            free_living_16s_to_ctg_linkage_dict[q_ref_to_s_ref_key] += 1
+
+                        if q_ref_to_s_ref_gnm_key not in free_living_16s_to_gnm_linkage_dict:
+                            free_living_16s_to_gnm_linkage_dict[q_ref_to_s_ref_gnm_key] = 1
+                        else:
+                            free_living_16s_to_gnm_linkage_dict[q_ref_to_s_ref_gnm_key] += 1
 
     stats_GapFilling_file_handle = open(stats_GapFilling_file, 'w')
     stats_GapFilling_file_handle.write('MarkerGene,GenomicSeq,Number\n')
