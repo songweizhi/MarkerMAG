@@ -220,3 +220,8 @@ MarkerGene__Kelp_SILVA138_id99_subsample_75_315,GenomicSeq__Refined_6,5
 MarkerGene__Kelp_SILVA138_id99_subsample_75_625,GenomicSeq__Refined_32,5
 MarkerGene__Kelp_SILVA138_id99_subsample_50_518,GenomicSeq__Refined_32,5
 '''
+
+'''
+Kelp_SILVA138_id99_subsample_5_147	Refined_54	42	S2	1	1	1	1	1	d__Bacteria;p__Planctomycetota;c__Planctomycetes;o__Pirellulales;f__Pirellulaceae;g__Mariniblastus;s__	d__Bacteria;p__Planctomycetota;c__Planctomycetes;o__Pirellulales;f__Pirellulaceae;g__Mariniblastus;s__Mariniblastus_fucicola	Bacteria(100.0);Planctomycetota(100.0);Planctomycetes(100.0);Pirellulales(100.0);Pirellulaceae(100.0);Mariniblastus(100.0);Mariniblastus fucicola(100.0)
+'''
+
