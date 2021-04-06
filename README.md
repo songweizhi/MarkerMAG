@@ -21,7 +21,6 @@ Dependencies
  
 + `link`: 
   [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/),
-  [Mira v5rc2](https://github.com/bachev/mira) (default) or [SPAdes](https://github.com/ablab/spades), 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download),
   [optparse](https://cran.r-project.org/web/packages/optparse/index.html) (R) and 
   [googleVis](https://cran.r-project.org/web/packages/googleVis/index.html) (R)
@@ -56,7 +55,7 @@ MarkerMAG modules:
 
 + Main module
 
-      link             ->  link MAGs with marker genes
+    + `link`: linking MAGs with 16S rRNA marker genes
     
 + Supplementary modules
 
@@ -95,7 +94,7 @@ Important Notes :warning:
        fq2fa R2.fastq R2.fasta
        MarkerMAG matam_16s -p Soil -r1 R1.fasta -r2 R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref /srv/scratch/z5039045/DB/SILVA/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12 -force
 
-2. :warning: All MAGs derived from a set should be included in MarkerMAG run. (more details need to be added)
+1. :warning: All MAGs derived from a set should be included in MarkerMAG run. (more details need to be added)
 
 
 How to run:
@@ -104,6 +103,16 @@ How to run:
 + Link 16S rRNA gene sequences with MAGs: 
 
       MarkerMAG link -p Soil -r1 R1.fastq -r2 R2.fastq -marker Soil_16S_uclust_0.999.fasta -mag refined_MAG -x fasta -t 12 -tmp -force
+
++ Preset parameters: 
+
+      very_sensitive:  -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 5  -s1_mplu 3  -min_M_len 30 -min_M_pct 20 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 25 -min_overlap_len 50 -min_overlap_num 3
+      sensitive:       -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 5  -s1_mplu 3  -min_M_len 30 -min_M_pct 20 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 30 -min_overlap_len 50 -min_overlap_num 5        
+      default:         -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 5  -min_M_len 30 -min_M_pct 25 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 35 -min_overlap_len 50 -min_overlap_num 5
+      specific:        -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 5  -min_M_len 30 -min_M_pct 30 -mismatch 2 -min_overlap_iden 100  -min_overlap_cov 55 -min_overlap_len 50 -min_overlap_num 8
+      very_specific:   -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 -min_M_pct 35 -mismatch 1 -min_overlap_iden 100  -min_overlap_cov 75 -min_overlap_len 50 -min_overlap_num 10
+      super_specific:  -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 -min_M_pct 35 -mismatch 1 -min_overlap_iden 100  -min_overlap_cov 85 -min_overlap_len 50 -min_overlap_num 10
+
 
 
 Output files:

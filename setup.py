@@ -34,5 +34,5 @@ setup(name="MarkerMAG",
       packages=['MarkerMAG'],
       package_data={'': ['*.r', '*.R', '*.py', 'VERSION']},
       include_package_data=True,
-      install_requires=['biopython', 'pandas'],
+      install_requires=['biopython', 'pandas', 'plotly'],
       scripts=['bin/MarkerMAG'])

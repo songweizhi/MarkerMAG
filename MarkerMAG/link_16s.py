@@ -21,16 +21,13 @@ import glob
 import shutil
 import argparse
 import pandas as pd
+import seaborn as sns
 from Bio import SeqIO
 from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
 from datetime import datetime
+import plotly.graph_objects as go
+from Bio.SeqRecord import SeqRecord
 from distutils.spawn import find_executable
-
-
-config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split('/')[:-1]),
-               'get_sankey_plot_R'  : '%s/get_sankey_plot.R' % '/'.join(os.path.realpath(__file__).split('/')[:-1])}
-
 
 link_Marker_MAG_usage = '''
 =================================== MarkerMAG example commands ===================================
@@ -763,7 +760,28 @@ def get_cigar_stats(cigar_splitted):
     return aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct
 
 
-def link_16s(args, config_dict):
+def get_sankey_plot(node_list, source_list, target_list, value_list, color_list, output_html):
+
+    node_index_dict = {y: x for x, y in enumerate(node_list)}
+    source_index = [node_index_dict[x] for x in source_list]
+    target_index = [node_index_dict[x] for x in target_list]
+
+    # https://anvil.works/docs/api/plotly.graph_objs.sankey
+    fig = go.Figure(data=[go.Sankey(node=dict(label=node_list,  # line=0,
+                                              pad=6,  # space between node
+                                              thickness=12,  # node width
+                                              line=dict(width=0)),  # set width of node border to 0
+                                    link=dict(source=source_index,
+                                              target=target_index,
+                                              value=value_list,
+                                              color=color_list))])
+
+    fig.update_layout(autosize=False, width=1200, height=1200, )
+    fig.update_traces(textfont_size=11)
+    fig.write_html(output_html)
+
+
+def link_16s(args):
 
     ###################################################### file in/out #####################################################
 
@@ -803,7 +821,6 @@ def link_16s(args, config_dict):
     preset_very_specific                = args['very_specific']
     preset_super_specific               = args['super_specific']
 
-    pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_makeblastdb_exe                 = 'makeblastdb'
     pwd_blastn_exe                      = 'blastn'
     pwd_bowtie2_build_exe               = 'bowtie2-build'
@@ -830,12 +847,18 @@ def link_16s(args, config_dict):
                            'min_overlap_len' : round_2_min_aln_len,
                            'min_overlap_num' : round_2_min_link_num}
 
-    preset_dict_very_sensitive  = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 5,  's1_mplu': 3,  'min_M_len': 30, 'min_M_pct': 20, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 25, 'min_overlap_len': 50, 'min_overlap_num': 3}
-    preset_dict_sensitive       = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 5,  's1_mplu': 3,  'min_M_len': 30, 'min_M_pct': 20, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 30, 'min_overlap_len': 50, 'min_overlap_num': 5}
-    # preset_dict_default       = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 5,  'min_M_len': 30, 'min_M_pct': 25, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 35, 'min_overlap_len': 50, 'min_overlap_num': 5}
-    preset_dict_specific        = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 5,  'min_M_len': 30, 'min_M_pct': 30, 'mismatch': 2, 'min_overlap_iden': 100,  'min_overlap_cov': 55, 'min_overlap_len': 50, 'min_overlap_num': 8}
-    preset_dict_very_specific   = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 10, 'min_M_len': 30, 'min_M_pct': 35, 'mismatch': 1, 'min_overlap_iden': 100,  'min_overlap_cov': 75, 'min_overlap_len': 50, 'min_overlap_num': 10}
-    preset_dict_super_specific  = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 10, 'min_M_len': 30, 'min_M_pct': 35, 'mismatch': 1, 'min_overlap_iden': 100,  'min_overlap_cov': 85, 'min_overlap_len': 50, 'min_overlap_num': 10}
+    # not included parameters (set their cutoffs according read length):
+    # min_clp_len       = 30
+    # min_clp_M_len     = 20
+    # min_M_len         = 30
+    # min_overlap_len   = 50
+
+    preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 3,  'min_M_pct': 20, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 25, 'min_overlap_num': 3}
+    preset_dict_sensitive       = {'s1_mpl': 5,  's1_mplu': 3,  'min_M_pct': 20, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 30, 'min_overlap_num': 5}
+    # preset_dict_default       = {'s1_mpl': 10, 's1_mplu': 5,  'min_M_pct': 25, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 35, 'min_overlap_num': 5}
+    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 5,  'min_M_pct': 30, 'mismatch': 2, 'min_overlap_iden': 100,  'min_overlap_cov': 55, 'min_overlap_num': 8}
+    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10, 'min_M_pct': 35, 'mismatch': 1, 'min_overlap_iden': 100,  'min_overlap_cov': 75, 'min_overlap_num': 10}
+    preset_dict_super_specific  = {'s1_mpl': 10, 's1_mplu': 10, 'min_M_pct': 35, 'mismatch': 1, 'min_overlap_iden': 100,  'min_overlap_cov': 85, 'min_overlap_num': 10}
 
     preset_to_use = preset_dict_default
     if preset_very_sensitive is True:
@@ -849,16 +872,12 @@ def link_16s(args, config_dict):
     if preset_super_specific is True:
         preset_to_use = preset_dict_super_specific
 
-    min_clp_len             = preset_to_use['min_clp_len']
-    min_clp_M_len           = preset_to_use['min_clp_M_len']
     min_link_num_rd1        = preset_to_use['s1_mpl']
     min_uniq_link_num_rd1   = preset_to_use['s1_mplu']
-    min_M_len               = preset_to_use['min_M_len']
     min_M_pct               = preset_to_use['min_M_pct']
     max_mis_pct             = preset_to_use['mismatch']
     round_2_min_iden        = preset_to_use['min_overlap_iden']
     round_2_min_cov         = preset_to_use['min_overlap_cov']
-    round_2_min_aln_len     = preset_to_use['min_overlap_len']
     round_2_min_link_num    = preset_to_use['min_overlap_num']
 
 
@@ -991,10 +1010,10 @@ def link_16s(args, config_dict):
     ################################################# combine linkages from two steps #################################################
 
     combined_linkage_file_tmp                   = '%s/combined_linkages_tmp.txt'                    % step_2_wd
-    combined_linkage_file                       = '%s/%s_identified_linkages_genome_level.txt'                   % (working_directory, output_prefix)
-    combined_linkage_file_ctg_level             = '%s/%s_identified_linkages_contig_level.txt'               % (working_directory, output_prefix)
-    linkage_for_sankey_rd1                      = '%s/%s_identified_linkages_round1.txt'            % (working_directory, output_prefix)
-    linkage_for_sankey_rd2                      = '%s/%s_identified_linkages_round2.txt'            % (working_directory, output_prefix)
+    combined_linkage_file                       = '%s/%s_identified_linkages_genome_level.txt'      % (working_directory, output_prefix)
+    combined_linkage_file_ctg_level             = '%s/%s_identified_linkages_contig_level.txt'      % (working_directory, output_prefix)
+    linkage_plot_rd1_html                       = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
+    linkage_plot_rd2_html                       = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
 
 
     #################################### calculate mean depth for genome/assemblies ####################################
@@ -2163,87 +2182,109 @@ def link_16s(args, config_dict):
     ####################################################################################################################
 
     report_and_log(('Visualising linkages'), pwd_log_file, keep_quiet)
+    dict_for_sankey_key_connector = '___X___'
 
-    linkage_num_dict_rd1_ctg = {}
-    linkage_num_dict_rd1_gnm = {}
-    linkage_num_dict_rd2_ctg = {}
-    linkage_num_dict_rd2_gnm = {}
-    linked_16s_rd1 = set()
-    linked_ctg_rd1 = set()
-    linked_16s_rd2 = set()
-    linked_ctg_rd2 = set()
+    linkage_num_dict_rd1 = {}
+    linkage_num_dict_rd2 = {}
+    ctg_to_gnm_dict_rd1 = {}
+    ctg_to_gnm_dict_rd2 = {}
+    node_set_rd1 = set()
+    node_set_rd2 = set()
+    genome_set_rd1 = set()
+    genome_set_rd2 = set()
     for each_linkage in open(combined_linkage_file_ctg_level):
         if not each_linkage.startswith('Marker___Genome(total)	Contig	Paired	Clipping	Overlapped	Step'):
             each_linkage_split = each_linkage.strip().split('\t')
+
             marker_id = each_linkage_split[0].split('___')[0]
             gnm_id = each_linkage_split[0].split('___')[1].split('(')[0]
             ctg_id = each_linkage_split[1]
             total_link_num = int(each_linkage_split[2]) + int(each_linkage_split[3]) + int(each_linkage_split[4])
-            marker_to_ctg_key = '%s%s%s' % (marker_id, marker_to_ctg_gnm_Key_connector, ctg_id)
-            ctg_to_gnm_key = '%s%s%s' % (ctg_id, gnm_to_ctg_connector, gnm_id)
+            marker_to_ctg_key = '%s%s%s' % (marker_id, dict_for_sankey_key_connector, ctg_id)
+            ctg_to_gnm_key = '%s%s%s' % (ctg_id, dict_for_sankey_key_connector, gnm_id)
 
             if each_linkage_split[5] == 'S1':
+                genome_set_rd1.add(gnm_id)
+                node_set_rd1.add(marker_id)
+                node_set_rd1.add(ctg_id)
+                node_set_rd1.add(gnm_id)
 
-                linked_16s_rd1.add(marker_id)
-                linked_ctg_rd1.add(ctg_id)
+                if ctg_id not in ctg_to_gnm_dict_rd1:
+                    ctg_to_gnm_dict_rd1[ctg_id] = gnm_id
 
-                if marker_to_ctg_key not in linkage_num_dict_rd1_ctg:
-                    linkage_num_dict_rd1_ctg[marker_to_ctg_key] = total_link_num
+                if marker_to_ctg_key not in linkage_num_dict_rd1:
+                    linkage_num_dict_rd1[marker_to_ctg_key] = total_link_num
                 else:
-                    linkage_num_dict_rd1_ctg[marker_to_ctg_key] += total_link_num
+                    linkage_num_dict_rd1[marker_to_ctg_key] += total_link_num
 
-                if ctg_to_gnm_key not in linkage_num_dict_rd1_gnm:
-                    linkage_num_dict_rd1_gnm[ctg_to_gnm_key] = total_link_num
+                if ctg_to_gnm_key not in linkage_num_dict_rd1:
+                    linkage_num_dict_rd1[ctg_to_gnm_key] = total_link_num
                 else:
-                    linkage_num_dict_rd1_gnm[ctg_to_gnm_key] += total_link_num
+                    linkage_num_dict_rd1[ctg_to_gnm_key] += total_link_num
 
             if each_linkage_split[5] == 'S2':
+                genome_set_rd2.add(gnm_id)
+                node_set_rd2.add(marker_id)
+                node_set_rd2.add(ctg_id)
+                node_set_rd2.add(gnm_id)
+                if ctg_id not in ctg_to_gnm_dict_rd2:
+                    ctg_to_gnm_dict_rd2[ctg_id] = gnm_id
 
-                linked_16s_rd2.add(marker_id)
-                linked_ctg_rd2.add(ctg_id)
-
-                if marker_to_ctg_key not in linkage_num_dict_rd2_ctg:
-                    linkage_num_dict_rd2_ctg[marker_to_ctg_key] = total_link_num
+                if marker_to_ctg_key not in linkage_num_dict_rd2:
+                    linkage_num_dict_rd2[marker_to_ctg_key] = total_link_num
                 else:
-                    linkage_num_dict_rd2_ctg[marker_to_ctg_key] += total_link_num
+                    linkage_num_dict_rd2[marker_to_ctg_key] += total_link_num
 
-                if ctg_to_gnm_key not in linkage_num_dict_rd2_gnm:
-                    linkage_num_dict_rd2_gnm[ctg_to_gnm_key] = total_link_num
+                if ctg_to_gnm_key not in linkage_num_dict_rd2:
+                    linkage_num_dict_rd2[ctg_to_gnm_key] = total_link_num
                 else:
-                    linkage_num_dict_rd2_gnm[ctg_to_gnm_key] += total_link_num
+                    linkage_num_dict_rd2[ctg_to_gnm_key] += total_link_num
 
-    linkage_for_sankey_rd1_handle = open(linkage_for_sankey_rd1, 'w')
-    linkage_for_sankey_rd1_handle.write('MarkerGene,GenomicSeq,Number\n')
-    for each_rd1_linkage in linkage_num_dict_rd1_ctg:
-        each_rd1_linkage_split = each_rd1_linkage.split(marker_to_ctg_gnm_Key_connector)
-        linkage_for_sankey_rd1_handle.write('%s,%s,%s\n' % (
-        each_rd1_linkage_split[0], each_rd1_linkage_split[1], linkage_num_dict_rd1_ctg[each_rd1_linkage]))
-    for each_rd1_linkage in linkage_num_dict_rd1_gnm:
-        each_rd1_linkage_split = each_rd1_linkage.split(gnm_to_ctg_connector)
-        linkage_for_sankey_rd1_handle.write('%s,%s,%s\n' % (
-        each_rd1_linkage_split[0], each_rd1_linkage_split[1], linkage_num_dict_rd1_gnm[each_rd1_linkage]))
-    linkage_for_sankey_rd1_handle.close()
+    source_list_rd1 = []
+    target_list_rd1 = []
+    value_list_rd1 = []
+    for each_rd1_linkage in linkage_num_dict_rd1:
+        each_rd1_linkage_split = each_rd1_linkage.split(dict_for_sankey_key_connector)
+        source_list_rd1.append(each_rd1_linkage_split[0])
+        target_list_rd1.append(each_rd1_linkage_split[1])
+        value_list_rd1.append(linkage_num_dict_rd1[each_rd1_linkage])
 
-    linkage_for_sankey_rd2_handle = open(linkage_for_sankey_rd2, 'w')
-    linkage_for_sankey_rd2_handle.write('MarkerGene,GenomicSeq,Number\n')
-    for each_rd2_linkage in linkage_num_dict_rd2_ctg:
-        each_rd2_linkage_split = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)
-        linkage_for_sankey_rd2_handle.write('%s,%s,%s\n' % (
-        each_rd2_linkage_split[0], each_rd2_linkage_split[1], linkage_num_dict_rd2_ctg[each_rd2_linkage]))
-    for each_rd2_linkage in linkage_num_dict_rd2_gnm:
-        each_rd2_linkage_split = each_rd2_linkage.split(gnm_to_ctg_connector)
-        linkage_for_sankey_rd2_handle.write('%s,%s,%s\n' % (
-        each_rd2_linkage_split[0], each_rd2_linkage_split[1], linkage_num_dict_rd2_gnm[each_rd2_linkage]))
-    linkage_for_sankey_rd2_handle.close()
+    source_list_rd2 = []
+    target_list_rd2 = []
+    value_list_rd2 = []
+    for each_rd2_linkage in linkage_num_dict_rd2:
+        each_rd2_linkage_split = each_rd2_linkage.split(dict_for_sankey_key_connector)
+        source_list_rd2.append(each_rd2_linkage_split[0])
+        target_list_rd2.append(each_rd2_linkage_split[1])
+        value_list_rd2.append(linkage_num_dict_rd2[each_rd2_linkage])
 
-    # get plot height
-    plot_height_rd1 = 500 if max([len(linked_16s_rd1), len(linked_ctg_rd1)]) <= 25 else max([len(linked_16s_rd1), len(linked_ctg_rd1)]) * 20
-    plot_height_rd2 = 500 if max([len(linked_16s_rd2), len(linked_ctg_rd2)]) <= 25 else max([len(linked_16s_rd2), len(linked_ctg_rd2)]) * 20
+    gnm_color_list_rd1 = sns.color_palette('tab20', len(genome_set_rd1)).as_hex()
+    gnm_color_list_rd2 = sns.color_palette('tab20', len(genome_set_rd2)).as_hex()
 
-    cmd_sankey_rd1 = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, linkage_for_sankey_rd1, 800, plot_height_rd1)
-    cmd_sankey_rd2 = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, linkage_for_sankey_rd2, 800, plot_height_rd2)
-    os.system(cmd_sankey_rd1)
-    os.system(cmd_sankey_rd2)
+    genome_to_color_dict_rd1 = {gnm: color for gnm, color in zip(genome_set_rd1, gnm_color_list_rd1)}
+    genome_to_color_dict_rd2 = {gnm: color for gnm, color in zip(genome_set_rd2, gnm_color_list_rd2)}
+
+    color_list_rd1 = []
+    for each_target in target_list_rd1:
+        if each_target in genome_to_color_dict_rd1:
+            color_list_rd1.append(genome_to_color_dict_rd1[each_target])
+        else:
+            target_genome = ctg_to_gnm_dict_rd1[each_target]
+            color_list_rd1.append(genome_to_color_dict_rd1[target_genome])
+
+    color_list_rd2 = []
+    for each_target in target_list_rd2:
+        if each_target in genome_to_color_dict_rd2:
+            color_list_rd2.append(genome_to_color_dict_rd2[each_target])
+        else:
+            target_genome = ctg_to_gnm_dict_rd2[each_target]
+            color_list_rd2.append(genome_to_color_dict_rd2[target_genome])
+
+    node_list_rd1 = sorted([i for i in node_set_rd1])
+    node_list_rd2 = sorted([i for i in node_set_rd2])
+
+    get_sankey_plot(node_list_rd1, source_list_rd1, target_list_rd1, value_list_rd1, color_list_rd1, linkage_plot_rd1_html)
+    get_sankey_plot(node_list_rd2, source_list_rd2, target_list_rd2, value_list_rd2, color_list_rd1, linkage_plot_rd2_html)
 
 
     ######################################## report assessment under test mode #########################################
@@ -2287,8 +2328,6 @@ def link_16s(args, config_dict):
 
     if keep_temp is False:
         os.remove(input_reads_to_16s_sam)
-    os.remove(linkage_for_sankey_rd1)
-    os.remove(linkage_for_sankey_rd2)
 
     # Final report
     report_and_log(('Done!'), pwd_log_file, keep_quiet)
@@ -2363,7 +2402,7 @@ if __name__ == '__main__':
     link_16s_parser_debug.add_argument('-rd2_only',         required=False, action="store_true",                            help='run round 2 only')
 
     args = vars(link_16s_parser.parse_args())
-    link_16s(args, config_dict)
+    link_16s(args)
 
 
 '''
