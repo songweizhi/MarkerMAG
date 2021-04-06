@@ -60,11 +60,11 @@ MarkerMAG modules:
     
 + Supplementary modules
 
-      rename_reads     ->  rename paired reads 
-      matam_16s        ->  Assemble 16S rRNA genes with Matam, including subsample and dereplication
-      uclust_16s       ->  cluster marker genes with Usearch
-      barrnap_16s      ->  identify 16S gene sequences with Barrnap
-      subsample_reads  ->  subsample reads with Usearch
+    + `rename_reads`: rename paired reads ([manual]())
+    + `matam_16s`: assemble 16S rRNA genes with Matam, including subsample and dereplication ([manual]())
+    + `uclust_16s`: cluster marker genes with Usearch ([manual]())
+    + `barrnap_16s`: identify 16S gene sequences with Barrnap ([manual]())
+    + `subsample_reads`: subsample reads with Usearch ([manual]())
 
 
 Important Notes :warning:

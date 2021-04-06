@@ -780,8 +780,8 @@ def link_16s(args, config_dict):
     min_iden_16s                        = args['min_iden_16s']
     min_cov_16s                         = args['min_cov_16s']
     min_aln_16s                         = args['min_aln_16s']
-    min_paired_linkages                 = args['s1_mpl']
-    min_paired_linkages_for_uniq_linked_16s  = args['s1_mplu']
+    min_link_num_rd1                    = args['s1_mpl']
+    min_uniq_link_num_rd1               = args['s1_mplu']
     num_threads                         = args['t']
     keep_quiet                          = args['quiet']
     force_overwrite                     = args['force']
@@ -797,6 +797,11 @@ def link_16s(args, config_dict):
     round_2_min_cov                     = args['min_overlap_cov']
     round_2_min_aln_len                 = args['min_overlap_len']
     round_2_min_link_num                = args['min_overlap_num']
+    preset_very_sensitive               = args['very_sensitive']
+    preset_sensitive                    = args['sensitive']
+    preset_specific                     = args['specific']
+    preset_very_specific                = args['very_specific']
+    preset_super_specific               = args['super_specific']
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_makeblastdb_exe                 = 'makeblastdb'
@@ -806,32 +811,55 @@ def link_16s(args, config_dict):
     pwd_samtools_exe                    = 'samtools'
     pwd_bbmap_exe                       = 'bbmap.sh'
 
-    end_seq_len                         = 500
-    min_clp_len_round2                  = 30
     marker_to_ctg_gnm_Key_connector     = '___M___'
-    gnm_to_ctg_connector                = '___'
+    gnm_to_ctg_connector                = '___C___'
+    end_seq_len                         = 500
 
 
-    '''
-    very_sensitive   For greater sensitivity, especially for dataset with low sequencing depth, shortcut for "".
-    sensitive        For better sensitivity, shortcut for "".
-    default_setting  Decide automatically, shortcut for "".
-    specific         For better specificity, shortcut for "".
-    very_specific    For greater specificity, shortcut for "".
-    superspecific    For the best specificity, shortcut for "".
-    
-    
-                        
-    very_sensitive      min_overlap_iden 99.5 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3
-    sensitive           min_overlap_iden 99.5 min_overlap_cov 35 min_overlap_len 50 min_overlap_num 5
-    ordinary            min_overlap_iden 99.9 min_overlap_cov 45 min_overlap_len 50 min_overlap_num 5
-    specific            min_overlap_iden 100  min_overlap_cov 55 min_overlap_len 50 min_overlap_num 8
-    very_specific       min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10
-    super_specific      min_overlap_iden 100  min_overlap_cov 85 min_overlap_len 50 min_overlap_num 15
-    
-    
-    
-    '''
+    ################################################ prepare preset parameters to use ################################################
+
+    preset_dict_default = {'min_clp_len'     : min_clp_len,
+                           'min_clp_M_len'   : min_clp_M_len,
+                           's1_mpl'          : min_link_num_rd1,
+                           's1_mplu'         : min_uniq_link_num_rd1,
+                           'min_M_len'       : min_M_len,
+                           'min_M_pct'       : min_M_pct,
+                           'mismatch'        : max_mis_pct,
+                           'min_overlap_iden': round_2_min_iden,
+                           'min_overlap_cov' : round_2_min_cov,
+                           'min_overlap_len' : round_2_min_aln_len,
+                           'min_overlap_num' : round_2_min_link_num}
+
+    preset_dict_very_sensitive  = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 5,  's1_mplu': 3,  'min_M_len': 30, 'min_M_pct': 20, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 25, 'min_overlap_len': 50, 'min_overlap_num': 3}
+    preset_dict_sensitive       = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 5,  's1_mplu': 3,  'min_M_len': 30, 'min_M_pct': 20, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 30, 'min_overlap_len': 50, 'min_overlap_num': 5}
+    # preset_dict_default       = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 5,  'min_M_len': 30, 'min_M_pct': 25, 'mismatch': 3, 'min_overlap_iden': 99.9, 'min_overlap_cov': 35, 'min_overlap_len': 50, 'min_overlap_num': 5}
+    preset_dict_specific        = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 5,  'min_M_len': 30, 'min_M_pct': 30, 'mismatch': 2, 'min_overlap_iden': 100,  'min_overlap_cov': 55, 'min_overlap_len': 50, 'min_overlap_num': 8}
+    preset_dict_very_specific   = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 10, 'min_M_len': 30, 'min_M_pct': 35, 'mismatch': 1, 'min_overlap_iden': 100,  'min_overlap_cov': 75, 'min_overlap_len': 50, 'min_overlap_num': 10}
+    preset_dict_super_specific  = {'min_clp_len': 30, 'min_clp_M_len': 20, 's1_mpl': 10, 's1_mplu': 10, 'min_M_len': 30, 'min_M_pct': 35, 'mismatch': 1, 'min_overlap_iden': 100,  'min_overlap_cov': 85, 'min_overlap_len': 50, 'min_overlap_num': 10}
+
+    preset_to_use = preset_dict_default
+    if preset_very_sensitive is True:
+        preset_to_use = preset_dict_very_sensitive
+    if preset_sensitive is True:
+        preset_to_use = preset_dict_sensitive
+    if preset_specific is True:
+        preset_to_use = preset_dict_specific
+    if preset_very_specific is True:
+        preset_to_use = preset_dict_very_specific
+    if preset_super_specific is True:
+        preset_to_use = preset_dict_super_specific
+
+    min_clp_len             = preset_to_use['min_clp_len']
+    min_clp_M_len           = preset_to_use['min_clp_M_len']
+    min_link_num_rd1        = preset_to_use['s1_mpl']
+    min_uniq_link_num_rd1   = preset_to_use['s1_mplu']
+    min_M_len               = preset_to_use['min_M_len']
+    min_M_pct               = preset_to_use['min_M_pct']
+    max_mis_pct             = preset_to_use['mismatch']
+    round_2_min_iden        = preset_to_use['min_overlap_iden']
+    round_2_min_cov         = preset_to_use['min_overlap_cov']
+    round_2_min_aln_len     = preset_to_use['min_overlap_len']
+    round_2_min_link_num    = preset_to_use['min_overlap_num']
 
 
     ################################################ check dependencies ################################################
@@ -963,8 +991,8 @@ def link_16s(args, config_dict):
     ################################################# combine linkages from two steps #################################################
 
     combined_linkage_file_tmp                   = '%s/combined_linkages_tmp.txt'                    % step_2_wd
-    combined_linkage_file                       = '%s/%s_identified_linkages.txt'                   % (working_directory, output_prefix)
-    combined_linkage_file_ctg_level             = '%s/%s_identified_linkages_ctg.txt'               % (working_directory, output_prefix)
+    combined_linkage_file                       = '%s/%s_identified_linkages_genome_level.txt'                   % (working_directory, output_prefix)
+    combined_linkage_file_ctg_level             = '%s/%s_identified_linkages_contig_level.txt'               % (working_directory, output_prefix)
     linkage_for_sankey_rd1                      = '%s/%s_identified_linkages_round1.txt'            % (working_directory, output_prefix)
     linkage_for_sankey_rd2                      = '%s/%s_identified_linkages_round2.txt'            % (working_directory, output_prefix)
 
@@ -1507,8 +1535,8 @@ def link_16s(args, config_dict):
 
     filter_linkages_iteratively(link_stats_combined, 'Number', pairwise_16s_iden_dict,
                                 mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple,
-                                min_iden_16s, min_paired_linkages,
-                                min_paired_linkages_for_uniq_linked_16s, link_stats_combined_filtered_s1)
+                                min_iden_16s, min_link_num_rd1,
+                                min_uniq_link_num_rd1, link_stats_combined_filtered_s1)
 
 
     ####################################################################################################################
@@ -1666,7 +1694,7 @@ def link_16s(args, config_dict):
                         round_2_MappingRecord_dict[read_id_base].r2_cigar_to_flag[cigar] = read_flag
                         round_2_MappingRecord_dict[read_id_base].r2_filtered_refs.add(ref_id)
 
-                    if clipping_len >= min_clp_len_round2:
+                    if clipping_len >= min_clp_len:
                         store_read_seq = True
                 else:
                     store_read_seq = True
@@ -1711,7 +1739,7 @@ def link_16s(args, config_dict):
                 r2_ref_cigar_rc = sam_flag_to_rc(r2_ref_flag)
 
                 # consider the unmapped mate only
-                if max_clp < min_clp_len_round2:
+                if max_clp < min_clp_len:
                     read_mr.consider_round_2 = True
                     read_mr.consider_r2_unmapped_mate = True
 
@@ -1784,7 +1812,7 @@ def link_16s(args, config_dict):
                 r1_ref_cigar_rc = sam_flag_to_rc(r1_ref_flag)
 
                 # consider the unmapped mate only
-                if max_clp < min_clp_len_round2:
+                if max_clp < min_clp_len:
                     read_mr.consider_round_2 = True
                     read_mr.consider_r1_unmapped_mate = True
 
@@ -2319,7 +2347,6 @@ if __name__ == '__main__':
     # preset parameters
     link_16s_parser_preset.add_argument('-very_sensitive',  required=False, action="store_true",                            help='for greater sensitivity, shortcut for  "min_overlap_iden 99.5 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3"')
     link_16s_parser_preset.add_argument('-sensitive',       required=False, action="store_true",                            help='for better sensitivity, shortcut for   "min_overlap_iden 99.5 min_overlap_cov 35 min_overlap_len 50 min_overlap_num 5"')
-    link_16s_parser_preset.add_argument('-ordinary',        required=False, action="store_true",                            help='ordinary setting, shortcut for         "min_overlap_iden 99.9 min_overlap_cov 45 min_overlap_len 50 min_overlap_num 5"')
     link_16s_parser_preset.add_argument('-specific',        required=False, action="store_true",                            help='for better specificity, shortcut for   "min_overlap_iden 100  min_overlap_cov 55 min_overlap_len 50 min_overlap_num 8"')
     link_16s_parser_preset.add_argument('-very_specific',   required=False, action="store_true",                            help='for greater specificity, shortcut for  "min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10"')
     link_16s_parser_preset.add_argument('-super_specific',  required=False, action="store_true",                            help='for the best specificity, shortcut for "min_overlap_iden 100  min_overlap_cov 85 min_overlap_len 50 min_overlap_num 15"')
@@ -2347,4 +2374,14 @@ if __name__ == '__main__':
 5. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
 6. add "16S_reads" to SortMeRNA's output prefix
 7. estimate cutoffs to use based sensitive or specific
+
+very_sensitive     -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 5  -s1_mplu 3  -min_M_len 30 min_M_pct 20 mismatch 3 min_overlap_iden 99.9 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3
+sensitive          -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 5  -s1_mplu 3  -min_M_len 30 min_M_pct 20 mismatch 3 min_overlap_iden 99.9 min_overlap_cov 30 min_overlap_len 50 min_overlap_num 5
+
+default            -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 5  -min_M_len 30 min_M_pct 25 mismatch 3 min_overlap_iden 99.9 min_overlap_cov 35 min_overlap_len 50 min_overlap_num 5
+
+specific           -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 5  -min_M_len 30 min_M_pct 30 mismatch 2 min_overlap_iden 100  min_overlap_cov 55 min_overlap_len 50 min_overlap_num 8
+very_specific      -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 min_M_pct 35 mismatch 1 min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10
+super_specific     -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 min_M_pct 35 mismatch 1 min_overlap_iden 100  min_overlap_cov 85 min_overlap_len 50 min_overlap_num 10
+
 '''
