@@ -782,7 +782,6 @@ def link_16s(args, config_dict):
     min_aln_16s                         = args['min_aln_16s']
     min_paired_linkages                 = args['s1_mpl']
     min_paired_linkages_for_uniq_linked_16s  = args['s1_mplu']
-    min_read_num                        = args['s2_r']
     num_threads                         = args['t']
     keep_quiet                          = args['quiet']
     force_overwrite                     = args['force']
@@ -794,6 +793,10 @@ def link_16s(args, config_dict):
     min_M_pct                           = args['min_M_pct']
     min_clp_len                         = args['min_clp_len']
     min_clp_M_len                       = args['min_clp_M_len']
+    round_2_min_iden                    = args['min_overlap_iden']
+    round_2_min_cov                     = args['min_overlap_cov']
+    round_2_min_aln_len                 = args['min_overlap_len']
+    round_2_min_link_num                = args['min_overlap_num']
 
     pwd_plot_sankey_R                   = config_dict['get_sankey_plot_R']
     pwd_makeblastdb_exe                 = 'makeblastdb'
@@ -807,9 +810,6 @@ def link_16s(args, config_dict):
     min_clp_len_round2                  = 30
     marker_to_ctg_gnm_Key_connector     = '___M___'
     gnm_to_ctg_connector                = '___'
-    round_2_min_aln_len                 = 50
-    round_2_min_cov                     = 35
-    round_2_min_iden                    = 99.9
 
 
     '''
@@ -822,12 +822,12 @@ def link_16s(args, config_dict):
     
     
                         
-    very_sensitive      rd2_min_iden 99.5   rd2_min_cov 25  rd2_min_aln_len 50  rd2_min_link_num 3
-    sensitive           rd2_min_iden 99.5   rd2_min_cov 35  rd2_min_aln_len 50  rd2_min_link_num 5
-    ordinary            rd2_min_iden 99.9   rd2_min_cov 45  rd2_min_aln_len 50  rd2_min_link_num 5
-    specific            rd2_min_iden 100    rd2_min_cov 55  rd2_min_aln_len 50  rd2_min_link_num 8
-    very_specific       rd2_min_iden 100    rd2_min_cov 75  rd2_min_aln_len 50  rd2_min_link_num 10
-    super_specific      rd2_min_iden 100    rd2_min_cov 85  rd2_min_aln_len 50  rd2_min_link_num 10
+    very_sensitive      min_overlap_iden 99.5 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3
+    sensitive           min_overlap_iden 99.5 min_overlap_cov 35 min_overlap_len 50 min_overlap_num 5
+    ordinary            min_overlap_iden 99.9 min_overlap_cov 45 min_overlap_len 50 min_overlap_num 5
+    specific            min_overlap_iden 100  min_overlap_cov 55 min_overlap_len 50 min_overlap_num 8
+    very_specific       min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10
+    super_specific      min_overlap_iden 100  min_overlap_cov 85 min_overlap_len 50 min_overlap_num 15
     
     
     
@@ -963,11 +963,11 @@ def link_16s(args, config_dict):
     ################################################# combine linkages from two steps #################################################
 
     combined_linkage_file_tmp                   = '%s/combined_linkages_tmp.txt'                    % step_2_wd
-    combined_linkage_file_tmp_html              = '%s/combined_linkages_tmp.html'                   % step_2_wd
     combined_linkage_file                       = '%s/%s_identified_linkages.txt'                   % (working_directory, output_prefix)
-    combined_linkage_file_html                  = '%s/%s_identified_linkages.html'                  % (working_directory, output_prefix)
     combined_linkage_file_ctg_level             = '%s/%s_identified_linkages_ctg.txt'               % (working_directory, output_prefix)
-    combined_linkage_file_ctg_level_html        = '%s/%s_identified_linkages_ctg.html'              % (working_directory, output_prefix)
+    linkage_for_sankey_rd1                      = '%s/%s_identified_linkages_round1.txt'            % (working_directory, output_prefix)
+    linkage_for_sankey_rd2                      = '%s/%s_identified_linkages_round2.txt'            % (working_directory, output_prefix)
+
 
     #################################### calculate mean depth for genome/assemblies ####################################
 
@@ -2047,7 +2047,7 @@ def link_16s(args, config_dict):
         stats_GapFilling_file_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
     stats_GapFilling_file_handle.close()
 
-    filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
+    filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, round_2_min_link_num, round_2_min_link_num, stats_GapFilling_file_filtered)
 
 
     ####################################################################################################################
@@ -2136,28 +2136,86 @@ def link_16s(args, config_dict):
 
     report_and_log(('Visualising linkages'), pwd_log_file, keep_quiet)
 
+    linkage_num_dict_rd1_ctg = {}
+    linkage_num_dict_rd1_gnm = {}
+    linkage_num_dict_rd2_ctg = {}
+    linkage_num_dict_rd2_gnm = {}
+    linked_16s_rd1 = set()
+    linked_ctg_rd1 = set()
+    linked_16s_rd2 = set()
+    linked_ctg_rd2 = set()
+    for each_linkage in open(combined_linkage_file_ctg_level):
+        if not each_linkage.startswith('Marker___Genome(total)	Contig	Paired	Clipping	Overlapped	Step'):
+            each_linkage_split = each_linkage.strip().split('\t')
+            marker_id = each_linkage_split[0].split('___')[0]
+            gnm_id = each_linkage_split[0].split('___')[1].split('(')[0]
+            ctg_id = each_linkage_split[1]
+            total_link_num = int(each_linkage_split[2]) + int(each_linkage_split[3]) + int(each_linkage_split[4])
+            marker_to_ctg_key = '%s%s%s' % (marker_id, marker_to_ctg_gnm_Key_connector, ctg_id)
+            ctg_to_gnm_key = '%s%s%s' % (ctg_id, gnm_to_ctg_connector, gnm_id)
+
+            if each_linkage_split[5] == 'S1':
+
+                linked_16s_rd1.add(marker_id)
+                linked_ctg_rd1.add(ctg_id)
+
+                if marker_to_ctg_key not in linkage_num_dict_rd1_ctg:
+                    linkage_num_dict_rd1_ctg[marker_to_ctg_key] = total_link_num
+                else:
+                    linkage_num_dict_rd1_ctg[marker_to_ctg_key] += total_link_num
+
+                if ctg_to_gnm_key not in linkage_num_dict_rd1_gnm:
+                    linkage_num_dict_rd1_gnm[ctg_to_gnm_key] = total_link_num
+                else:
+                    linkage_num_dict_rd1_gnm[ctg_to_gnm_key] += total_link_num
+
+            if each_linkage_split[5] == 'S2':
+
+                linked_16s_rd2.add(marker_id)
+                linked_ctg_rd2.add(ctg_id)
+
+                if marker_to_ctg_key not in linkage_num_dict_rd2_ctg:
+                    linkage_num_dict_rd2_ctg[marker_to_ctg_key] = total_link_num
+                else:
+                    linkage_num_dict_rd2_ctg[marker_to_ctg_key] += total_link_num
+
+                if ctg_to_gnm_key not in linkage_num_dict_rd2_gnm:
+                    linkage_num_dict_rd2_gnm[ctg_to_gnm_key] = total_link_num
+                else:
+                    linkage_num_dict_rd2_gnm[ctg_to_gnm_key] += total_link_num
+
+    linkage_for_sankey_rd1_handle = open(linkage_for_sankey_rd1, 'w')
+    linkage_for_sankey_rd1_handle.write('MarkerGene,GenomicSeq,Number\n')
+    for each_rd1_linkage in linkage_num_dict_rd1_ctg:
+        each_rd1_linkage_split = each_rd1_linkage.split(marker_to_ctg_gnm_Key_connector)
+        linkage_for_sankey_rd1_handle.write('%s,%s,%s\n' % (
+        each_rd1_linkage_split[0], each_rd1_linkage_split[1], linkage_num_dict_rd1_ctg[each_rd1_linkage]))
+    for each_rd1_linkage in linkage_num_dict_rd1_gnm:
+        each_rd1_linkage_split = each_rd1_linkage.split(gnm_to_ctg_connector)
+        linkage_for_sankey_rd1_handle.write('%s,%s,%s\n' % (
+        each_rd1_linkage_split[0], each_rd1_linkage_split[1], linkage_num_dict_rd1_gnm[each_rd1_linkage]))
+    linkage_for_sankey_rd1_handle.close()
+
+    linkage_for_sankey_rd2_handle = open(linkage_for_sankey_rd2, 'w')
+    linkage_for_sankey_rd2_handle.write('MarkerGene,GenomicSeq,Number\n')
+    for each_rd2_linkage in linkage_num_dict_rd2_ctg:
+        each_rd2_linkage_split = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)
+        linkage_for_sankey_rd2_handle.write('%s,%s,%s\n' % (
+        each_rd2_linkage_split[0], each_rd2_linkage_split[1], linkage_num_dict_rd2_ctg[each_rd2_linkage]))
+    for each_rd2_linkage in linkage_num_dict_rd2_gnm:
+        each_rd2_linkage_split = each_rd2_linkage.split(gnm_to_ctg_connector)
+        linkage_for_sankey_rd2_handle.write('%s,%s,%s\n' % (
+        each_rd2_linkage_split[0], each_rd2_linkage_split[1], linkage_num_dict_rd2_gnm[each_rd2_linkage]))
+    linkage_for_sankey_rd2_handle.close()
+
     # get plot height
-    MarkerGenes_paired = set()
-    GenomicSeqs_paired = set()
-    for filtered_paired in open(combined_linkage_file_tmp):
-        if not filtered_paired.startswith('MarkerGene,GenomicSeq,Number'):
-            filtered_paired_split = filtered_paired.strip().split(',')
-            MarkerGenes_paired.add(filtered_paired_split[0])
-            GenomicSeqs_paired.add(filtered_paired_split[1])
+    plot_height_rd1 = 500 if max([len(linked_16s_rd1), len(linked_ctg_rd1)]) <= 25 else max([len(linked_16s_rd1), len(linked_ctg_rd1)]) * 20
+    plot_height_rd2 = 500 if max([len(linked_16s_rd2), len(linked_ctg_rd2)]) <= 25 else max([len(linked_16s_rd2), len(linked_ctg_rd2)]) * 20
 
-    # calculate plot height
-    plot_height_paired = 500 if max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) <= 25 else max([len(MarkerGenes_paired), len(GenomicSeqs_paired)]) * 20
-
-    # prepare commands
-    cmd_sankey_paired = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, combined_linkage_file_tmp, 600, plot_height_paired)
-
-    # plot
-    if len(open(link_stats_combined_filtered_s1).readlines()) == 1:
-        report_and_log(('No data in %s, plotting skipped' % (combined_linkage_file_tmp)), pwd_log_file, keep_quiet)
-    else:
-        os.system(cmd_sankey_paired)
-
-    os.system('mv %s %s' % (combined_linkage_file_tmp_html, combined_linkage_file_html))
+    cmd_sankey_rd1 = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, linkage_for_sankey_rd1, 800, plot_height_rd1)
+    cmd_sankey_rd2 = 'Rscript %s -f %s -x %s -y %s' % (pwd_plot_sankey_R, linkage_for_sankey_rd2, 800, plot_height_rd2)
+    os.system(cmd_sankey_rd1)
+    os.system(cmd_sankey_rd2)
 
 
     ######################################## report assessment under test mode #########################################
@@ -2197,10 +2255,12 @@ def link_16s(args, config_dict):
 
     ################################################### remove tmp files ###################################################
 
-    if keep_temp is False:
+    report_and_log(('Removing temporary files'), pwd_log_file, keep_quiet)
 
-        report_and_log(('Removing temporary files'), pwd_log_file, keep_quiet)
+    if keep_temp is False:
         os.remove(input_reads_to_16s_sam)
+    os.remove(linkage_for_sankey_rd1)
+    os.remove(linkage_for_sankey_rd2)
 
     # Final report
     report_and_log(('Done!'), pwd_log_file, keep_quiet)
@@ -2245,21 +2305,24 @@ if __name__ == '__main__':
     link_16s_parser_both_rds.add_argument('-mismatch',      required=False, metavar='', type=float, default=3,              help='maximum mismatch percentage, (default: %(default)s)')
 
     # parameters for 1st round linking
-    link_16s_parser_both_rds.add_argument('-min_clp_len',   required=False, metavar='', type=int,   default=30,             help='minimum clipping sequence length (bp), (default: %(default)s)')
-    link_16s_parser_both_rds.add_argument('-min_clp_M_len', required=False, metavar='', type=int,   default=20,             help='minimum aligned clipping sequence length (bp), (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-min_clp_len',        required=False, metavar='', type=int,   default=30,             help='minimum clipping sequence length (bp), (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-min_clp_M_len',      required=False, metavar='', type=int,   default=20,             help='minimum aligned clipping sequence length (bp), (default: %(default)s)')
     link_16s_parser_rd1.add_argument('-s1_mpl',             required=False, metavar='', type=int,   default=10,             help='minimum number of paired reads provided linkages to report, (default: %(default)s)')
     link_16s_parser_rd1.add_argument('-s1_mplu',            required=False, metavar='', type=int,   default=5,              help='minimum number of paired reads provided linkages to report (for uniq linked 16S), (default: %(default)s)')
 
     # parameters for 2nd round linking
-    link_16s_parser_rd2.add_argument('-s2_r',               required=False, metavar='', type=int,   default=3,              help='min_read_num, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_iden',   required=False, metavar='', type=float, default=99.9,           help='min_overlap_iden, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_cov',    required=False, metavar='', type=float, default=35,             help='min_overlap_cov, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_len',    required=False, metavar='', type=int,   default=50,             help='min_overlap_len, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_num',    required=False, metavar='', type=int,   default=5,              help='minimum number of overlapping reads for a linkages to be reported, (default: %(default)s)')
 
     # preset parameters
-    link_16s_parser_preset.add_argument('-very_sensitive',  required=False, action="store_true",                            help='for greater sensitivity, shortcut for ""')
-    link_16s_parser_preset.add_argument('-sensitive',       required=False, action="store_true",                            help='for better sensitivity, shortcut for ""')
-    link_16s_parser_preset.add_argument('-ordinary',        required=False, action="store_true",                            help='ordinary setting, shortcut for ""')
-    link_16s_parser_preset.add_argument('-specific',        required=False, action="store_true",                            help='for better specificity, shortcut for ""')
-    link_16s_parser_preset.add_argument('-very_specific',   required=False, action="store_true",                            help='for greater specificity, shortcut for ""')
-    link_16s_parser_preset.add_argument('-super_specific',  required=False, action="store_true",                            help='for the best specificity, shortcut for ""')
+    link_16s_parser_preset.add_argument('-very_sensitive',  required=False, action="store_true",                            help='for greater sensitivity, shortcut for  "min_overlap_iden 99.5 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3"')
+    link_16s_parser_preset.add_argument('-sensitive',       required=False, action="store_true",                            help='for better sensitivity, shortcut for   "min_overlap_iden 99.5 min_overlap_cov 35 min_overlap_len 50 min_overlap_num 5"')
+    link_16s_parser_preset.add_argument('-ordinary',        required=False, action="store_true",                            help='ordinary setting, shortcut for         "min_overlap_iden 99.9 min_overlap_cov 45 min_overlap_len 50 min_overlap_num 5"')
+    link_16s_parser_preset.add_argument('-specific',        required=False, action="store_true",                            help='for better specificity, shortcut for   "min_overlap_iden 100  min_overlap_cov 55 min_overlap_len 50 min_overlap_num 8"')
+    link_16s_parser_preset.add_argument('-very_specific',   required=False, action="store_true",                            help='for greater specificity, shortcut for  "min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10"')
+    link_16s_parser_preset.add_argument('-super_specific',  required=False, action="store_true",                            help='for the best specificity, shortcut for "min_overlap_iden 100  min_overlap_cov 85 min_overlap_len 50 min_overlap_num 15"')
 
     # program settings
     link_16s_parser_others.add_argument('-bbmap_mem',       required=False, metavar='', type=int,   default=10,             help='bbmap memory allocation (in gigabyte), (default: %(default)s)')
