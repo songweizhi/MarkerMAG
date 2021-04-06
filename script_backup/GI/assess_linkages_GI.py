@@ -61,21 +61,33 @@ MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mita_test_combined_linkages.
 # Linkage	51/97(52.58)	51/52(98.08)	10
 #MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_mismatch0.55_mplu10_combined_linkages.txt'     % wd
 # 99.3 Linkage	57/97(58.76)	57/64(89.06)	9
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_0128_combined_linkages.txt'                     % wd
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_0128_2_combined_linkages.txt'                   % wd
-MarkerMAG_linkages          = '%s/file_in/GI_combined_linkages.txt'                                                 % wd
+MarkerMAG_linkages          = '%s/MarkerMAG_Mira_by_mapping_0128_combined_linkages.txt'                     % wd
+MarkerMAG_linkages          = '%s/MarkerMAG_Mira_by_mapping_0128_2_combined_linkages.txt'                   % wd
+MarkerMAG_linkages          = '%s/GI_combined_linkages.txt'                                                 % wd
 
-MarkerMAG_linkages          = '%s/file_in/GI_3_70_10_5_combined_linkages.txt'                                                 % wd
+MarkerMAG_linkages          = '%s/GI_3_70_10_5_combined_linkages.txt'                                                 % wd
 # Linkage	155/97(159.79)	155/174(89.08)	21
 # Linkage	160/97(164.95)	160/181(88.4)	14
 
-MarkerMAG_linkages          = '%s/file_in/GI_1_70_10_5_combined_linkages.txt'                                                 % wd
+MarkerMAG_linkages          = '%s/GI_1_70_10_5_combined_linkages.txt'                                                 % wd
 # Linkage	109/97(112.37)	109/113(96.46)	4
 
-MarkerMAG_linkages          = '%s/file_in/GI_2_70_10_5_combined_linkages.txt'                                                 % wd
+MarkerMAG_linkages          = '%s/GI_2_70_10_5_combined_linkages.txt'                                                 % wd
 # Linkage	141/97(145.36)	141/156(90.38)	11
 
+MarkerMAG_linkages          = '%s/GI_0401_combined_linkages.txt'                                                 % wd
+# Linkage	165/97(170.1)	165/187(88.24)	21
+MarkerMAG_linkages          = '%s/GI_0405_mis1_combined_linkages.txt'                                                 % wd
+# Linkage	211/97(217.53)	211/298(70.81)	25
 
+
+
+'''
+    	                Recovery	    Accuracy	    Unknown
+GI_0405_mis3    Linkage	212/97(218.56)	212/299(70.9)	25
+GI_0405_mis2    Linkage	186/97(191.75)	186/283(65.72)	26
+GI_0405_mis1    Linkage	166/97(171.13)	166/223(74.44)	11
+'''
 
 ########## script ##########
 
@@ -416,5 +428,6 @@ for each_mag in open(mag_metadata):
 # print(linkage_assessment_stats_dict)
 # print(cluster_to_matam_16s_dict)
 
-for bin in bin_to_cluster_dict:
-    print('%s\t%s' % (bin, bin_to_cluster_dict[bin]))
+# for bin in bin_to_cluster_dict:
+#     print('%s\t%s' % (bin, bin_to_cluster_dict[bin]))
+

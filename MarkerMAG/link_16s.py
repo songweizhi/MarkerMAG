@@ -21,7 +21,6 @@ import glob
 import shutil
 import argparse
 import pandas as pd
-import multiprocessing as mp
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -36,12 +35,10 @@ config_dict = {'config_file_path'   : '/'.join(os.path.realpath(__file__).split(
 link_Marker_MAG_usage = '''
 =================================== MarkerMAG example commands ===================================
 
-MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -g contig.fasta -t 4
-MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAGs -x fa -t 4
+# example commands
+MarkerMAG link -p Test -r1 R1.fasta -r2 R2.fasta -m 16S_seqs.fa -mag MAG_folder -x fa -t 6
 
-Note:
-MarkerMAG assumes the id of paired reads in a format of XXXX.1 and XXXX.2. The only difference 
-is the last character. You can rename your reads with "Rename_reads".
+# For more details: https://github.com/songweizhi/MarkerMAG
 
 ==================================================================================================
 '''
@@ -253,41 +250,6 @@ def cigar_splitter(cigar):
     return cigar_splitted
 
 
-def get_cigar_matched_and_mismatch_pct(cigar):
-
-    cigar_splitted = cigar_splitter(cigar)
-
-    total_len_with_s = 0
-    total_len_without_s = 0
-    matched_seq_len = 0
-    mismatched_seq_len = 0
-    for each_part in cigar_splitted:
-        each_part_len = int(each_part[:-1])
-        each_part_cate = each_part[-1]
-
-        # get total len with/without s
-        if each_part_cate in {'M', 'I', '=', 'X'}:
-            total_len_with_s += each_part_len
-            total_len_without_s += each_part_len
-
-        # get total len with s
-        if each_part_cate == 'S':
-            total_len_with_s += each_part_len
-
-        # get matched part len
-        if each_part_cate == '=':
-            matched_seq_len += each_part_len
-
-        # get mismatched part len
-        if each_part_cate in {'I', 'X', 'D'}:
-            mismatched_seq_len += each_part_len
-
-    matched_pct    = float("{0:.2f}".format(matched_seq_len*100/total_len_with_s))
-    mismatch_pct = float("{0:.2f}".format(mismatched_seq_len*100/total_len_without_s))
-
-    return matched_pct, mismatch_pct
-
-
 def split_list(list_in, subset_num):
 
     list_in_formatted = [i for i in list_in]
@@ -309,217 +271,6 @@ def split_list(list_in, subset_num):
         n += 1
 
     return lol_out
-
-
-def extract_reads_worker(argument_list):
-
-    reads_file_in    = argument_list[0]
-    reads_fmt        = argument_list[1]
-    reads_to_extract = argument_list[2]
-    reads_file_out   = argument_list[3]
-
-    reads_file_out_handle = open(reads_file_out, 'w')
-    for read_record in SeqIO.parse(reads_file_in, reads_fmt):
-        if read_record.id in reads_to_extract:
-            if reads_fmt == 'fasta':
-                reads_file_out_handle.write('>%s\n' % read_record.id)
-                reads_file_out_handle.write('%s\n' % read_record.seq)
-            if reads_fmt == 'fastq':
-                SeqIO.write(read_record, reads_file_out_handle, 'fastq')
-    reads_file_out_handle.close()
-
-
-def extracted_reads_with_multiprocessing(reads_r1, reads_r2, reads_fmt, r1_to_extract, r2_to_extract, output_folder, num_threads):
-
-    solely_perfectly_mapped_reads_r1_splitted = split_list(r1_to_extract, num_threads // 2)
-    solely_perfectly_mapped_reads_r2_splitted = split_list(r2_to_extract, num_threads // 2)
-
-    argument_list_for_extract_reads_worker = []
-    extract_reads_file_index_r1 = 1
-    for reads_subset_r1 in solely_perfectly_mapped_reads_r1_splitted:
-        current_output_file = '%s/extract_r1_subset_%s.%s' % (output_folder, extract_reads_file_index_r1, reads_fmt)
-        argument_list_for_extract_reads_worker.append([reads_r1, reads_fmt, reads_subset_r1, current_output_file])
-        extract_reads_file_index_r1 += 1
-
-    extract_reads_file_index_r2 = 1
-    for reads_subset_r2 in solely_perfectly_mapped_reads_r2_splitted:
-        current_output_file = '%s/extract_r2_subset_%s.%s' % (output_folder, extract_reads_file_index_r2, reads_fmt)
-        argument_list_for_extract_reads_worker.append([reads_r2, reads_fmt, reads_subset_r2, current_output_file])
-        extract_reads_file_index_r2 += 1
-
-    # extract reads with multiprocessing
-    pool = mp.Pool(processes=num_threads)
-    pool.map(extract_reads_worker, argument_list_for_extract_reads_worker)
-    pool.close()
-    pool.join()
-
-
-def paired_blast_results_to_dict(blastn_results, iden_cutoff, query_cov_cutoff):
-
-    query_to_subject_list_dict = {}
-    for blast_hit in open(blastn_results):
-        blast_hit_split = blast_hit.strip().split('\t')
-        query = blast_hit_split[0]
-        subject = blast_hit_split[1]
-        subject_with_prefix = 'GenomicSeq__%s' % subject
-        iden = float(blast_hit_split[2])
-        align_len = int(blast_hit_split[3])
-        query_len = int(blast_hit_split[12])
-        subject_len = int(blast_hit_split[13])
-        coverage_q = float(align_len) * 100 / float(query_len)
-
-        # for perfect hits
-        if (iden >= iden_cutoff) and (coverage_q == 100):
-            if query not in query_to_subject_list_dict:
-                query_to_subject_list_dict[query] = [subject_with_prefix]
-            else:
-                query_to_subject_list_dict[query].append(subject_with_prefix)
-
-        # for nearly perfect hits
-        elif (iden >= iden_cutoff) and (query_cov_cutoff <= coverage_q < 100):
-            s_l = sorted([int(blast_hit_split[8]), int(blast_hit_split[9])])[0]
-            s_r = sorted([int(blast_hit_split[8]), int(blast_hit_split[9])])[1]
-            subject_min_gap = min([s_l, (subject_len - s_r)])
-            if subject_min_gap <= 5:
-                if query not in query_to_subject_list_dict:
-                    query_to_subject_list_dict[query] = [subject_with_prefix]
-                else:
-                    query_to_subject_list_dict[query].append(subject_with_prefix)
-
-    return query_to_subject_list_dict
-
-
-def paired_blast_results_to_dict_by_mapping(unmapped_paired_reads_mapping_results):
-
-    cigar_M_pct_min_value = 50
-    mismatch_pct_max_value = 1
-
-    unmapped_paired_reads_to_ctg_dict_by_mapping = {}
-
-    ref_len_dict = {}
-    for unmapped_read in open(unmapped_paired_reads_mapping_results):
-        unmapped_read_split = unmapped_read.strip().split('\t')
-
-        # get ref len dict
-        if unmapped_read.startswith('@'):
-            ref_id = ''
-            ref_len = 0
-            for each_element in unmapped_read_split:
-                if each_element.startswith('SN:'):
-                    ref_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    ref_len = int(each_element[3:])
-            ref_len_dict[ref_id] = ref_len
-
-        else:
-            cigar = unmapped_read_split[5]
-            if cigar != '*':
-                unmapped_read_split = unmapped_read.strip().split('\t')
-                read_id = unmapped_read_split[0]
-                ref_id = unmapped_read_split[2]
-                ref_len = ref_len_dict[ref_id]
-                ref_id_with_prefix = 'GenomicSeq__%s' % unmapped_read_split[2]
-                ref_pos = int(unmapped_read_split[3])
-                read_seq = unmapped_read_split[9]
-                read_len = len(read_seq)
-                cigar_splitted = cigar_splitter(cigar)
-                qualified_unmapped_read = False
-
-                # e.g. 189=
-                if ('=' in cigar) and (len(cigar_splitted) == 1):
-                    qualified_unmapped_read = True
-
-                elif len(cigar_splitted) == 2:
-
-                    # e.g. ['44S', '176=']
-                    if (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == '='):
-                        cigar_M_pct = int(cigar_splitted[1][:-1]) * 100 / read_len
-                        if (ref_pos == 1) and (cigar_M_pct >= cigar_M_pct_min_value):
-                            qualified_unmapped_read = True
-
-                    # e.g. ['154=', '66S']
-                    if (cigar_splitted[0][-1] == '=') and (cigar_splitted[1][-1] == 'S'):
-                        cigar_M_pct = int(cigar_splitted[0][:-1]) * 100 / read_len
-                        matched_to_bp = ref_pos + int(cigar_splitted[0][:-1]) - 1
-                        if (matched_to_bp == ref_len) and (cigar_M_pct >= cigar_M_pct_min_value):
-                            qualified_unmapped_read = True
-
-
-                elif len(cigar_splitted) == 3:
-
-                    # e.g. ['134=', '1X', '22='], ['215=', '1X', '4=']
-                    if (cigar_splitted[0][-1] == '=') and (cigar_splitted[2][-1] == '='):
-                        mismatch_pct = int(cigar_splitted[1][:-1])*100/read_len
-                        if mismatch_pct <= mismatch_pct_max_value:
-                            qualified_unmapped_read = True
-
-                elif len(cigar_splitted) == 4:
-
-                    # e.g. ['118=', '1X', '99=', '1S'], ['8=', '1D', '127=', '84S']
-                    if (cigar_splitted[0][-1] == '=') and (cigar_splitted[2][-1] == '=') and (cigar_splitted[3][-1] == 'S'):
-                        cigar_M_pct = (int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1]))*100/read_len
-                        if ((ref_pos + int(cigar_splitted[0][:-1]) + int(cigar_splitted[2][:-1])) == ref_len) and (int(cigar_splitted[1][:-1]) <= 2):
-                            if cigar_M_pct >= cigar_M_pct_min_value:
-                                qualified_unmapped_read = True
-
-                    # e.g. ['51S', '158=', '1X', '10='] and ref_pos = 1
-                    elif (cigar_splitted[0][-1] == 'S') and (cigar_splitted[1][-1] == '=') and (cigar_splitted[3][-1] == '='):
-                        cigar_M_pct = (int(cigar_splitted[1][:-1]) + int(cigar_splitted[3][:-1]))*100/read_len
-                        if (ref_pos == 1) and (int(cigar_splitted[2][:-1]) <= 1) and (cigar_M_pct >= cigar_M_pct_min_value):
-                            qualified_unmapped_read = True
-
-                # add to dict
-                if qualified_unmapped_read is True:
-                    if read_id not in unmapped_paired_reads_to_ctg_dict_by_mapping:
-                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id] = [ref_id_with_prefix]
-                    else:
-                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id].append(ref_id_with_prefix)
-
-    return unmapped_paired_reads_to_ctg_dict_by_mapping
-
-
-def paired_blast_results_to_dict_by_mapping_new(unmapped_paired_reads_mapping_results, perfect_match_min_cigar_M_pct, global_max_mismatch_pct):
-
-    unmapped_paired_reads_to_ctg_dict_by_mapping = {}
-    for unmapped_read in open(unmapped_paired_reads_mapping_results):
-
-        if not unmapped_read.startswith('@'):
-            unmapped_read_split = unmapped_read.strip().split('\t')
-            cigar = unmapped_read_split[5]
-            if cigar != '*':
-                read_id = unmapped_read_split[0]
-                ref_id_with_prefix = 'GenomicSeq__%s' % unmapped_read_split[2]
-                cigar_match_pct, cigar_mismatch_pct = get_cigar_matched_and_mismatch_pct(cigar)
-
-                if (cigar_match_pct >= perfect_match_min_cigar_M_pct) and (cigar_mismatch_pct <= global_max_mismatch_pct):
-
-                    if read_id not in unmapped_paired_reads_to_ctg_dict_by_mapping:
-                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id] = [ref_id_with_prefix]
-                    else:
-                        unmapped_paired_reads_to_ctg_dict_by_mapping[read_id].append(ref_id_with_prefix)
-
-    return unmapped_paired_reads_to_ctg_dict_by_mapping
-
-
-def blast_results_to_dict(blastn_results, iden_cutoff, query_cov_cutoff):
-    query_to_subject_list_dict = {}
-
-    for blast_hit in open(blastn_results):
-        blast_hit_split = blast_hit.strip().split('\t')
-        query = blast_hit_split[0]
-        subject = blast_hit_split[1]
-        subject_with_prefix = 'GenomicSeq__%s' % subject
-        iden = float(blast_hit_split[2])
-        align_len = int(blast_hit_split[3])
-        query_len = int(blast_hit_split[12])
-        coverage_q = float(align_len) * 100 / float(query_len)
-        if (iden >= iden_cutoff) and (coverage_q >= query_cov_cutoff):
-            if query not in query_to_subject_list_dict:
-                query_to_subject_list_dict[query] = [subject_with_prefix]
-            else:
-                query_to_subject_list_dict[query].append(subject_with_prefix)
-
-    return query_to_subject_list_dict
 
 
 def stats_dict_to_sankey_file_in(clipping_stats_dict, paired_stats_dict, sankey_file_in_clipping, sankey_file_in_paired):
@@ -1026,9 +777,9 @@ def link_16s(args, config_dict):
     mag_file_extension                  = args['x']
     marker_gene_seqs                    = args['marker']
     min_16s_gnm_multiple                = args['depth']
-    within_genome_minimum_iden16s       = args['s1_mi']
-    cov16s                              = args['s1_mc']
-    aln16s                              = args['s1_ma']
+    min_iden_16s                        = args['min_iden_16s']
+    min_cov_16s                         = args['min_cov_16s']
+    min_aln_16s                         = args['min_aln_16s']
     min_paired_linkages                 = args['s1_mpl']
     min_paired_linkages_for_uniq_linked_16s  = args['s1_mplu']
     min_read_num                        = args['s2_r']
@@ -1058,7 +809,29 @@ def link_16s(args, config_dict):
     gnm_to_ctg_connector                = '___'
     round_2_min_aln_len                 = 50
     round_2_min_cov                     = 35
-    round_2_min_iden                    = 99.5
+    round_2_min_iden                    = 99.9
+
+
+    '''
+    very_sensitive   For greater sensitivity, especially for dataset with low sequencing depth, shortcut for "".
+    sensitive        For better sensitivity, shortcut for "".
+    default_setting  Decide automatically, shortcut for "".
+    specific         For better specificity, shortcut for "".
+    very_specific    For greater specificity, shortcut for "".
+    superspecific    For the best specificity, shortcut for "".
+    
+    
+                        
+    very_sensitive      rd2_min_iden 99.5   rd2_min_cov 25  rd2_min_aln_len 50  rd2_min_link_num 3
+    sensitive           rd2_min_iden 99.5   rd2_min_cov 35  rd2_min_aln_len 50  rd2_min_link_num 5
+    ordinary            rd2_min_iden 99.9   rd2_min_cov 45  rd2_min_aln_len 50  rd2_min_link_num 5
+    specific            rd2_min_iden 100    rd2_min_cov 55  rd2_min_aln_len 50  rd2_min_link_num 8
+    very_specific       rd2_min_iden 100    rd2_min_cov 75  rd2_min_aln_len 50  rd2_min_link_num 10
+    super_specific      rd2_min_iden 100    rd2_min_cov 85  rd2_min_aln_len 50  rd2_min_link_num 10
+    
+    
+    
+    '''
 
 
     ################################################ check dependencies ################################################
@@ -1167,7 +940,6 @@ def link_16s(args, config_dict):
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
     bbmap_parameter  = 'local=t nodisk=t ambiguous=all keepnames=t saa=f trd=t silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
 
-
     ################################################# step 2 #################################################
 
     marker_gene_seqs_1st_round_unlinked         = '%s/round_1_unlinked_16s.fa'                      % step_2_wd
@@ -1176,10 +948,6 @@ def link_16s(args, config_dict):
     combined_1st_round_unlinked_ctgs            = '%s/round_1_unlinked_ctg.fa'                      % step_2_wd
     stats_GapFilling_file                       = '%s/stats_GapFilling.txt'                         % step_2_wd
     stats_GapFilling_file_filtered              = '%s/stats_GapFilling_filtered.txt'                % step_2_wd
-    combined_linkage_file_tmp                   = '%s/combined_linkages_tmp.txt'                    % step_2_wd
-    combined_linkage_file_tmp_html              = '%s/combined_linkages_tmp.html'                   % step_2_wd
-    combined_linkage_file                       = '%s/%s_combined_linkages.txt'                     % (working_directory, output_prefix)
-    combined_linkage_file_html                  = '%s/%s_combined_linkages.html'                    % (working_directory, output_prefix)
     free_living_16s_R1                          = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
     free_living_16s_R2                          = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
     free_living_16s_UP                          = '%s/round2_free_living_16s_UP.fa'                 % step_2_wd
@@ -1192,6 +960,14 @@ def link_16s(args, config_dict):
     free_living_ctg_ref_file                    = '%s/round2_free_living_ctg_refs.txt'              % step_2_wd
     free_living_blast_result                    = '%s/free_living_reads_blastn.tab'                 % step_2_wd
 
+    ################################################# combine linkages from two steps #################################################
+
+    combined_linkage_file_tmp                   = '%s/combined_linkages_tmp.txt'                    % step_2_wd
+    combined_linkage_file_tmp_html              = '%s/combined_linkages_tmp.html'                   % step_2_wd
+    combined_linkage_file                       = '%s/%s_identified_linkages.txt'                   % (working_directory, output_prefix)
+    combined_linkage_file_html                  = '%s/%s_identified_linkages.html'                  % (working_directory, output_prefix)
+    combined_linkage_file_ctg_level             = '%s/%s_identified_linkages_ctg.txt'               % (working_directory, output_prefix)
+    combined_linkage_file_ctg_level_html        = '%s/%s_identified_linkages_ctg.html'              % (working_directory, output_prefix)
 
     #################################### calculate mean depth for genome/assemblies ####################################
 
@@ -1599,7 +1375,7 @@ def link_16s(args, config_dict):
     all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, blastdb_16s, blastdb_16s, blast_results_all_vs_all_16s, blast_parameters)
     os.system(all_vs_all_16s_blastn_cmd)
 
-    pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, aln16s, cov16s)
+    pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
 
     # write out to file
     pairwise_marker_similarity_handle = open(pairwise_marker_similarity, 'w')
@@ -1731,7 +1507,7 @@ def link_16s(args, config_dict):
 
     filter_linkages_iteratively(link_stats_combined, 'Number', pairwise_16s_iden_dict,
                                 mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple,
-                                within_genome_minimum_iden16s, min_paired_linkages,
+                                min_iden_16s, min_paired_linkages,
                                 min_paired_linkages_for_uniq_linked_16s, link_stats_combined_filtered_s1)
 
 
@@ -1804,65 +1580,42 @@ def link_16s(args, config_dict):
                 read_mr.consider_round_2 = True
 
                 if (read_mr.consider_r1_unmapped_mate is True) and (read_mr.consider_r1_clipping_part is True):
-
-                    # write out refs
                     free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
                     free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
-
-                    # write out R1 fa
                     free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
                     #free_living_16s_R1_handle.write('%s\n' % read_mr.r1_clipping_seq)
                     free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
-                    # write out R2 fa
                     free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
                     free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
 
-
                 elif (read_mr.consider_r2_unmapped_mate is True) and (read_mr.consider_r2_clipping_part is True):
-
-                    # write out refs
                     free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
                     free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
-
-                    # write out R1 fa
                     free_living_16s_R1_handle.write('>%s.1\n' % qualified_read)
                     free_living_16s_R1_handle.write('%s\n' % read_mr.r1_seq)
-                    # write out R2 fa
                     free_living_16s_R2_handle.write('>%s.2\n' % qualified_read)
                     #free_living_16s_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
                     free_living_16s_R2_handle.write('%s\n' % read_mr.r2_seq)
 
-
                 else:
                     if read_mr.consider_r1_unmapped_mate is True:
-
-                        # write out refs
                         free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
-
                         free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
                         free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
 
-
                     elif read_mr.consider_r2_unmapped_mate is True:
-                        # write out refs
                         free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
                         free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
                         free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
 
-
                     elif read_mr.consider_r1_clipping_part is True:
-                        # write out refs
                         free_living_16s_refs_file_handle.write('%s.1\t%s\n' % (qualified_read, ','.join(read_mr.r1_filtered_refs)))
-
                         free_living_16s_UP_handle.write('>%s.1\n' % qualified_read)
                         #free_living_16s_UP_handle.write('%s\n' % read_mr.r1_clipping_seq)
                         free_living_16s_UP_handle.write('%s\n' % read_mr.r1_seq)
 
-
                     elif read_mr.consider_r2_clipping_part is True:
-                        # write out refs
                         free_living_16s_refs_file_handle.write('%s.2\t%s\n' % (qualified_read, ','.join(read_mr.r2_filtered_refs)))
-
                         free_living_16s_UP_handle.write('>%s.2\n' % qualified_read)
                         #free_living_16s_UP_handle.write('%s\n' % read_mr.r2_clipping_seq)
                         free_living_16s_UP_handle.write('%s\n' % read_mr.r2_seq)
@@ -1871,6 +1624,7 @@ def link_16s(args, config_dict):
     free_living_16s_R1_handle.close()
     free_living_16s_R2_handle.close()
     free_living_16s_UP_handle.close()
+
 
     ######################################## extract sequences flanking ctg ends #######################################
 
@@ -1937,7 +1691,6 @@ def link_16s(args, config_dict):
                     if round_2_MappingRecord_dict[read_id_base].r2_seq == '':
                         round_2_MappingRecord_dict[read_id_base].r2_seq = read_seq_to_store
 
-
     # parse round_2_MappingRecord_dict
     free_living_ctg_refs_file_handle = open(free_living_ctg_ref_file, 'w')
     free_living_ctg_R1_handle = open(free_living_ctg_R1, 'w')
@@ -1968,7 +1721,6 @@ def link_16s(args, config_dict):
                     # write out sequence
                     free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
                     free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
-
 
                 # consider both of unmapped mate and clipping part
                 else:
@@ -2020,7 +1772,6 @@ def link_16s(args, config_dict):
                         #free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_clipping_seq)
                         free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
 
-
             else:  # r2 mapped to multiple refs, ignore
                 round_2_MappingRecord_dict.pop(read_basename)
 
@@ -2043,7 +1794,6 @@ def link_16s(args, config_dict):
                     # write out sequence
                     free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
                     free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
-
 
                 # consider both of unmapped mate and clipping part
                 else:
@@ -2094,7 +1844,6 @@ def link_16s(args, config_dict):
                         # write out R2 fa
                         free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
                         free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
-
 
             else:  # r1 mapped to multiple refs, ignore
                 round_2_MappingRecord_dict.pop(read_basename)
@@ -2218,6 +1967,7 @@ def link_16s(args, config_dict):
     free_living_ctg_UP_handle.close()
     free_living_ctg_refs_file_handle.close()
 
+
     ############################################### round 2 by blast ###############################################
 
     os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, free_living_16s))
@@ -2297,7 +2047,7 @@ def link_16s(args, config_dict):
         stats_GapFilling_file_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
     stats_GapFilling_file_handle.close()
 
-    filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
+    filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
 
 
     ####################################################################################################################
@@ -2326,6 +2076,58 @@ def link_16s(args, config_dict):
             combined_linkage_file_tmp_handle.write(step_2_link)
     combined_linkage_file_handle.close()
     combined_linkage_file_tmp_handle.close()
+
+    #################### summarize linkages at contig level ####################
+
+    combined_linkage_file_ctg_level_handle = open(combined_linkage_file_ctg_level, 'w')
+    combined_linkage_file_ctg_level_handle.write('Marker___Genome(total)\tContig\tPaired\tClipping\tOverlapped\tStep\n')
+    for each_linkage in open(combined_linkage_file):
+        if not each_linkage.startswith('MarkerGene	GenomicSeq	Linkage	Step'):
+            each_linkage_split = each_linkage.strip().split('\t')
+            marker_id = each_linkage_split[0]
+            mag_id = each_linkage_split[1]
+            total_link_num = int(each_linkage_split[2])
+            link_step = each_linkage_split[3]
+
+            if link_step == 'S1':
+
+                # first go through link num dict by paired reads
+                counted_16s_to_ctg_key = set()
+                for each_paired_link in marker_to_ctg_link_num_dict_pair:
+                    paired_link_16s_id = each_paired_link.split(marker_to_ctg_gnm_Key_connector)[0]
+                    paired_link_ctg_id = each_paired_link.split(marker_to_ctg_gnm_Key_connector)[1]
+                    paired_link_ctg_id_no_gnm = paired_link_ctg_id.split(gnm_to_ctg_connector)[1]
+                    paired_link_gnm_id = paired_link_ctg_id.split(gnm_to_ctg_connector)[0]
+                    if (paired_link_16s_id == marker_id) and (paired_link_gnm_id == mag_id):
+                        current_pair_link_num = marker_to_ctg_link_num_dict_pair[each_paired_link]
+                        current_clip_link_num = marker_to_ctg_link_num_dict_clip.get(each_paired_link, 0)
+                        combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t%s\t%s\t0\tS1\n' % (paired_link_16s_id, paired_link_gnm_id, total_link_num, paired_link_ctg_id_no_gnm, current_pair_link_num, current_clip_link_num))
+                        counted_16s_to_ctg_key.add(each_paired_link)
+
+                # then go through link num dict by clipping reads
+                for each_clip_link in marker_to_ctg_link_num_dict_clip:
+                    if each_clip_link not in counted_16s_to_ctg_key:
+                        clip_link_16s_id = each_clip_link.split(marker_to_ctg_gnm_Key_connector)[0]
+                        clip_link_ctg_id = each_clip_link.split(marker_to_ctg_gnm_Key_connector)[1]
+                        clip_link_ctg_id_no_gnm = clip_link_ctg_id.split(gnm_to_ctg_connector)[1]
+                        clip_link_gnm_id = clip_link_ctg_id.split(gnm_to_ctg_connector)[0]
+                        if (clip_link_16s_id == marker_id) and (clip_link_gnm_id == mag_id):
+                            current_pair_link_num = marker_to_ctg_link_num_dict_pair.get(each_clip_link, 0)
+                            current_clip_link_num = marker_to_ctg_link_num_dict_clip[each_clip_link]
+                            combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t%s\t%s\t0\tS1\n' % (clip_link_16s_id, clip_link_gnm_id, total_link_num, clip_link_ctg_id_no_gnm, current_pair_link_num, current_clip_link_num))
+                            counted_16s_to_ctg_key.add(each_clip_link)
+
+            if link_step == 'S2':
+
+                for each_rd2_linkage in free_living_16s_to_ctg_linkage_dict:
+                    rd2_link_16s_id = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)[0]
+                    rd2_link_ctg_id = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)[1]
+                    rd2_link_ctg_id_no_gnm = rd2_link_ctg_id.split(gnm_to_ctg_connector)[1]
+                    rd2_link_gnm_id = rd2_link_ctg_id.split(gnm_to_ctg_connector)[0]
+                    if (rd2_link_16s_id == marker_id) and (rd2_link_gnm_id == mag_id):
+                        current_ctg_link_num = free_living_16s_to_ctg_linkage_dict[each_rd2_linkage]
+                        combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t0\t0\t%s\tS2\n' % (rd2_link_16s_id, rd2_link_gnm_id, total_link_num, rd2_link_ctg_id_no_gnm, current_ctg_link_num))
+    combined_linkage_file_ctg_level_handle.close()
 
 
     ####################################################################################################################
@@ -2408,42 +2210,73 @@ def link_16s(args, config_dict):
 
 if __name__ == '__main__':
 
-    link_16s_parser = argparse.ArgumentParser(description='Link MAGs with marker genes', usage=link_Marker_MAG_usage)
+    default_prefix = 'MyRun_%s' % datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+    link_16s_parser = argparse.ArgumentParser(description='Linking MAGs with marker genes', usage=link_Marker_MAG_usage)
 
-    link_16s_parser.add_argument('-p',               required=True,                                     help='output prefix')
-    link_16s_parser.add_argument('-r1',              required=True,                                     help='paired reads r1')
-    link_16s_parser.add_argument('-r2',              required=True,                                     help='paired reads r2')
-    link_16s_parser.add_argument('-r16s',            required=False,                                    help='16S reads')
-    link_16s_parser.add_argument('-marker',          required=True,                                     help='marker gene sequences')
-    link_16s_parser.add_argument('-g',               required=False,                default=None,       help='genomic sequences')
-    link_16s_parser.add_argument('-mag',             required=False,                default=None,       help='metagenome-assembled-genome (MAG) folder')
-    link_16s_parser.add_argument('-x',               required=False,                default='fasta',    help='MAG file extension, default: fasta')
-    link_16s_parser.add_argument('-depth',           required=False, type=float,    default=0,          help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, default: 0')
-    link_16s_parser.add_argument('-s1_mi',           required=False, type=float,    default=98,         help='within genome 16S identity cutoff, default: 98')
-    link_16s_parser.add_argument('-s1_mc',           required=False, type=float,    default=30,         help='alignment coverage cutoff for calculating 16S identity, default: 30')
-    link_16s_parser.add_argument('-s1_ma',           required=False, type=int,      default=500,        help='alignment length cutoff for calculating 16S identity, default: 500')
-    link_16s_parser.add_argument('-s1_mpl',          required=False, type=int,      default=10,          help='minimum number of paired reads provided linkages to report, default: 10')
-    link_16s_parser.add_argument('-s1_mplu',         required=False, type=int,      default=5,          help='minimum number of paired reads provided linkages to report (for uniq linked 16S, default: 5')
-    link_16s_parser.add_argument('-s2_r',            required=False, type=int,      default=3,          help='min_read_num, default: 3')
-    link_16s_parser.add_argument('-t',               required=False, type=int,      default=1,          help='number of threads, default: 1')
-    link_16s_parser.add_argument('-quiet',           required=False, action="store_true",               help='not report progress')
-    link_16s_parser.add_argument('-force',           required=False, action="store_true",               help='force overwrite existing results')
-    link_16s_parser.add_argument('-tmp',             required=False, action="store_true",               help='keep temporary files')
-    link_16s_parser.add_argument('-test_mode',       required=False, action="store_true",               help='only for debugging, do not provide')
-    link_16s_parser.add_argument('-bbmap_mem',       required=False, type=int,      default=10,         help='bbmap memory allocation (in gigabyte), default: 10')
-    link_16s_parser.add_argument('-min_M_len',       required=False, type=int,      default=30,         help='minimum aligned length (bp), default: 30')
-    link_16s_parser.add_argument('-min_M_pct',       required=False, type=float,    default=25,         help='minimum aligned percentage (%), default: 25')
-    link_16s_parser.add_argument('-min_clp_len',     required=False, type=int,      default=30,         help='minimum clipping sequence length (bp), default: 30')
-    link_16s_parser.add_argument('-min_clp_M_len',   required=False, type=int,      default=20,         help='minimum aligned clipping sequence length (bp), default: 20')
-    link_16s_parser.add_argument('-mismatch',        required=False, type=float,    default=3,          help='maximum mismatch percentage, default: 3')
+    # specify argument group
+    link_16s_parser_input_files = link_16s_parser.add_argument_group("input files")
+    link_16s_parser_16s         = link_16s_parser.add_argument_group("16S rRNA gene related parameters")
+    link_16s_parser_both_rds    = link_16s_parser.add_argument_group("parameters for linking (round 1 and 2)")
+    link_16s_parser_rd1         = link_16s_parser.add_argument_group("parameters for linking (round 1)")
+    link_16s_parser_rd2         = link_16s_parser.add_argument_group("parameters for linking (round 2)")
+    link_16s_parser_preset      = link_16s_parser.add_argument_group("preset parameters, decide automatically if not specified")
+    link_16s_parser_others      = link_16s_parser.add_argument_group("program settings")
+    link_16s_parser_debug       = link_16s_parser.add_argument_group("for debugging, do NOT specify")
+
+    # input files
+    link_16s_parser_input_files.add_argument('-p',          required=False, metavar='',             default=default_prefix, help='output prefix, (default: MyRun_SystemTime)')
+    link_16s_parser_input_files.add_argument('-r1',         required=True,  metavar='',                                     help='paired reads r1 (fasta format)')
+    link_16s_parser_input_files.add_argument('-r2',         required=True,  metavar='',                                     help='paired reads r2 (fasta format)')
+    link_16s_parser_input_files.add_argument('-marker',     required=True,  metavar='',                                     help='marker gene sequences')
+    link_16s_parser_input_files.add_argument('-g',          required=False, metavar='',             default=None,           help='genomic sequences')
+    link_16s_parser_input_files.add_argument('-mag',        required=False, metavar='',             default=None,           help='metagenome-assembled-genome (MAG) folder')
+    link_16s_parser_input_files.add_argument('-x',          required=False, metavar='',             default='fasta',        help='MAG file extension, (default: %(default)s)')
+    link_16s_parser_input_files.add_argument('-depth',      required=False, metavar='', type=float, default=0,              help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, (default: %(default)s)')
+    link_16s_parser_input_files.add_argument('-r16s',       required=False, metavar='',                                     help='16S reads')
+
+    # 16S rRNA gene related parameters
+    link_16s_parser_16s.add_argument('-min_iden_16s',       required=False, metavar='', type=float, default=98,             help='minimum similarity for 16S sequences to be assigned to the same genome, (default: %(default)s)')
+    link_16s_parser_16s.add_argument('-min_cov_16s',        required=False, metavar='', type=float, default=30,             help='coverage cutoff for calculating pairwise 16S similarity, (default: %(default)s)')
+    link_16s_parser_16s.add_argument('-min_aln_16s',        required=False, metavar='', type=int,   default=500,            help='alignment length cutoff for calculating pairwise 16S similarity, (default: %(default)s)')
+
+    # parameters for both rounds linking
+    link_16s_parser_both_rds.add_argument('-min_M_len',     required=False, metavar='', type=int,   default=30,             help='minimum aligned length (bp), (default: %(default)s)')
+    link_16s_parser_both_rds.add_argument('-min_M_pct',     required=False, metavar='', type=float, default=25,             help='minimum aligned percentage, (default: %(default)s)')
+    link_16s_parser_both_rds.add_argument('-mismatch',      required=False, metavar='', type=float, default=3,              help='maximum mismatch percentage, (default: %(default)s)')
+
+    # parameters for 1st round linking
+    link_16s_parser_both_rds.add_argument('-min_clp_len',   required=False, metavar='', type=int,   default=30,             help='minimum clipping sequence length (bp), (default: %(default)s)')
+    link_16s_parser_both_rds.add_argument('-min_clp_M_len', required=False, metavar='', type=int,   default=20,             help='minimum aligned clipping sequence length (bp), (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-s1_mpl',             required=False, metavar='', type=int,   default=10,             help='minimum number of paired reads provided linkages to report, (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-s1_mplu',            required=False, metavar='', type=int,   default=5,              help='minimum number of paired reads provided linkages to report (for uniq linked 16S), (default: %(default)s)')
+
+    # parameters for 2nd round linking
+    link_16s_parser_rd2.add_argument('-s2_r',               required=False, metavar='', type=int,   default=3,              help='min_read_num, (default: %(default)s)')
+
+    # preset parameters
+    link_16s_parser_preset.add_argument('-very_sensitive',  required=False, action="store_true",                            help='for greater sensitivity, shortcut for ""')
+    link_16s_parser_preset.add_argument('-sensitive',       required=False, action="store_true",                            help='for better sensitivity, shortcut for ""')
+    link_16s_parser_preset.add_argument('-ordinary',        required=False, action="store_true",                            help='ordinary setting, shortcut for ""')
+    link_16s_parser_preset.add_argument('-specific',        required=False, action="store_true",                            help='for better specificity, shortcut for ""')
+    link_16s_parser_preset.add_argument('-very_specific',   required=False, action="store_true",                            help='for greater specificity, shortcut for ""')
+    link_16s_parser_preset.add_argument('-super_specific',  required=False, action="store_true",                            help='for the best specificity, shortcut for ""')
+
+    # program settings
+    link_16s_parser_others.add_argument('-bbmap_mem',       required=False, metavar='', type=int,   default=10,             help='bbmap memory allocation (in gigabyte), (default: %(default)s)')
+    link_16s_parser_others.add_argument('-t',               required=False, metavar='', type=int,   default=1,              help='number of threads, (default: %(default)s)')
+    link_16s_parser_others.add_argument('-tmp',             required=False, action="store_true",                            help='keep temporary files')
+    link_16s_parser_others.add_argument('-quiet',           required=False, action="store_true",                            help='not report progress')
+    link_16s_parser_others.add_argument('-force',           required=False, action="store_true",                            help='force overwrite existing results')
+
+    # for debugging
+    link_16s_parser_debug.add_argument('-test_mode',        required=False, action="store_true",                            help='only for debugging, do not provide')
+    link_16s_parser_debug.add_argument('-rd2_only',         required=False, action="store_true",                            help='run round 2 only')
 
     args = vars(link_16s_parser.parse_args())
-
     link_16s(args, config_dict)
 
 
-To_do = '''
-
+'''
 1. how to incorporate the taxonomy of MAGs and 16S sequences
 2. the depth of 16S sequences always not lower than the genome they come from
 3. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
@@ -2451,8 +2284,4 @@ To_do = '''
 5. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
 6. add "16S_reads" to SortMeRNA's output prefix
 7. estimate cutoffs to use based sensitive or specific
-
-BioSAK select_seq -seq Kelp_R1.fasta -id id_1.txt -out id_1.fa -option 1
-BioSAK select_seq -seq Kelp_R2.fasta -id id_2.txt -out id_2.fa -option 1
-
 '''

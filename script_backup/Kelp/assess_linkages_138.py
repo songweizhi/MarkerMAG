@@ -78,9 +78,49 @@ linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/mock_final_op.txt'
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0401_spades_combined_linkages.txt'
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0404_combined_linkages.txt'
 linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0405_cov35_combined_linkages.txt'
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0405_mis3_combined_linkages.txt'
 
 
 '''
+mis1
+=============================
+Linkage accuracy: Kelp_0405_mis1_combined_linkages
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	87	3	84	0	84(100.0)
+class	87	3	82	0	82(97.62)
+order	87	3	77	0	77(91.67)
+family	87	3	70	0	70(83.33)
+genus	87	3	51	9	60(71.43)
+=============================
+linked MAGs: 31
+
+mis2
+=============================
+Linkage accuracy: Kelp_0405_mis2_combined_linkages
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	84	3	81	0	81(100.0)
+class	84	3	79	0	79(97.53)
+order	84	3	73	0	73(90.12)
+family	84	3	66	0	66(81.48)
+genus	84	3	49	8	57(70.37)
+=============================
+linked MAGs: 32
+
+mis3
+=============================
+Linkage accuracy: Kelp_0405_mis3_combined_linkages
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	82	4	78	0	78(100.0)
+class	82	4	76	0	76(97.44)
+order	82	4	70	0	70(89.74)
+family	82	4	61	0	61(78.21)
+genus	82	4	42	10	52(66.67)
+=============================
+linked MAGs: 35
+
+
+
+
 Linkage accuracy: Kelp_NewCigar_70_mis1_combined_linkages
 Rank	Links	NA	Correct	Unknown	Total(Accuracy)
 phylum	37	0	37	0	37(100.0)
@@ -395,3 +435,29 @@ for each_mag in sorted(bin_id_list):
 linkage_file_with_assessment_by_mag_handle.close()
 
 print('linked MAGs: %s' % len(linked_mag_list))
+
+'''
+
+Kelp_SILVA138_id99_subsample_75_306		Refined_20	42	S1	1	0	0	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__HTCC2089;g__SYFY01;s__	d__Bacteria;p__Proteobacteria;c__Alphaproteobacteria;o__Sphingomonadales;f__Sphingomonadaceae;g__Erythrobacter_A;s__Erythrobacter_A_sp002895025	Bacteria(100.0);Proteobacteria(100.0);Alphaproteobacteria(88.5);Sphingomonadales(88.5);Sphingomonadaceae(88.5);Erythrobacter_A(88.5);Erythrobacter_A sp002895025(88.5)
+Kelp_SILVA138_id99_subsample_100_365	Refined_20	23	S1	1	0	0	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__HTCC2089;g__SYFY01;s__	d__Bacteria;p__Proteobacteria;c__Alphaproteobacteria;o__Sphingomonadales;f__Sphingomonadaceae;g__Erythrobacter_A;s__Erythrobacter_A_sp002895025	Bacteria(100.0);Proteobacteria(100.0);Alphaproteobacteria(85.0);Sphingomonadales(85.0);Sphingomonadaceae(85.0);Erythrobacter_A(85.0);Erythrobacter_A sp002895025(85.0)
+Kelp_SILVA138_id99_subsample_25_212		Refined_20	11	S1	1	1	1	1	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__HTCC2089;g__SYFY01;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__HTCC2089;g__SZUA-521;s__SZUA-521_sp003248125	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(55.50);Pseudomonadales(55.50);HTCC2089(55.50);SZUA-521(55.50);SZUA-521 sp003248125(55.50)
+
+Kelp_SILVA138_id99_subsample_75_668		Refined_26	91	S1	1	1	0	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Granulosicoccales;f__Granulosicoccaceae;g__GCA-1730015;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Chromatiales;f__Sedimenticolaceae;g__QGON01;s__QGON01_sp003660235	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(100.0);Chromatiales(81.33);Sedimenticolaceae(81.33);QGON01(81.33);QGON01 sp003660235(80.99)
+Kelp_SILVA138_id99_subsample_50_553		Refined_26	20	S1	1	1	0	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Granulosicoccales;f__Granulosicoccaceae;g__GCA-1730015;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Chromatiales;f__Sedimenticolaceae;g__QGON01;s__QGON01_sp003660235	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(100.0);Granulosicoccales(78.33);Granulosicoccaceae(78.33);Granulosicoccus(78.33);Granulosicoccus antarcticus(78.33)
+Kelp_SILVA138_id99_subsample_10_229		Refined_26	42	S1	1	1	0	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Granulosicoccales;f__Granulosicoccaceae;g__GCA-1730015;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Chromatiales;f__Sedimenticolaceae;g__QGON01;s__QGON01_sp003660235	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(100.0);Chromatiales(95.75);Sedimenticolaceae(95.75);QGON01(95.75);QGON01 sp003660235(91.50)
+Kelp_SILVA138_id99_subsample_75_314		Refined_26	17	S1	1	1	0	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Granulosicoccales;f__Granulosicoccaceae;g__GCA-1730015;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Chromatiales;f__Sedimenticolaceae;g__QGON01;s__QGON01_sp003660235	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(100.0);Chromatiales(82.0);Sedimenticolaceae(82.0);QGON01(82.0);QGON01 sp003660235(45.0)
+Kelp_SILVA138_id99_subsample_25_393		Refined_26	9	S1	1	1	0	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Granulosicoccales;f__Granulosicoccaceae;g__GCA-1730015;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Chromatiales;f__Sedimenticolaceae;g__QGON01;s__QGON01_sp003660235	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(100.0);Granulosicoccales(51.0);Granulosicoccaceae(51.0);Granulosicoccus(51.0);Granulosicoccus antarcticus(51.0)
+Kelp_SILVA138_id99_subsample_100_789	Refined_26	13	S1	1	1	1	1	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Granulosicoccales;f__Granulosicoccaceae;g__GCA-1730015;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Granulosicoccales;f__Granulosicoccaceae;g__Granulosicoccus;s__Granulosicoccus_antarcticus	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(100.0);Granulosicoccales(97.0);Granulosicoccaceae(97.0);Granulosicoccus(97.0);Granulosicoccus antarcticus(97.0)
+
+Kelp_SILVA138_id99_subsample_10_136		Refined_57	154	S1	1	1	1	0	0	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__Porticoccaceae;g__;s__	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__Cellvibrionaceae;g__Teredinibacter;s__Teredinibacter_sp000966245	Bacteria(100.0);Proteobacteria(100.0);Gammaproteobacteria(100.0);Pseudomonadales(100.0);Cellvibrionaceae(78.0);Teredinibacter(60.0);Teredinibacter sp003634075(60.0)
+
+Kelp_SILVA138_id99_subsample_50_115		Refined_19	44	S1	1	1	1	0	0	d__Bacteria;p__Planctomycetota;c__UBA1135;o__UBA1135;f__GCA-002686595;g__;s__	d__Bacteria;p__Planctomycetota;c__UBA1135;o__UBA1135;f__UBA1135;g__GCA-2705055;s__GCA-2705055_sp002705055	Unclassified
+
+Kelp_SILVA138_id99_subsample_50_418		Refined_31	28	S2	1	1	1	0	0	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__SHLQ01;g__SHLQ01;s__	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__MedAcidi-G1;g__S20-B6;s__S20-B6_sp002346745	Bacteria(100.0);Actinobacteriota(100.0);Acidimicrobiia(100.0);Acidimicrobiales(100.0);MedAcidi-G1(100.0);MedAcidi-G1(60.5);MedAcidi-G1 sp002713545(60.5)
+Kelp_SILVA138_id99_subsample_75_575		Refined_31	28	S2	1	1	1	0	0	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__SHLQ01;g__SHLQ01;s__	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__MedAcidi-G1;g__S20-B6;s__S20-B6_sp002699725	Bacteria(100.0);Actinobacteriota(100.0);Acidimicrobiia(100.0);Acidimicrobiales(100.0);MedAcidi-G1(100.0);UBA3125(78.33);UBA3125 sp002687745(78.33)
+Kelp_SILVA138_id99_subsample_100_694	Refined_31	28	S2	1	1	1	0	0	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__SHLQ01;g__SHLQ01;s__	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__MedAcidi-G1;g__S20-B6;s__S20-B6_sp002346745	Bacteria(100.0);Actinobacteriota(100.0);Acidimicrobiia(100.0);Acidimicrobiales(100.0);MedAcidi-G1(87.0);MedAcidi-G1(81.0);MedAcidi-G1 sp003214465(81.0)
+Kelp_SILVA138_id99_subsample_75_493		Refined_31	3	S2	1	1	1	0	0	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__SHLQ01;g__SHLQ01;s__	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__MedAcidi-G1;g__MedAcidi-G1;s__MedAcidi-G1_sp002713545	Bacteria(100.0);Actinobacteriota(100.0);Acidimicrobiia(100.0);Acidimicrobiales(100.0);MedAcidi-G1(100.0);MedAcidi-G1(72.33);MedAcidi-G1 sp002713545(72.33)
+Kelp_SILVA138_id99_subsample_50_487		Refined_31	8	S2	1	1	1	0	0	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__SHLQ01;g__SHLQ01;s__	d__Bacteria;p__Actinobacteriota;c__Acidimicrobiia;o__Acidimicrobiales;f__MedAcidi-G1;g__S20-B6;s__S20-B6_sp002346745	Bacteria(100.0);Actinobacteriota(100.0);Acidimicrobiia(100.0);Acidimicrobiales(100.0);MedAcidi-G1(57.5);MedAcidi-G3(42.5);MedAcidi-G3 sp000817105(42.5)
+
+
+'''
