@@ -20,10 +20,8 @@ Dependencies
  Dependencies are module-specific, please see details below:
  
 + `link`: 
-  [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/),
-  [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download),
-  [optparse](https://cran.r-project.org/web/packages/optparse/index.html) (R) and 
-  [googleVis](https://cran.r-project.org/web/packages/googleVis/index.html) (R)
+  [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/) and 
+  [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 
 + `matam_16s`: 
   [SortMeRNA](https://github.com/biocore/sortmerna), 

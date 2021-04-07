@@ -81,8 +81,25 @@ MarkerMAG_linkages          = '%s/GI_0405_mis1_combined_linkages.txt'           
 # Linkage	211/97(217.53)	211/298(70.81)	25
 
 
+# GI_0406_very_sensitive_identified_linkages_genome_level.txt
+# GI_0406_sensitive_identified_linkages_genome_level.txt
+# GI_0406_default_identified_linkages_genome_level.txt
+# GI_0406_specific_identified_linkages_genome_level.txt
+# GI_0406_very_specific_identified_linkages_genome_level.txt
+# GI_0406_super_specific_identified_linkages_genome_level.txt
+
+MarkerMAG_linkages          = '%s/GI_0406_super_specific_identified_linkages_genome_level.txt'                                                 % wd
+
 
 '''
+
+very_sensitive	204/97(210.31)	204/282(72.34)	25
+sensitive	    205/97(211.34)	205/283(72.44)	25
+default	        205/97(211.34)	205/283(72.44)	25
+specific	    204/97(210.31)	204/282(72.34)	25
+very_specific	204/97(210.31)	204/282(72.34)	25
+super_specific	205/97(211.34)	205/283(72.44)	25
+
     	                Recovery	    Accuracy	    Unknown
 GI_0405_mis3    Linkage	212/97(218.56)	212/299(70.9)	25
 GI_0405_mis2    Linkage	186/97(191.75)	186/283(65.72)	26

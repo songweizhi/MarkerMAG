@@ -2,7 +2,7 @@ import seaborn as sns
 import plotly.graph_objects as go
 
 
-def get_sankey_plot(node_list, source_list, target_list, value_list, color_list, output_html):
+def get_sankey_plot(node_list, source_list, target_list, value_list, color_list, plot_title, output_html):
 
     node_index_dict = {y: x for x, y in enumerate(node_list)}
     source_index = [node_index_dict[x] for x in source_list]
@@ -10,7 +10,7 @@ def get_sankey_plot(node_list, source_list, target_list, value_list, color_list,
 
     # https://anvil.works/docs/api/plotly.graph_objs.sankey
     fig = go.Figure(data=[go.Sankey(node=dict(label=node_list,  # line=0,
-                                              pad=6,  # space between node
+                                              pad=5,  # space between node
                                               thickness=12,  # node width
                                               line=dict(width=0)),  # set width of node border to 0
                                     link=dict(source=source_index,
@@ -18,13 +18,12 @@ def get_sankey_plot(node_list, source_list, target_list, value_list, color_list,
                                               value=value_list,
                                               color=color_list))])
 
-    fig.update_layout(autosize=False, width=1200, height=1200, )
+    fig.update_layout(autosize=False, width=1200, height=1200, margin=dict(l=50, r=50, b=50, t=125), paper_bgcolor="white", title=plot_title)
     fig.update_traces(textfont_size=11)
     fig.write_html(output_html)
 
 
 combined_linkage_file_ctg_level = '/Users/songweizhi/Desktop/Kelp_0406_mis1_identified_linkages_ctg.txt'
-
 output_plot_rd1 = '/Users/songweizhi/Desktop/000_rd1.html'
 output_plot_rd2 = '/Users/songweizhi/Desktop/000_rd2.html'
 dict_for_sankey_key_connector = '___X___'
@@ -38,6 +37,8 @@ node_set_rd1 = set()
 node_set_rd2 = set()
 genome_set_rd1 = set()
 genome_set_rd2 = set()
+marker_gene_set_rd1 = set()
+marker_gene_set_rd2 = set()
 for each_linkage in open(combined_linkage_file_ctg_level):
     if not each_linkage.startswith('Marker___Genome(total)	Contig	Paired	Clipping	Overlapped	Step'):
         each_linkage_split = each_linkage.strip().split('\t')
@@ -51,6 +52,7 @@ for each_linkage in open(combined_linkage_file_ctg_level):
 
         if each_linkage_split[5] == 'S1':
             genome_set_rd1.add(gnm_id)
+            marker_gene_set_rd1.add(marker_id)
             node_set_rd1.add(marker_id)
             node_set_rd1.add(ctg_id)
             node_set_rd1.add(gnm_id)
@@ -70,6 +72,7 @@ for each_linkage in open(combined_linkage_file_ctg_level):
 
         if each_linkage_split[5] == 'S2':
             genome_set_rd2.add(gnm_id)
+            marker_gene_set_rd2.add(marker_id)
             node_set_rd2.add(marker_id)
             node_set_rd2.add(ctg_id)
             node_set_rd2.add(gnm_id)
@@ -129,8 +132,13 @@ for each_target in target_list_rd2:
 node_list_rd1 = sorted([i for i in node_set_rd1])
 node_list_rd2 = sorted([i for i in node_set_rd2])
 
-get_sankey_plot(node_list_rd1, source_list_rd1, target_list_rd1, value_list_rd1, color_list_rd1, output_plot_rd1)
-get_sankey_plot(node_list_rd2, source_list_rd2, target_list_rd2, value_list_rd2, color_list_rd1, output_plot_rd2)
+plot_title_text_rd1 = 'MarkerMAG detected linkages (round 1)<br>Number of linked genomes: %s<br>Number of linked markers: %s' % (len(genome_set_rd1), len(marker_gene_set_rd1))
+
+plot_title_dict_rd1 = dict(text=plot_title_text_rd1, x=0.05, y=0.95)
+
+
+get_sankey_plot(node_list_rd1, source_list_rd1, target_list_rd1, value_list_rd1, color_list_rd1, plot_title_dict_rd1, output_plot_rd1)
+#get_sankey_plot(node_list_rd2, source_list_rd2, target_list_rd2, value_list_rd2, color_list_rd1, plot_title_rd1, output_plot_rd2)
 
 
 

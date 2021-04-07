@@ -760,7 +760,7 @@ def get_cigar_stats(cigar_splitted):
     return aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct
 
 
-def get_sankey_plot(node_list, source_list, target_list, value_list, color_list, output_html):
+def get_sankey_plot(node_list, source_list, target_list, value_list, color_list, plot_title, output_html):
 
     node_index_dict = {y: x for x, y in enumerate(node_list)}
     source_index = [node_index_dict[x] for x in source_list]
@@ -768,7 +768,7 @@ def get_sankey_plot(node_list, source_list, target_list, value_list, color_list,
 
     # https://anvil.works/docs/api/plotly.graph_objs.sankey
     fig = go.Figure(data=[go.Sankey(node=dict(label=node_list,  # line=0,
-                                              pad=6,  # space between node
+                                              pad=5,  # space between node
                                               thickness=12,  # node width
                                               line=dict(width=0)),  # set width of node border to 0
                                     link=dict(source=source_index,
@@ -776,7 +776,7 @@ def get_sankey_plot(node_list, source_list, target_list, value_list, color_list,
                                               value=value_list,
                                               color=color_list))])
 
-    fig.update_layout(autosize=False, width=1200, height=1200, )
+    fig.update_layout(autosize=False, width=1200, height=1200, margin=dict(l=50, r=50, b=50, t=125), paper_bgcolor="white", title=plot_title)
     fig.update_traces(textfont_size=11)
     fig.write_html(output_html)
 
@@ -917,9 +917,9 @@ def link_16s(args):
 
     ######################## check genomic sequence type and prepare files for making blast db #########################
 
-    combined_input_gnms           = ''
-    genomic_seq_type   = ''  # ctg or mag
-    renamed_mag_folder = ''
+    combined_input_gnms = ''
+    genomic_seq_type    = ''  # ctg or mag
+    renamed_mag_folder  = ''
 
     # check the type of input genomic sequences
     if (genomic_assemblies is not None) and (mag_folder is None):
@@ -1179,8 +1179,6 @@ def link_16s(args):
     for each_mp in MappingRecord_dict:
 
         current_mp_record = MappingRecord_dict[each_mp]
-        current_mp_r1_seq = current_mp_record.r1_seq
-        current_mp_r2_seq = current_mp_record.r2_seq
         current_mp_r1_refs = current_mp_record.r1_refs
         current_mp_r2_refs = current_mp_record.r2_refs
         current_mp_r1_refs_no_pos = {i.split('_pos_')[0] for i in current_mp_r1_refs}
@@ -1370,17 +1368,13 @@ def link_16s(args):
         if not each_read.startswith('@'):
             each_read_split = each_read.strip().split('\t')
             read_id = each_read_split[0]
-            read_seq = each_read_split[9]
             cigar = each_read_split[5]
             if cigar != '*':
                 read_id_base = '.'.join(read_id.split('.')[:-1])
                 read_strand = read_id.split('.')[-1]
                 ref_id = each_read_split[2]
-                ref_pos = each_read_split[3]
-                ref_id_with_pos = '%s_pos_%s' % (ref_id, ref_pos)
                 cigar_splitted = cigar_splitter(cigar)
                 aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-
                 if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= max_mis_pct):
                     if read_strand == '1':
                         MappingRecord_dict[read_id_base].unmapped_r1_refs.add(ref_id)
@@ -1395,17 +1389,13 @@ def link_16s(args):
         if not each_read.startswith('@'):
             each_read_split = each_read.strip().split('\t')
             read_id = each_read_split[0]
-            read_seq = each_read_split[9]
             cigar = each_read_split[5]
             if cigar != '*':
                 read_id_base = '.'.join(read_id.split('.')[:-1])
                 read_strand = read_id.split('.')[-1]
                 ref_id = each_read_split[2]
-                ref_pos = each_read_split[3]
-                ref_id_with_pos = '%s_pos_%s' % (ref_id, ref_pos)
                 cigar_splitted = cigar_splitter(cigar)
                 aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-
                 if (aligned_len >= min_clp_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= max_mis_pct):
                     if read_strand == '1':
                         MappingRecord_dict[read_id_base].clipping_r1_refs.add(ref_id)
@@ -2192,6 +2182,8 @@ def link_16s(args):
     node_set_rd2 = set()
     genome_set_rd1 = set()
     genome_set_rd2 = set()
+    marker_gene_set_rd1 = set()
+    marker_gene_set_rd2 = set()
     for each_linkage in open(combined_linkage_file_ctg_level):
         if not each_linkage.startswith('Marker___Genome(total)	Contig	Paired	Clipping	Overlapped	Step'):
             each_linkage_split = each_linkage.strip().split('\t')
@@ -2205,6 +2197,7 @@ def link_16s(args):
 
             if each_linkage_split[5] == 'S1':
                 genome_set_rd1.add(gnm_id)
+                marker_gene_set_rd1.add(marker_id)
                 node_set_rd1.add(marker_id)
                 node_set_rd1.add(ctg_id)
                 node_set_rd1.add(gnm_id)
@@ -2224,6 +2217,7 @@ def link_16s(args):
 
             if each_linkage_split[5] == 'S2':
                 genome_set_rd2.add(gnm_id)
+                marker_gene_set_rd2.add(marker_id)
                 node_set_rd2.add(marker_id)
                 node_set_rd2.add(ctg_id)
                 node_set_rd2.add(gnm_id)
@@ -2283,8 +2277,14 @@ def link_16s(args):
     node_list_rd1 = sorted([i for i in node_set_rd1])
     node_list_rd2 = sorted([i for i in node_set_rd2])
 
-    get_sankey_plot(node_list_rd1, source_list_rd1, target_list_rd1, value_list_rd1, color_list_rd1, linkage_plot_rd1_html)
-    get_sankey_plot(node_list_rd2, source_list_rd2, target_list_rd2, value_list_rd2, color_list_rd1, linkage_plot_rd2_html)
+    plot_title_text_rd1 = 'MarkerMAG detected linkages (round 1)<br>Number of linked genomes: %s<br>Number of linked markers: %s' % (len(genome_set_rd1), len(marker_gene_set_rd1))
+    plot_title_text_rd2 = 'MarkerMAG detected linkages (round 2)<br>Number of linked genomes: %s<br>Number of linked markers: %s' % (len(genome_set_rd2), len(marker_gene_set_rd2))
+
+    plot_title_dict_rd1 = dict(text=plot_title_text_rd1, x=0.05, y=0.95)
+    plot_title_dict_rd2 = dict(text=plot_title_text_rd2, x=0.05, y=0.95)
+
+    get_sankey_plot(node_list_rd1, source_list_rd1, target_list_rd1, value_list_rd1, color_list_rd1, plot_title_dict_rd1, linkage_plot_rd1_html)
+    get_sankey_plot(node_list_rd2, source_list_rd2, target_list_rd2, value_list_rd2, color_list_rd2, plot_title_dict_rd2, linkage_plot_rd2_html)
 
 
     ######################################## report assessment under test mode #########################################
@@ -2413,14 +2413,4 @@ if __name__ == '__main__':
 5. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
 6. add "16S_reads" to SortMeRNA's output prefix
 7. estimate cutoffs to use based sensitive or specific
-
-very_sensitive     -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 5  -s1_mplu 3  -min_M_len 30 min_M_pct 20 mismatch 3 min_overlap_iden 99.9 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3
-sensitive          -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 5  -s1_mplu 3  -min_M_len 30 min_M_pct 20 mismatch 3 min_overlap_iden 99.9 min_overlap_cov 30 min_overlap_len 50 min_overlap_num 5
-
-default            -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 5  -min_M_len 30 min_M_pct 25 mismatch 3 min_overlap_iden 99.9 min_overlap_cov 35 min_overlap_len 50 min_overlap_num 5
-
-specific           -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 5  -min_M_len 30 min_M_pct 30 mismatch 2 min_overlap_iden 100  min_overlap_cov 55 min_overlap_len 50 min_overlap_num 8
-very_specific      -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 min_M_pct 35 mismatch 1 min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10
-super_specific     -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 min_M_pct 35 mismatch 1 min_overlap_iden 100  min_overlap_cov 85 min_overlap_len 50 min_overlap_num 10
-
 '''
