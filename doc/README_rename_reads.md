@@ -10,7 +10,6 @@ Manual for the `rename_reads` module
    which might due to the shorter length of read names in the output files.
 
    You can use `wc -l input_R1.fasta` and `wc -l output_R1.fasta` to get the number of lines in the input and output files and see if the numbers are the same.   
-   
    You can also use `head R1.fasta` or `tail R1.fasta` to print on the screen the first/last few lines of a file.
 
 

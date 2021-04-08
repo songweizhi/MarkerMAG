@@ -120,13 +120,13 @@ if __name__ == '__main__':
         matam_16s.matam_16s(args)
 
     elif sys.argv[1] == 'uclust_16s':
-        from MarkerMAG import uclust_16S
-        uclust_16S_parser = subparsers.add_parser('uclust_16s', description='Cluster 16S with Usearch', usage=uclust_16S.uclust_16S_usage)
+        from MarkerMAG import uclust_16s
+        uclust_16S_parser = subparsers.add_parser('uclust_16s', description='Cluster 16S with Usearch', usage=uclust_16s.uclust_16S_usage)
         uclust_16S_parser.add_argument('-in',           required=True,                          help='fasta file')
         uclust_16S_parser.add_argument('-i',            required=False, type=float, default=1,  help='Identity cutoff (0-1), default: 1')
         uclust_16S_parser.add_argument('-out',          required=True,                          help='file out')
         args = vars(parser.parse_args())
-        uclust_16S.uclust_16S(args)
+        uclust_16s.uclust_16S(args)
 
     elif sys.argv[1] == 'subsample_reads':
         from MarkerMAG import subsample_reads

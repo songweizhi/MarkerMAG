@@ -64,8 +64,7 @@ MarkerMAG is implemented in python3, you can install it with pip3:
     pip3 install --upgrade MarkerMAG
 
 
-
-Important Notes :warning:
+Notes :warning:
 ---
 
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
@@ -93,7 +92,6 @@ How to run:
       specific:        -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 5  -min_M_len 30 -min_M_pct 30 -mismatch 2 -min_overlap_iden 100  -min_overlap_cov 55 -min_overlap_len 50 -min_overlap_num 8
       very_specific:   -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 -min_M_pct 35 -mismatch 1 -min_overlap_iden 100  -min_overlap_cov 75 -min_overlap_len 50 -min_overlap_num 10
       super_specific:  -min_clp_len 30 -min_clp_M_len 20 -s1_mpl 10 -s1_mplu 10 -min_M_len 30 -min_M_pct 35 -mismatch 1 -min_overlap_iden 100  -min_overlap_cov 85 -min_overlap_len 50 -min_overlap_num 10
-
 
 
 Output files:
