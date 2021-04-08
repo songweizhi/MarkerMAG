@@ -4,7 +4,7 @@ Manual for the `rename_reads` module
 
 ### Notes
 
-1. :warning: All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same.
+1. :warning: All reads in the forward and reverse reads files **must be in pair** and their orders in the two files **must be the same**.
 
 1. The sizes of the output files might be slightly smaller than the input files, 
    which might due to the shorter length of read names in the output files.
