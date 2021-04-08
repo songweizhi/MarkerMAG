@@ -2,6 +2,7 @@
 Manual for the `matam_16s` module
 ---
 
+
 ### Notes
 
 1. The reconstruction of 16S rRNA genes by Matam is affected by sequencing depth (data not published), we thus recommend to 
@@ -21,7 +22,7 @@ Manual for the `matam_16s` module
        fq2fa soil_R2.fastq soil_R2.fasta
 
 1. :warning: The default SILVA SSU database used by Matam is the [128 release](https://www.arb-silva.de/documentation/release-128/). 
-   please follow the steps below to prepare database files for Matam with the latest release of the SILVA SSU database.
+   If you want to run Matam with the latest release of the SILVA SSU database, please refer to the steps below.
 
 1. :warning: Reconstruct 16S with Matam is time-consuming (especially with multiple times of subsampling), so be patient! 
 
@@ -41,6 +42,7 @@ Manual for the `matam_16s` module
 
 1. Format SILVA SSU sequences with Matam
 
+       cd $matam_db_folder
        matam_db_preprocessing.py --clustering_id_threshold 0.99 --max_memory 30000 --cpu 12 -v -i SILVA_138.1_SSURef_NR99_tax_silva.fasta -d SILVA_138_1_SSURef_NR99_id99
 
 1. The generated db files need to be provided to Matama as `-d $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99`. Here is an example command:
