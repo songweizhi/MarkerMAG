@@ -64,10 +64,10 @@ MarkerMAG is implemented in python3, you can install it with pip3:
     pip3 install --upgrade MarkerMAG
 
 
-Notes :warning:
+Notes 
 ---
 
-1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
+1. :warning: MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module ([manual](doc/README_rename_reads.md)). 
    
 1. Although you can use your preferred tool to reconstruct 16S rRNA gene sequences from the metagenomic dataset, 
