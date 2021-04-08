@@ -12,270 +12,87 @@ def sep_path_basename_ext(file_in):
 
     return file_path, file_basename, file_extension
 
-'''
-=============================
-Linkage accuracy: Kelp_0405_combined_linkages
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	83	4	79	0	79(100.0)
-class	83	4	77	0	77(97.47)
-order	83	4	71	0	71(89.87)
-family	83	4	64	0	64(81.01)
-genus	83	4	48	8	56(70.89)
-=============================
-linked MAGs: 33
-
-=============================
-Linkage accuracy: Kelp_0405_500bp_combined_linkages
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	78	4	74	0	74(100.0)
-class	78	4	72	0	72(97.3)
-order	78	4	66	0	66(89.19)
-family	78	4	59	0	59(79.73)
-genus	78	4	43	8	51(68.92)
-=============================
-linked MAGs: 33
-
-cov25
-=============================
-Linkage accuracy: Kelp_0405_cov25_combined_linkages
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	83	4	79	0	79(100.0)
-class	83	4	77	0	77(97.47)
-order	83	4	71	0	71(89.87)
-family	83	4	62	0	62(78.48)
-genus	83	4	42	11	53(67.09)
-=============================
-linked MAGs: 36
-
-cov35
-=============================
-Linkage accuracy: Kelp_0405_cov35_combined_linkages
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	82	4	78	0	78(100.0)
-class	82	4	76	0	76(97.44)
-order	82	4	70	0	70(89.74)
-family	82	4	61	0	61(78.21)
-genus	82	4	42	10	52(66.67)
-=============================
-linked MAGs: 35
-
-'''
 
 ###################################################### file in/out #####################################################
 
 wd                  = '/Users/songweizhi/Desktop/MarkerMAG_wd/4_Kelp'
 taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                              % wd
 taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified.txt' % wd
+taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified_corrected.txt' % wd
 taxonomy_16s_blca   = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999.fasta.blca.out' % wd
 bin_id_file         = '%s/bin_id.txt'                                                   % wd
 barrnap_output      = '%s/BH_ER_050417_16S.txt'                                         % wd
 checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                       % wd
 mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                     % wd
 
-linkage_file        = '%s/file_in/manual_linkages.txt'      % wd
-#linkage_file        = '%s/file_in/Kelp_70_3_combined_linkages.txt'      % wd
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/mock_final_op.txt'
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0401_spades_combined_linkages.txt'
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0404_combined_linkages.txt'
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0405_cov35_combined_linkages.txt'
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0405_mis3_combined_linkages.txt'
-
-# Kelp_0406_default_identified_linkages_genome_level.txt
-# Kelp_0406_sensitive_identified_linkages_genome_level.txt
-# Kelp_0406_specific_identified_linkages_genome_level.txt
-# Kelp_0406_super_specific_identified_linkages_genome_level.txt
 # Kelp_0406_very_sensitive_identified_linkages_genome_level.txt
+# Kelp_0406_sensitive_identified_linkages_genome_level.txt
+# Kelp_0406_default_identified_linkages_genome_level.txt
+# Kelp_0406_specific_identified_linkages_genome_level.txt
 # Kelp_0406_very_specific_identified_linkages_genome_level.txt
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0406_very_sensitive_identified_linkages_genome_level.txt'
+# Kelp_0406_super_specific_identified_linkages_genome_level.txt
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0406_default_identified_linkages_genome_level.txt'
 
 '''
 =============================
-Linkage accuracy: Kelp_0406_very_sensitive_identified_linkages_genome_level
+very_sensitive
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	95	3	92	0	92(100.0)
-class	95	3	90	0	90(97.83)
-order	95	3	83	0	83(90.22)
-family	95	3	74	0	74(80.43)
-genus	95	3	51	15	66(71.74)
+phylum	95	3	92	0	92/92(100.0)
+class	95	3	92	0	92/92(100.0)
+order	95	3	91	0	91/92(98.91)
+family	95	3	88	0	88/92(95.65)
+genus	95	3	59	15	74/92(80.43)
 linked MAGs: 36
 
 =============================
-Linkage accuracy: Kelp_0406_sensitive_identified_linkages_genome_level
+sensitive
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	93	3	90	0	90(100.0)
-class	93	3	88	0	88(97.78)
-order	93	3	81	0	81(90.0)
-family	93	3	73	0	73(81.11)
-genus	93	3	51	14	65(72.22)
+phylum	93	3	90	0	90/90(100.0)
+class	93	3	90	0	90/90(100.0)
+order	93	3	89	0	89/90(98.89)
+family	93	3	87	0	87/90(96.67)
+genus	93	3	59	14	73/90(81.11)
 linked MAGs: 35
 
 =============================
-Linkage accuracy: Kelp_0406_default_identified_linkages_genome_level
+default
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	81	4	77	0	77(100.0)
-class	81	4	75	0	75(97.4)
-order	81	4	69	0	69(89.61)
-family	81	4	61	0	61(79.22)
-genus	81	4	42	10	52(67.53)
+phylum	81	4	77	0	77/77(100.0)
+class	81	4	77	0	77/77(100.0)
+order	81	4	77	0	77/77(100.0)
+family	81	4	75	0	75/77(97.4)
+genus	81	4	50	10	60/77(77.92)
 linked MAGs: 35
 
 =============================
-Linkage accuracy: Kelp_0406_specific_identified_linkages_genome_level
+specific
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	72	3	69	0	69(100.0)
-class	72	3	67	0	67(97.1)
-order	72	3	61	0	61(88.41)
-family	72	3	56	0	56(81.16)
-genus	72	3	41	6	47(68.12)
+phylum	72	3	69	0	69/69(100.0)
+class	72	3	69	0	69/69(100.0)
+order	72	3	69	0	69/69(100.0)
+family	72	3	67	0	67/69(97.1)
+genus	72	3	45	6	51/69(73.91)
 linked MAGs: 29
 
 =============================
-Linkage accuracy: Kelp_0406_very_specific_identified_linkages_genome_level
+very_specific
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	54	1	53	0	53(100.0)
-class	54	1	51	0	51(96.23)
-order	54	1	47	0	47(88.68)
-family	54	1	45	0	45(84.91)
-genus	54	1	32	5	37(69.81)
+phylum	54	1	53	0	53/53(100.0)
+class	54	1	53	0	53/53(100.0)
+order	54	1	53	0	53/53(100.0)
+family	54	1	51	0	51/53(96.23)
+genus	54	1	32	5	37/53(69.81)
 linked MAGs: 23
 
 =============================
-Linkage accuracy: Kelp_0406_super_specific_identified_linkages_genome_level
+super_specific
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	50	1	49	0	49(100.0)
-class	50	1	47	0	47(95.92)
-order	50	1	43	0	43(87.76)
-family	50	1	41	0	41(83.67)
-genus	50	1	29	4	33(67.35)
+phylum	50	1	49	0	49/49(100.0)
+class	50	1	49	0	49/49(100.0)
+order	50	1	49	0	49/49(100.0)
+family	50	1	47	0	47/49(95.92)
+genus	50	1	29	4	33/49(67.35)
 linked MAGs: 20
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-mis1
-=============================
-Linkage accuracy: Kelp_0405_mis1_combined_linkages
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	87	3	84	0	84(100.0)
-class	87	3	82	0	82(97.62)
-order	87	3	77	0	77(91.67)
-family	87	3	70	0	70(83.33)
-genus	87	3	51	9	60(71.43)
-=============================
-linked MAGs: 31
-
-mis2
-=============================
-Linkage accuracy: Kelp_0405_mis2_combined_linkages
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	84	3	81	0	81(100.0)
-class	84	3	79	0	79(97.53)
-order	84	3	73	0	73(90.12)
-family	84	3	66	0	66(81.48)
-genus	84	3	49	8	57(70.37)
-=============================
-linked MAGs: 32
-
-mis3
-=============================
-Linkage accuracy: Kelp_0405_mis3_combined_linkages
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	82	4	78	0	78(100.0)
-class	82	4	76	0	76(97.44)
-order	82	4	70	0	70(89.74)
-family	82	4	61	0	61(78.21)
-genus	82	4	42	10	52(66.67)
-=============================
-linked MAGs: 35
-
-
-
-
-Linkage accuracy: Kelp_NewCigar_70_mis1_combined_linkages
-Rank	Links	NA	Correct	Unknown	Total(Accuracy)
-phylum	37	0	37	0	37(100.0)
-class	37	0	34	0	34(91.89)
-order	37	0	30	0	30(81.08)
-family	37	0	28	0	28(75.68)
-genus	37	0	18	7	25(67.57)
-
-Linkage accuracy: Kelp_NewCigar_70_mis2_combined_linkages
-Rank	Links	NA	Correct	Unknown	Total(Accuracy)
-phylum	46	0	46	0	46(100.0)
-class	46	0	43	0	43(93.48)
-order	46	0	39	0	39(84.78)
-family	46	0	37	0	37(80.43)
-genus	46	0	27	7	34(73.91)
-
-Linkage accuracy: Kelp_NewCigar_70_mis3_combined_linkages
-Rank	Links	NA	Correct	Unknown	Total(Accuracy)
-phylum	50	0	50	0	50(100.0)
-class	50	0	47	0	47(94.0)
-order	50	0	43	0	43(86.0)
-family	50	0	41	0	41(82.0)
-genus	50	0	31	7	38(76.0)
-
-        70_mis1         70_mis2         70_mis3         70_mis4         70_mis5
-phylum	37/37(100.0)	46/46(100.0)	50/50(100.0)	52/52(100.0)    54/54(100.0)
-class	34/37(91.89)	43/46(93.48)	47/50(94.0)	    49/52(94.23)    51/54(94.44)
-order	30/37(81.08)	39/46(84.78)	43/50(86.0) 	45/52(86.54)    47/54(87.04)
-family	28/37(75.68)	37/46(80.43)	41/50(82.0) 	43/52(82.69)    45/54(83.33)
-genus	18/37(48.65)	27/46(58.7)	    31/50(62.0) 	32/52(61.54)    34/54(62.96)
-
-80_mis1
-phylum	33/33(100.0)
-class	31/33(93.94)
-order	27/33(81.82)
-family	25/33(75.76)
-genus	17/33(51.52)
-
-80_mis2
-phylum	42/42(100.0)
-class	40/42(95.24)
-order	36/42(85.71)
-family	34/42(80.95)
-genus	24/42(57.14)
-
-
-80_mis3
-phylum	44/44(100.0)
-class	42/44(95.45)
-order	38/44(86.36)
-family	36/44(81.82)
-genus	26/44(59.09)
-
-60_mis1
-phylum	38/38(100.0)
-class	35/38(92.11)
-order	31/38(81.58)
-family	29/38(76.32)
-genus	18/38(47.37)
-
-60_mis2
-phylum	48/48(100.0)
-class	45/48(93.75)
-order	41/48(85.42)
-family	39/48(81.25)
-genus	29/48(60.42)
-
-60_mis3
-phylum	46/46(100.0)
-class	43/46(93.48)
-order	39/46(84.78)
-family	37/46(80.43)
-genus	27/46(58.7)
 
 '''
 
@@ -376,6 +193,7 @@ for each_linkage in open(linkage_file):
 
         if (taxon_mag == 'NA') or (taxon_16s == 'NA'):
             unknown_mag_or_16s_taxon += 1
+            line_to_write += '\tna\tna\tna\tna\tna'
         else:
             taxon_mag_p = taxon_mag_split[1]
             taxon_mag_c = taxon_mag_split[2]
@@ -473,11 +291,11 @@ if total_linkage > 0:
 
     print('Linkage accuracy: %s' % linkage_file_basename)
     print('Rank\tAll\tNA\tCorrect\tUnknown\tTotal(Accuracy)')
-    print('phylum\t%s\t%s\t%s\t%s\t%s(%s)' % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_p, linkage_with_unknown_p, (correct_linkage_p + linkage_with_unknown_p), accuracy_p))
-    print('class\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_c, linkage_with_unknown_c, (correct_linkage_c + linkage_with_unknown_c), accuracy_c))
-    print('order\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_o, linkage_with_unknown_o, (correct_linkage_o + linkage_with_unknown_o), accuracy_o))
-    print('family\t%s\t%s\t%s\t%s\t%s(%s)' % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_f, linkage_with_unknown_f, (correct_linkage_f + linkage_with_unknown_f), accuracy_f))
-    print('genus\t%s\t%s\t%s\t%s\t%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_g, linkage_with_unknown_g, (correct_linkage_g + linkage_with_unknown_g), accuracy_g))
+    print('phylum\t%s\t%s\t%s\t%s\t%s/%s(%s)' % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_p, linkage_with_unknown_p, (correct_linkage_p + linkage_with_unknown_p), (total_linkage - unknown_mag_or_16s_taxon), accuracy_p))
+    print('class\t%s\t%s\t%s\t%s\t%s/%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_c, linkage_with_unknown_c, (correct_linkage_c + linkage_with_unknown_c), (total_linkage - unknown_mag_or_16s_taxon), accuracy_c))
+    print('order\t%s\t%s\t%s\t%s\t%s/%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_o, linkage_with_unknown_o, (correct_linkage_o + linkage_with_unknown_o), (total_linkage - unknown_mag_or_16s_taxon), accuracy_o))
+    print('family\t%s\t%s\t%s\t%s\t%s/%s(%s)' % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_f, linkage_with_unknown_f, (correct_linkage_f + linkage_with_unknown_f), (total_linkage - unknown_mag_or_16s_taxon), accuracy_f))
+    print('genus\t%s\t%s\t%s\t%s\t%s/%s(%s)'  % (total_linkage, unknown_mag_or_16s_taxon, correct_linkage_g, linkage_with_unknown_g, (correct_linkage_g + linkage_with_unknown_g), (total_linkage - unknown_mag_or_16s_taxon), accuracy_g))
     print('=============================')
 
 ######################################################## by MAG ########################################################

@@ -1,7 +1,7 @@
 
 ## MarkerMAG (linking MAGs with 16S rRNA marker genes)
 
-![logo](images/MarkerMAG_logo.jpg) 
+![logo](doc/images/MarkerMAG_logo.jpg) 
 
 [![pypi licence](https://img.shields.io/pypi/l/MarkerMAG.svg)](https://opensource.org/licenses/gpl-3.0.html)
 [![pypi version](https://img.shields.io/pypi/v/MarkerMAG.svg)](https://pypi.python.org/pypi/MarkerMAG) 
@@ -57,27 +57,19 @@ MarkerMAG modules:
     
 + Supplementary modules
 
-    + `rename_reads`: rename paired reads ([manual]())
-    + `matam_16s`: assemble 16S rRNA genes with Matam, including subsample and dereplication ([manual]())
-    + `uclust_16s`: cluster marker genes with Usearch ([manual]())
-    + `barrnap_16s`: identify 16S gene sequences with Barrnap ([manual]())
-    + `subsample_reads`: subsample reads with Usearch ([manual]())
+    + `rename_reads`: rename paired reads ([manual](doc/README_rename_reads.md))
+    + `matam_16s`: assemble 16S rRNA genes with Matam, including subsample and dereplication ([manual](doc/README_matam_16s.md))
+    + `uclust_16s`: cluster marker genes with Usearch ([manual](doc/README_uclust_16s.md))
+    + `barrnap_16s`: identify 16S gene sequences with Barrnap ([manual](doc/README_barrnap_16s.md))
+    + `subsample_reads`: subsample reads with Usearch ([manual](doc/README_subsample_reads.md))
 
 
 Important Notes :warning:
 ---
 
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
-   You can rename your reads with MarkerMAG's `rename_reads` module. 
+   You can rename your reads with MarkerMAG's `rename_reads` module ([manual](doc/README_rename_reads.md)). 
    
-    :warning: All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same.
-
-       MarkerMAG rename_reads -r1 R1.fastq -r2 R2.fastq -p soil -fq -t 2
-        
-       # output files and format of renamed reads id:
-       # Soil_R1.fasta: soil_1.1, soil_2.1, soil_3.1 ...
-       # Soil_R2.fasta: soil_1.2, soil_2.2, soil_3.2 ...
-
 1. The reconstruction of 16S rRNA genes by Matam is highly affected by sequencing depth ([ref](to/be/added)), we thus recommend to 
    run Matam on reads subsets subsampled at different percentage and combine assemblies at all depth, followed by dereplication.
 

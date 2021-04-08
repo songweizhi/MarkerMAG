@@ -92,13 +92,14 @@ MarkerMAG_linkages          = '%s/GI_0406_super_specific_identified_linkages_gen
 
 
 '''
+Setting	        Recovery	    Accuracy	    Unknown
+very_sensitive	231/97(238.14)	231/324(71.3)	26
+sensitive	    224/97(230.93)	224/306(73.2)	26
+default	        204/97(210.31)	204/282(72.34)	25
+specific	    174/97(179.38)	174/234(74.36)	20
+very_specific	106/97(109.28)	106/121(87.6)	8
+super_specific	96/97(98.97)	96/108(88.89)	7
 
-very_sensitive	204/97(210.31)	204/282(72.34)	25
-sensitive	    205/97(211.34)	205/283(72.44)	25
-default	        205/97(211.34)	205/283(72.44)	25
-specific	    204/97(210.31)	204/282(72.34)	25
-very_specific	204/97(210.31)	204/282(72.34)	25
-super_specific	205/97(211.34)	205/283(72.44)	25
 
     	                Recovery	    Accuracy	    Unknown
 GI_0405_mis3    Linkage	212/97(218.56)	212/299(70.9)	25
