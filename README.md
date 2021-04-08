@@ -14,10 +14,26 @@ Publication
 + Center for Marine Science & Innovation, University of New South Wales, Sydney, Australia
 
 
+MarkerMAG modules:
+---
+
+1. Main module
+
+    + `link`: linking MAGs with 16S rRNA marker genes
+    
+1. Supplementary modules
+
+    + `rename_reads`: rename paired reads ([manual](doc/README_rename_reads.md))
+    + `matam_16s`: assemble 16S rRNA genes with Matam, including subsample and dereplication ([manual](doc/README_matam_16s.md))
+    + `uclust_16s`: cluster marker genes with Usearch ([manual](doc/README_uclust_16s.md))
+    + `barrnap_16s`: identify 16S gene sequences with Barrnap ([manual](doc/README_barrnap_16s.md))
+    + `subsample_reads`: subsample reads with Usearch ([manual](doc/README_subsample_reads.md))
+
+
 Dependencies
 ---
  
- Dependencies are module-specific, please see details below:
+ Dependencies of MarkerMAG are module-specific.
  
 + `link`: 
   [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/) and 
@@ -48,21 +64,6 @@ MarkerMAG is implemented in python3, you can install it with pip3:
     pip3 install --upgrade MarkerMAG
 
 
-MarkerMAG modules:
----
-
-+ Main module
-
-    + `link`: linking MAGs with 16S rRNA marker genes
-    
-+ Supplementary modules
-
-    + `rename_reads`: rename paired reads ([manual](doc/README_rename_reads.md))
-    + `matam_16s`: assemble 16S rRNA genes with Matam, including subsample and dereplication ([manual](doc/README_matam_16s.md))
-    + `uclust_16s`: cluster marker genes with Usearch ([manual](doc/README_uclust_16s.md))
-    + `barrnap_16s`: identify 16S gene sequences with Barrnap ([manual](doc/README_barrnap_16s.md))
-    + `subsample_reads`: subsample reads with Usearch ([manual](doc/README_subsample_reads.md))
-
 
 Important Notes :warning:
 ---
@@ -70,21 +71,11 @@ Important Notes :warning:
 1. MarkerMAG assumes the id of paired reads in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module ([manual](doc/README_rename_reads.md)). 
    
-1. The reconstruction of 16S rRNA genes by Matam is highly affected by sequencing depth ([ref](to/be/added)), we thus recommend to 
-   run Matam on reads subsets subsampled at different percentage and combine assemblies at all depth, followed by dereplication.
+1. Although you can use your preferred tool to reconstruct 16S rRNA gene sequences from the metagenomic dataset, 
+   MarkerMAG does have a supplementary module (`matam_16s`) to reconstruct 16S using Matam. 
+   Please refer to the manual [here](doc/README_matam_16s.md) if you want to use it.
 
-   The following command extracts 16S rRNA reads from `combined_paired_reads.fasta` and subsample at percentage of `1, 5, 10, 25, 50, 75 and 100`.
-   16S rRNA genes reconstructed from all subsets will be combined and clustered at identity cut-off of `99.9%`.
-   The longest sequence from each cluster will be kept.
-   
-   Please refer to [here](demo_files/README_Matam.md) for running Matam using the latest SILVA SSU database (v138.1).
-        
-       # convert fastq files fasta files (e.g. with idba's fq2fa)
-       fq2fa R1.fastq R1.fasta
-       fq2fa R2.fastq R2.fasta
-       MarkerMAG matam_16s -p Soil -r1 R1.fasta -r2 R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref /srv/scratch/z5039045/DB/SILVA/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12 -force
-
-1. :warning: All MAGs derived from a set should be included in MarkerMAG run. (more details need to be added)
+1. :warning: All MAGs derived from a metagenomic dataset should be included in MarkerMAG run. (more details need to be added)
 
 
 How to run:

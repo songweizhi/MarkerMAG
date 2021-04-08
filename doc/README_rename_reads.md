@@ -4,9 +4,9 @@ Manual for the `rename_reads` module
 
 ### Notes
 
-1. :warning: All reads in the forward and reverse reads files **must be in pair** and their orders in the two files **must be the same**.
++ :warning: All reads in the forward and reverse reads files **must be in pair** and their orders in the two files **must be the same**.
 
-1. The sizes of the output files might be slightly smaller than the input files, 
++ The sizes of the output files might be slightly smaller than the input files, 
    which might due to the shorter length of read names in the output files.
 
    You can use `wc -l input_R1.fasta` and `wc -l output_R1.fasta` to get the number of lines in the input and output files and see if the numbers are the same.   
