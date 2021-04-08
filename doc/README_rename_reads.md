@@ -2,10 +2,15 @@
 
 ### Notes
 
-1. All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same :warning:.
+1. :warning: All reads in the R1.fastq and R2.fastq must be in pair and their orders in the two files must be the same.
 
 1. The sizes of the output files might be slightly smaller than the input files, 
-which might due to the shorter length of read names in the renamed files.
+   which might due to the shorter length of read names in the output files.
+
+   You can use `wc -l R1.fasta` to get the number of lines in a file.
+   
+   You can also use `head R1.fasta` or `tail R1.fasta` to get the first/last few lines of a file.
+
 
 ### Example commands
 
