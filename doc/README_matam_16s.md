@@ -45,7 +45,11 @@ Manual for the `matam_16s` module
 
 1. The generated db files need to be provided to Matama as `-d $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99`. Here is an example command:
 
+       # run matam directly
        matam_assembly.py -i filtered_reads_R1_R2.fasta -o Matam_outputs -d $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -v --cpu 12 --max_memory 30000 
+       
+       # run matam with matam_16s
+       MarkerMAG matam_16s -p soil -r1 soil_R1.fasta -r2 soil_R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12
 
 
 ### Modules need to be loaded for UNSW Katana users
