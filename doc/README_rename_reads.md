@@ -1,4 +1,6 @@
 
+Manual for the `rename_reads` module
+---
 
 ### Notes
 
