@@ -16,11 +16,13 @@ Manual for the `rename_reads` module
 
 ### Example commands
 
-    # in fasta format
-    MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -t 2
++ In fasta format
+
+      MarkerMAG rename_reads -r1 R1.fasta -r2 R2.fasta -p soil -t 2
       
-    # in fastq format
-    MarkerMAG rename_reads -r1 R1.fastq -r2 R2.fastq -p soil -fq -t 2
++ In fastq format
+
+      MarkerMAG rename_reads -r1 R1.fastq -r2 R2.fastq -p soil -fq -t 2
 
 
 ### Format of renamed reads
