@@ -13,7 +13,7 @@ Manual for the `matam_16s` module
    16S rRNA gene sequences reconstructed from all subsets are combined and clustered at identity cut-off of 99.9% (recommended).
    The longest sequence from each cluster will be kept.
  
-       MarkerMAG matam_16s -p soil -r1 soil_R1.fasta -r2 soil_R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref /srv/scratch/z5039045/DB/SILVA/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12
+       MarkerMAG matam_16s -p soil -r1 soil_R1.fasta -r2 soil_R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -d /srv/scratch/z5039045/DB/SILVA/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12
 
 1. The `matam_16s` module takes the quality-filtered paired reads in **fasta** format as input. 
    You can use IDBA's `fq2fa` module for format conversion.
@@ -51,7 +51,7 @@ Manual for the `matam_16s` module
        matam_assembly.py -i filtered_reads_R1_R2.fasta -o Matam_outputs -d $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -v --cpu 12 --max_memory 30000 
        
        # run matam with matam_16s
-       MarkerMAG matam_16s -p soil -r1 soil_R1.fasta -r2 soil_R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12
+       MarkerMAG matam_16s -p soil -r1 soil_R1.fasta -r2 soil_R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -d $matam_db_folder/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12
 
 
 ### Modules need to be loaded for UNSW Katana users
