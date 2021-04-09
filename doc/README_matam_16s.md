@@ -10,7 +10,7 @@ Manual for the `matam_16s` module
    dereplicate them.
 
 1. The following command extracts 16S rRNA reads and subsample them at rates of 1, 5, 10, 25, 50, 75 and 100%.
-   16S rRNA gene sequences reconstructed from all subsets are combined and clustered at identity cut-off of 99.9%.
+   16S rRNA gene sequences reconstructed from all subsets are combined and clustered at identity cut-off of 99.9% (recommended).
    The longest sequence from each cluster will be kept.
  
        MarkerMAG matam_16s -p soil -r1 soil_R1.fasta -r2 soil_R2.fasta -pct 1,5,10,25,50,75,100 -i 0.999 -ref /srv/scratch/z5039045/DB/SILVA/SILVA_138_1_SSURef_NR99_id99/SILVA_138.1_SSURef_NR99_tax_silva_NR99 -t 12
