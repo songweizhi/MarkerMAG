@@ -33,12 +33,14 @@ MarkerMAG modules:
 Dependencies
 ---
  
- Dependencies of MarkerMAG are module-specific.
- 
-+ `link`: 
-  [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/) and 
++ Dependencies for the `link` module: 
+
+  [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/)
+  
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 
++ Dependencies for other supplementary modules can be found from their own manual page.
+ 
 + `matam_16s`: 
   [SortMeRNA](https://github.com/biocore/sortmerna), 
   [MATAM](https://github.com/bonsai-team/matam),

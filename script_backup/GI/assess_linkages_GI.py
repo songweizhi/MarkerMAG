@@ -81,6 +81,7 @@ MarkerMAG_linkages          = '%s/GI_0405_mis1_combined_linkages.txt'           
 # Linkage	211/97(217.53)	211/298(70.81)	25
 
 
+
 # GI_0406_very_sensitive_identified_linkages_genome_level.txt
 # GI_0406_sensitive_identified_linkages_genome_level.txt
 # GI_0406_default_identified_linkages_genome_level.txt
@@ -88,23 +89,51 @@ MarkerMAG_linkages          = '%s/GI_0405_mis1_combined_linkages.txt'           
 # GI_0406_very_specific_identified_linkages_genome_level.txt
 # GI_0406_super_specific_identified_linkages_genome_level.txt
 
-MarkerMAG_linkages          = '%s/GI_0406_super_specific_identified_linkages_genome_level.txt'                                                 % wd
+MarkerMAG_linkages          = '%s/GI_0410_3_0_identified_linkages_genome_level.txt'                                                 % wd
+# default               Linkage	185/97(190.72)	185/227(81.5)	16
+# super_specific        Linkage	86/97(88.66)	86/95(90.53)	5
+# super_specific_M75    Linkage	67/97(69.07)	67/86(77.91)	7
+# super_specific_M40    Linkage	90/97(92.78)	90/97(92.78)	6
+# super_specific_M40    Linkage	93/97(95.88)	93/100(93.0)	7
+
+MarkerMAG_linkages          = '%s/GI_0411_very_specific_identified_linkages_genome_level.txt'                                                 % wd
 
 
 '''
-Setting	        Recovery	    Accuracy	    Unknown
-very_sensitive	231/97(238.14)	231/324(71.3)	26
-sensitive	    224/97(230.93)	224/306(73.2)	26
-default	        204/97(210.31)	204/282(72.34)	25
-specific	    174/97(179.38)	174/234(74.36)	20
-very_specific	106/97(109.28)	106/121(87.6)	8
-super_specific	96/97(98.97)	96/108(88.89)	7
+
+Setting	                        Recovery	    Accuracy	    Unknown
+very_sensitive	                231/97(238.14)	231/324(71.3)	26
+very_sensitive_best_match	    191/97(196.91)	191/244(78.28)	24
+
+sensitive	                    224/97(230.93)	224/306(73.2)	26
+sensitive_best_match	        191/97(196.91)	191/243(78.6)	24
+
+default	                        204/97(210.31)	204/282(72.34)	25
+default_best_match	            163/97(168.04)	163/192(84.9)	19
+
+specific	                    174/97(179.38)	174/234(74.36)	20
+specific_best_match	            151/97(155.67)	151/177(85.31)	15
+
+very_specific	                106/97(109.28)	106/121(87.6)	8
+very_specific_best_match	    122/97(125.77)	122/136(89.71)	10
 
 
-    	                Recovery	    Accuracy	    Unknown
-GI_0405_mis3    Linkage	212/97(218.56)	212/299(70.9)	25
-GI_0405_mis2    Linkage	186/97(191.75)	186/283(65.72)	26
-GI_0405_mis1    Linkage	166/97(171.13)	166/223(74.44)	11
+
+
+
+GI_0409_default             Linkage	185/97(190.72)	185/227(81.5)	16
+GI_0409_default_best_match  Linkage	161/97(165.98)	161/178(90.45)	15
+
+GI_0411_by_blast            Linkage	121/97(124.74)	121/137(88.32)	9
+GI_0411_by_blast_best_match Linkage	121/97(124.74)	121/137(88.32)	9
+
+
+
+3_3   Linkage	183/97(188.66)	183/225(81.33)	16      66 links
+3_1   Linkage	169/97(174.23)	169/188(89.89)	15      28 links
+3_0   Linkage	170/97(175.26)	170/188(90.43)	15      26 links
+
+
 '''
 
 ########## script ##########

@@ -95,7 +95,7 @@ def sep_path_basename_ext(file_in):
     # separate path and file name
     file_path, file_name = os.path.split(file_in)
     if file_path == '':
-        file_path = '.'
+        file_path = '../script_backup'
 
     # separate file basename and extension
     file_basename, file_extension = os.path.splitext(file_name)
@@ -2567,252 +2567,171 @@ def link_16s(args, config_dict):
     free_living_ctg_UP_handle.close()
     free_living_ctg_refs_file_handle.close()
 
-    ############################################### round 2 by blast ###############################################
-
-    os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, round_2_free_living_16s))
-    os.system('cat %s %s %s > %s' % (free_living_ctg_R1, free_living_ctg_R2, free_living_ctg_UP, round_2_free_living_ctg))
-
-    blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % 4
-    makeblastdb_cmd = 'makeblastdb -in %s -dbtype nucl -parse_seqids' % round_2_free_living_ctg
-    blastn_cmd = 'blastn -query %s -db %s -out %s %s' % (round_2_free_living_16s, round_2_free_living_ctg, round_2_free_living_blast_result, blast_parameters)
-    os.system(makeblastdb_cmd)
-    os.system(blastn_cmd)
-
-    round2_free_living_16s_ref_dict = {}
-    for free_living_read_16s in open(round2_free_living_16s_ref_file):
-        free_living_read_16s_split = free_living_read_16s.strip().split('\t')
-        read_16s_id = free_living_read_16s_split[0]
-        read_16s_refs = free_living_read_16s_split[1].split(',')
-        round2_free_living_16s_ref_dict[read_16s_id] = read_16s_refs
-
-    round2_free_living_ctg_ref_dict = {}
-    for free_living_read_ctg in open(round2_free_living_ctg_ref_file):
-        free_living_read_ctg_split = free_living_read_ctg.strip().split('\t')
-        read_ctg_id = free_living_read_ctg_split[0]
-        read_ctg_refs = free_living_read_ctg_split[1].split(',')
-        round2_free_living_ctg_ref_dict[read_ctg_id] = read_ctg_refs
-
-    free_living_16s_to_ctg_linkage_dict = {}
-    free_living_16s_to_gnm_linkage_dict = {}
-    for each_hit in open(round_2_free_living_blast_result):
-        match_split = each_hit.strip().split('\t')
-        query = match_split[0]
-        subject = match_split[1]
-        identity = float(match_split[2])
-        align_len = int(match_split[3])
-        query_len = int(match_split[12])
-        subject_len = int(match_split[13])
-        coverage_q = float(align_len) * 100 / float(query_len)
-        coverage_s = float(align_len) * 100 / float(subject_len)
-        qstart = int(match_split[6])
-        qend = int(match_split[7])
-        sstart = int(match_split[8])
-        send = int(match_split[9])
-        if (align_len >= round_2_min_aln_len) and (identity >= round_2_min_iden) and (coverage_q >= round_2_min_cov) and (coverage_s >= round_2_min_cov):
-
-            # make sure matched to one end for both query and subject
-            if ((1 in [qstart, qend]) or (query_len in [qstart, qend])) and ((1 in [sstart, send]) or (subject_len in [sstart, send])):
-
-                query_16s_refs = round2_free_living_16s_ref_dict.get(query, [])
-                subject_ctg_refs = round2_free_living_ctg_ref_dict.get(subject, [])
-                for each_query_ref in query_16s_refs:
-                    for each_subject_ref in subject_ctg_refs:
-
-                        if each_subject_ref[-2:] in ['_l', '_r']:
-                            each_subject_ref = each_subject_ref[:-2]
-
-                        subject_ref_gnm = each_subject_ref.split(gnm_ctg_connector)[0]
-
-                        q_ref_to_s_ref_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, each_subject_ref)
-                        q_ref_to_s_ref_gnm_key = '%s%s%s' % (each_query_ref, round_2_free_living_16s_to_ctg_connector, subject_ref_gnm)
-
-                        if q_ref_to_s_ref_key not in free_living_16s_to_ctg_linkage_dict:
-                            free_living_16s_to_ctg_linkage_dict[q_ref_to_s_ref_key] = 1
-                        else:
-                            free_living_16s_to_ctg_linkage_dict[q_ref_to_s_ref_key] += 1
-
-                        if q_ref_to_s_ref_gnm_key not in free_living_16s_to_gnm_linkage_dict:
-                            free_living_16s_to_gnm_linkage_dict[q_ref_to_s_ref_gnm_key] = 1
-                        else:
-                            free_living_16s_to_gnm_linkage_dict[q_ref_to_s_ref_gnm_key] += 1
-
-    stats_GapFilling_file_handle = open(stats_GapFilling_file, 'w')
-    stats_GapFilling_file_handle.write('MarkerGene,GenomicSeq,Number\n')
-    for each_round2_linkage in free_living_16s_to_gnm_linkage_dict:
-        each_round2_linkage_split = each_round2_linkage.split(round_2_free_living_16s_to_ctg_connector)
-        id_16s = each_round2_linkage_split[0]
-        id_gnm = each_round2_linkage_split[1]
-        linkage_num = free_living_16s_to_gnm_linkage_dict[each_round2_linkage]
-        stats_GapFilling_file_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
-    stats_GapFilling_file_handle.close()
-
-    filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
-
 
     ############################################### assemble and mapping ###############################################
 
-    # # combine extracted reads
-    # os.system('cat %s %s > %s' % (free_living_16s_R1, free_living_ctg_R1, free_living_R1))
-    # os.system('cat %s %s > %s' % (free_living_16s_R2, free_living_ctg_R2, free_living_R2))
-    # os.system('cat %s %s > %s' % (free_living_16s_UP, free_living_ctg_UP, free_living_UP))
-    #
-    # # assemble
-    # if round_2_spades is False:
-    #     extracted_reads_cbd = ''
-    #     report_and_log(('Round 2: running Mira on extracted reads'), pwd_log_file, keep_quiet)
-    #     run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, extracted_reads_cbd, mira_stdout, force_overwrite)
-    #     mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
-    # else:
-    #     report_and_log(('Round 2: running SPAdes on extracted reads'), pwd_log_file, keep_quiet)
-    #     spades_cmd = '%s --meta --only-assembler -1 %s -2 %s -s %s -o %s -t %s -k 49,75,99,127 > %s' % (pwd_spades_exe, free_living_R1, free_living_R2, free_living_UP, spades_wd, num_threads, spades_log)
-    #     os.system(spades_cmd)
-    #     mini_assemblies = '%s/scaffolds.fasta' % spades_wd
-    #
-    # # mapping extracted reads to mini assemblies with bbmap
-    # report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
-    # bbmap_cmd_miniassembly_paired   = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, free_living_R1, free_living_R2, sam_file_mini_assembly_P, bbmap_parameter, sam_file_mini_assembly_stderr_P)
-    # bbmap_cmd_miniassembly_unpaired = '%s ref=%s in=%s outm=%s %s 2> %s'        % (pwd_bbmap_exe, mini_assemblies, free_living_UP, sam_file_mini_assembly_UP, bbmap_parameter, sam_file_mini_assembly_stderr_UP)
-    # os.system(bbmap_cmd_miniassembly_paired)
-    # os.system(bbmap_cmd_miniassembly_unpaired)
+    # combine extracted reads
+    os.system('cat %s %s > %s' % (free_living_16s_R1, free_living_ctg_R1, free_living_R1))
+    os.system('cat %s %s > %s' % (free_living_16s_R2, free_living_ctg_R2, free_living_R2))
+    os.system('cat %s %s > %s' % (free_living_16s_UP, free_living_ctg_UP, free_living_UP))
+
+    # assemble
+    if round_2_spades is False:
+        extracted_reads_cbd = ''
+        report_and_log(('Round 2: running Mira on extracted reads'), pwd_log_file, keep_quiet)
+        run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, extracted_reads_cbd, mira_stdout, force_overwrite)
+        mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
+    else:
+        report_and_log(('Round 2: running SPAdes on extracted reads'), pwd_log_file, keep_quiet)
+        spades_cmd = '%s --meta --only-assembler -1 %s -2 %s -s %s -o %s -t %s -k 49,75,99,127 > %s' % (pwd_spades_exe, free_living_R1, free_living_R2, free_living_UP, spades_wd, num_threads, spades_log)
+        os.system(spades_cmd)
+        mini_assemblies = '%s/scaffolds.fasta' % spades_wd
+
+    # mapping extracted reads to mini assemblies with bbmap
+    report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
+    bbmap_cmd_miniassembly_paired   = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, free_living_R1, free_living_R2, sam_file_mini_assembly_P, bbmap_parameter, sam_file_mini_assembly_stderr_P)
+    bbmap_cmd_miniassembly_unpaired = '%s ref=%s in=%s outm=%s %s 2> %s'        % (pwd_bbmap_exe, mini_assemblies, free_living_UP, sam_file_mini_assembly_UP, bbmap_parameter, sam_file_mini_assembly_stderr_UP)
+    os.system(bbmap_cmd_miniassembly_paired)
+    os.system(bbmap_cmd_miniassembly_unpaired)
 
 
     #################################################### parse sam file ####################################################
 
-    # # combine sam files
-    # os.system('cat %s %s > %s' % (sam_file_mini_assembly_P, sam_file_mini_assembly_UP, sam_file_mini_assembly_combined))
-    #
-    # report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
-    # # remove reads mapped to multiple miniassembly? check later
-    # gap_seq_to_reads_dict = {}
-    # for each_read in open(sam_file_mini_assembly_combined):
-    #     if not each_read.startswith('@'):
-    #         each_read_split = each_read.strip().split('\t')
-    #         cigar = each_read_split[5]
-    #         if cigar != '*':
-    #             read_id = each_read_split[0]
-    #             ref_id = each_read_split[2]
-    #             cigar_splitted = cigar_splitter(cigar)
-    #             aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-    #             if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= (max_mis_pct)):
-    #                 if ref_id not in gap_seq_to_reads_dict:
-    #                     gap_seq_to_reads_dict[ref_id] = [read_id]
-    #                 else:
-    #                     gap_seq_to_reads_dict[ref_id].append(read_id)
-    #
-    # report_and_log(('Round 2: linking genomes/16Ss to Spades assemblies'), pwd_log_file, keep_quiet)
-    # stats_GapFilling_file_16s_handle = open(stats_GapFilling_file_16s, 'w')
-    # stats_GapFilling_file_ctg_handle = open(stats_GapFilling_file_ctg, 'w')
-    # stats_GapFilling_file_16s_handle.write('Gap_seq,s16,Number\n')
-    # stats_GapFilling_file_ctg_handle.write('Gap_seq,ctg,Number\n')
-    # for gap_seq in gap_seq_to_reads_dict:
-    #     gap_seq_mapped_reads = gap_seq_to_reads_dict[gap_seq]
-    #     gap_seq_to_16s_linkage_dict = {}
-    #     gap_seq_to_ctg_linkage_dict = {}
-    #     gap_seq_to_gnm_linkage_dict = {}
-    #     for mapped_read in gap_seq_mapped_reads:
-    #         mapped_read_basename = mapped_read[:-2]
-    #         mapped_read_strand   = mapped_read[-1]
-    #
-    #         mapped_read_mate_or_clp_refs_16s = set()
-    #         if mapped_read_basename in MappingRecord_dict:
-    #             read_mr_round_1 = MappingRecord_dict[mapped_read_basename]
-    #             if read_mr_round_1.consider_round_2 is True:
-    #                 if mapped_read_strand == '1':
-    #                     if read_mr_round_1.consider_r1_unmapped_mate is True:
-    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
-    #                     if read_mr_round_1.consider_r1_clipping_part is True:
-    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
-    #                 if mapped_read_strand == '2':
-    #                     if read_mr_round_1.consider_r2_unmapped_mate is True:
-    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
-    #                     if read_mr_round_1.consider_r2_clipping_part is True:
-    #                         mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
-    #
-    #         for each_mate_or_clp_ref_16s in mapped_read_mate_or_clp_refs_16s:
-    #             if each_mate_or_clp_ref_16s not in gap_seq_to_16s_linkage_dict:
-    #                 gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] = 1
-    #             else:
-    #                 gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] += 1
-    #
-    #         mapped_read_mate_or_clp_refs_ctg = set()
-    #         if mapped_read_basename in round_2_MappingRecord_dict:
-    #             read_mr_round_2 = round_2_MappingRecord_dict[mapped_read_basename]
-    #             if mapped_read_strand == '1':
-    #                 if read_mr_round_2.consider_r1_unmapped_mate is True:
-    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
-    #                 if read_mr_round_2.consider_r1_clipping_part is True:
-    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
-    #             if mapped_read_strand == '2':
-    #                 if read_mr_round_2.consider_r2_unmapped_mate is True:
-    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
-    #                 if read_mr_round_2.consider_r2_clipping_part is True:
-    #                     mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
-    #
-    #         for each_mate_or_clp_ref_ctg in mapped_read_mate_or_clp_refs_ctg:
-    #             if each_mate_or_clp_ref_ctg not in gap_seq_to_ctg_linkage_dict:
-    #                 gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] = 1
-    #             else:
-    #                 gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] += 1
-    #
-    #     for each_16s in gap_seq_to_16s_linkage_dict:
-    #         stats_GapFilling_file_16s_handle.write('%s,%s,%s\n' % (gap_seq, each_16s, gap_seq_to_16s_linkage_dict[each_16s]))
-    #     for each_ctg in gap_seq_to_ctg_linkage_dict:
-    #         stats_GapFilling_file_ctg_handle.write('%s,%s,%s\n' % (gap_seq, each_ctg, gap_seq_to_ctg_linkage_dict[each_ctg]))
-    #
-    # stats_GapFilling_file_16s_handle.close()
-    # stats_GapFilling_file_ctg_handle.close()
-    #
-    # get_best_ctg_or_16s_for_gap_seq_iteratively(stats_GapFilling_file_16s, 'Number', min_read_num, stats_GapFilling_file_filtered_16s)
-    # get_best_ctg_or_16s_for_gap_seq_iteratively(stats_GapFilling_file_ctg, 'Number', min_read_num, stats_GapFilling_file_filtered_ctg)
-    #
-    # gap_seq_to_16s_dict = {}
-    # for each_line in open(stats_GapFilling_file_filtered_16s):
-    #     if not each_line.startswith('Gap_seq,'):
-    #         each_line_split = each_line.strip().split(',')
-    #         gap_seq_id = each_line_split[0]
-    #         s16_id = each_line_split[1]
-    #         link_num = int(each_line_split[2])
-    #         gap_seq_to_16s_dict[gap_seq_id] = {s16_id: link_num}
-    #
-    # gap_seq_to_gnm_dict = {}
-    # for each_match in open(stats_GapFilling_file_filtered_ctg):
-    #     if not each_match.startswith('Gap_seq,'):
-    #         match_split = each_match.strip().split(',')
-    #         gap_seq_id = match_split[0]
-    #         ctg_id = match_split[1]
-    #         ctg_gnm = ctg_id.split(gnm_ctg_connector)[0]
-    #         linkage_num = int(match_split[2])
-    #         gap_seq_to_gnm_dict[gap_seq_id] = {ctg_gnm: linkage_num}
-    #
-    # gnm_to_16s_linkage_dict = {}
-    # for gap_seq in gap_seq_to_gnm_dict:
-    #     if gap_seq in gap_seq_to_16s_dict:
-    #         current_gap_seq_matched_gnm = list(gap_seq_to_gnm_dict[gap_seq].items())[0][0]
-    #         current_gap_seq_matched_gnm_link_num = list(gap_seq_to_gnm_dict[gap_seq].items())[0][1]
-    #         current_gap_seq_matched_16s = list(gap_seq_to_16s_dict[gap_seq].items())[0][0]
-    #         current_gap_seq_matched_16s_link_num = list(gap_seq_to_16s_dict[gap_seq].items())[0][1]
-    #         gnm_to_16s_key = '%s%s%s' % (current_gap_seq_matched_gnm, dict_key_connector, current_gap_seq_matched_16s)
-    #         gnm_to_16s_link_num = current_gap_seq_matched_gnm_link_num + current_gap_seq_matched_16s_link_num
-    #
-    #         # check num difference
-    #         link_num_max = max(int(current_gap_seq_matched_gnm_link_num), int(current_gap_seq_matched_16s_link_num))
-    #         link_num_min = min(int(current_gap_seq_matched_gnm_link_num), int(current_gap_seq_matched_16s_link_num))
-    #         if (link_num_min*100/link_num_max) >= 33.3:
-    #             if gnm_to_16s_key not in gnm_to_16s_linkage_dict:
-    #                 gnm_to_16s_linkage_dict[gnm_to_16s_key] = gnm_to_16s_link_num
-    #             else:
-    #                 gnm_to_16s_linkage_dict[gnm_to_16s_key] += gnm_to_16s_link_num
-    #
-    # stats_GapFilling_file_handle = open(stats_GapFilling_file, 'w')
-    # stats_GapFilling_file_handle.write('MarkerGene,GenomicSeq,Number\n')
-    # for gnm_to_16s in gnm_to_16s_linkage_dict:
-    #     id_gnm = gnm_to_16s.split(dict_key_connector)[0]
-    #     id_16s = gnm_to_16s.split(dict_key_connector)[1]
-    #     stats_GapFilling_file_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, gnm_to_16s_linkage_dict[gnm_to_16s]))
-    # stats_GapFilling_file_handle.close()
-    #
-    #
-    # filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
+    # combine sam files
+    os.system('cat %s %s > %s' % (sam_file_mini_assembly_P, sam_file_mini_assembly_UP, sam_file_mini_assembly_combined))
+
+    report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
+    # remove reads mapped to multiple miniassembly? check later
+    gap_seq_to_reads_dict = {}
+    for each_read in open(sam_file_mini_assembly_combined):
+        if not each_read.startswith('@'):
+            each_read_split = each_read.strip().split('\t')
+            cigar = each_read_split[5]
+            if cigar != '*':
+                read_id = each_read_split[0]
+                ref_id = each_read_split[2]
+                cigar_splitted = cigar_splitter(cigar)
+                aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
+                if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= (max_mis_pct)):
+                    if ref_id not in gap_seq_to_reads_dict:
+                        gap_seq_to_reads_dict[ref_id] = [read_id]
+                    else:
+                        gap_seq_to_reads_dict[ref_id].append(read_id)
+
+    report_and_log(('Round 2: linking genomes/16Ss to Spades assemblies'), pwd_log_file, keep_quiet)
+    stats_GapFilling_file_16s_handle = open(stats_GapFilling_file_16s, 'w')
+    stats_GapFilling_file_ctg_handle = open(stats_GapFilling_file_ctg, 'w')
+    stats_GapFilling_file_16s_handle.write('Gap_seq,s16,Number\n')
+    stats_GapFilling_file_ctg_handle.write('Gap_seq,ctg,Number\n')
+    for gap_seq in gap_seq_to_reads_dict:
+        gap_seq_mapped_reads = gap_seq_to_reads_dict[gap_seq]
+        gap_seq_to_16s_linkage_dict = {}
+        gap_seq_to_ctg_linkage_dict = {}
+        gap_seq_to_gnm_linkage_dict = {}
+        for mapped_read in gap_seq_mapped_reads:
+            mapped_read_basename = mapped_read[:-2]
+            mapped_read_strand   = mapped_read[-1]
+
+            mapped_read_mate_or_clp_refs_16s = set()
+            if mapped_read_basename in MappingRecord_dict:
+                read_mr_round_1 = MappingRecord_dict[mapped_read_basename]
+                if read_mr_round_1.consider_round_2 is True:
+                    if mapped_read_strand == '1':
+                        if read_mr_round_1.consider_r1_unmapped_mate is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
+                        if read_mr_round_1.consider_r1_clipping_part is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
+                    if mapped_read_strand == '2':
+                        if read_mr_round_1.consider_r2_unmapped_mate is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r1_filtered_refs)
+                        if read_mr_round_1.consider_r2_clipping_part is True:
+                            mapped_read_mate_or_clp_refs_16s = mapped_read_mate_or_clp_refs_16s.union(read_mr_round_1.r2_filtered_refs)
+
+            for each_mate_or_clp_ref_16s in mapped_read_mate_or_clp_refs_16s:
+                if each_mate_or_clp_ref_16s not in gap_seq_to_16s_linkage_dict:
+                    gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] = 1
+                else:
+                    gap_seq_to_16s_linkage_dict[each_mate_or_clp_ref_16s] += 1
+
+            mapped_read_mate_or_clp_refs_ctg = set()
+            if mapped_read_basename in round_2_MappingRecord_dict:
+                read_mr_round_2 = round_2_MappingRecord_dict[mapped_read_basename]
+                if mapped_read_strand == '1':
+                    if read_mr_round_2.consider_r1_unmapped_mate is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
+                    if read_mr_round_2.consider_r1_clipping_part is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
+                if mapped_read_strand == '2':
+                    if read_mr_round_2.consider_r2_unmapped_mate is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r1_filtered_refs)
+                    if read_mr_round_2.consider_r2_clipping_part is True:
+                        mapped_read_mate_or_clp_refs_ctg = mapped_read_mate_or_clp_refs_ctg.union(read_mr_round_2.r2_filtered_refs)
+
+            for each_mate_or_clp_ref_ctg in mapped_read_mate_or_clp_refs_ctg:
+                if each_mate_or_clp_ref_ctg not in gap_seq_to_ctg_linkage_dict:
+                    gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] = 1
+                else:
+                    gap_seq_to_ctg_linkage_dict[each_mate_or_clp_ref_ctg] += 1
+
+        for each_16s in gap_seq_to_16s_linkage_dict:
+            stats_GapFilling_file_16s_handle.write('%s,%s,%s\n' % (gap_seq, each_16s, gap_seq_to_16s_linkage_dict[each_16s]))
+        for each_ctg in gap_seq_to_ctg_linkage_dict:
+            stats_GapFilling_file_ctg_handle.write('%s,%s,%s\n' % (gap_seq, each_ctg, gap_seq_to_ctg_linkage_dict[each_ctg]))
+
+    stats_GapFilling_file_16s_handle.close()
+    stats_GapFilling_file_ctg_handle.close()
+
+    get_best_ctg_or_16s_for_gap_seq_iteratively(stats_GapFilling_file_16s, 'Number', min_read_num, stats_GapFilling_file_filtered_16s)
+    get_best_ctg_or_16s_for_gap_seq_iteratively(stats_GapFilling_file_ctg, 'Number', min_read_num, stats_GapFilling_file_filtered_ctg)
+
+    gap_seq_to_16s_dict = {}
+    for each_line in open(stats_GapFilling_file_filtered_16s):
+        if not each_line.startswith('Gap_seq,'):
+            each_line_split = each_line.strip().split(',')
+            gap_seq_id = each_line_split[0]
+            s16_id = each_line_split[1]
+            link_num = int(each_line_split[2])
+            gap_seq_to_16s_dict[gap_seq_id] = {s16_id: link_num}
+
+    gap_seq_to_gnm_dict = {}
+    for each_match in open(stats_GapFilling_file_filtered_ctg):
+        if not each_match.startswith('Gap_seq,'):
+            match_split = each_match.strip().split(',')
+            gap_seq_id = match_split[0]
+            ctg_id = match_split[1]
+            ctg_gnm = ctg_id.split(gnm_ctg_connector)[0]
+            linkage_num = int(match_split[2])
+            gap_seq_to_gnm_dict[gap_seq_id] = {ctg_gnm: linkage_num}
+
+    gnm_to_16s_linkage_dict = {}
+    for gap_seq in gap_seq_to_gnm_dict:
+        if gap_seq in gap_seq_to_16s_dict:
+            current_gap_seq_matched_gnm = list(gap_seq_to_gnm_dict[gap_seq].items())[0][0]
+            current_gap_seq_matched_gnm_link_num = list(gap_seq_to_gnm_dict[gap_seq].items())[0][1]
+            current_gap_seq_matched_16s = list(gap_seq_to_16s_dict[gap_seq].items())[0][0]
+            current_gap_seq_matched_16s_link_num = list(gap_seq_to_16s_dict[gap_seq].items())[0][1]
+            gnm_to_16s_key = '%s%s%s' % (current_gap_seq_matched_gnm, dict_key_connector, current_gap_seq_matched_16s)
+            gnm_to_16s_link_num = current_gap_seq_matched_gnm_link_num + current_gap_seq_matched_16s_link_num
+
+            # check num difference
+            link_num_max = max(int(current_gap_seq_matched_gnm_link_num), int(current_gap_seq_matched_16s_link_num))
+            link_num_min = min(int(current_gap_seq_matched_gnm_link_num), int(current_gap_seq_matched_16s_link_num))
+            if (link_num_min*100/link_num_max) >= 33.3:
+                if gnm_to_16s_key not in gnm_to_16s_linkage_dict:
+                    gnm_to_16s_linkage_dict[gnm_to_16s_key] = gnm_to_16s_link_num
+                else:
+                    gnm_to_16s_linkage_dict[gnm_to_16s_key] += gnm_to_16s_link_num
+
+    stats_GapFilling_file_handle = open(stats_GapFilling_file, 'w')
+    stats_GapFilling_file_handle.write('MarkerGene,GenomicSeq,Number\n')
+    for gnm_to_16s in gnm_to_16s_linkage_dict:
+        id_gnm = gnm_to_16s.split(dict_key_connector)[0]
+        id_16s = gnm_to_16s.split(dict_key_connector)[1]
+        stats_GapFilling_file_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, gnm_to_16s_linkage_dict[gnm_to_16s]))
+    stats_GapFilling_file_handle.close()
+
+
+    filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, within_genome_minimum_iden16s, min_read_num, min_read_num, stats_GapFilling_file_filtered)
 
 
     ####################################################################################################################
