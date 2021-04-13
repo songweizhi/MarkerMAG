@@ -18,7 +18,7 @@ def sep_path_basename_ext(file_in):
 wd                  = '/Users/songweizhi/Desktop/MarkerMAG_wd/4_Kelp'
 taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                              % wd
 taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified.txt' % wd
-taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified_corrected.txt' % wd
+#taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified_corrected.txt' % wd
 taxonomy_16s_blca   = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999.fasta.blca.out' % wd
 bin_id_file         = '%s/bin_id.txt'                                                   % wd
 barrnap_output      = '%s/BH_ER_050417_16S.txt'                                         % wd
@@ -31,7 +31,61 @@ mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'             
 # Kelp_0406_specific_identified_linkages_genome_level.txt
 # Kelp_0406_very_specific_identified_linkages_genome_level.txt
 # Kelp_0406_super_specific_identified_linkages_genome_level.txt
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0409_default_identified_linkages_genome_level.txt'
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0413_specific_identified_linkages_genome_level.txt'
+
+'''
+Linkage accuracy: Kelp_0413_very_sensitive_identified_linkages_genome_level
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	44	3	41	0	41/41(100.0)
+class	44	3	40	0	40/41(97.56)
+order	44	3	37	0	37/41(90.24)
+family	44	3	34	0	34/41(82.93)
+genus	44	3	23	6	29/41(70.73)
+linked MAGs: 31
+
+Linkage accuracy: Kelp_0413_sensitive_identified_linkages_genome_level
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	45	3	42	0	42/42(100.0)
+class	45	3	41	0	41/42(97.62)
+order	45	3	38	0	38/42(90.48)
+family	45	3	35	0	35/42(83.33)
+genus	45	3	22	8	30/42(71.43)
+linked MAGs: 31
+
+Linkage accuracy: Kelp_0413_default_identified_linkages_genome_level
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	39	2	37	0	37/37(100.0)
+class	39	2	36	0	36/37(97.3)
+order	39	2	33	0	33/37(89.19)
+family	39	2	30	0	30/37(81.08)
+genus	39	2	19	7	26/37(70.27)
+linked MAGs: 29
+
+
+
+Linkage accuracy: Kelp_0413_specific_identified_linkages_genome_level
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	35	4	31	0	31/31(100.0)
+class	35	4	30	0	30/31(96.77)
+order	35	4	27	0	27/31(87.1)
+family	35	4	24	0	24/31(77.42)
+genus	35	4	15	6	21/31(67.74)
+linked MAGs: 25
+
+
+Linkage accuracy: Kelp_0413_very_specific_identified_linkages_genome_level
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	33	2	31	0	31/31(100.0)
+class	33	2	30	0	30/31(96.77)
+order	33	2	27	0	27/31(87.1)
+family	33	2	24	0	24/31(77.42)
+genus	33	2	15	7	22/31(70.97)
+linked MAGs: 24
+
+
+
+'''
+
 
 '''
 =============================

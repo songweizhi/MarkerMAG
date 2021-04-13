@@ -319,7 +319,7 @@ def blast_results_to_pairwise_16s_iden_dict(blastn_output, align_len_cutoff, cov
     return pairwise_iden_dict
 
 
-def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, genomic_seq_depth_dict, marker_gene_depth_dict, min_16s_gnm_multiple, within_genome_16s_divergence_cutoff, min_linkages, min_linkages_for_uniq_linked_16s, file_out):
+def filter_linkages_iteratively_backup(file_in, sort_by_col_header, pairwise_16s_iden_dict, genomic_seq_depth_dict, marker_gene_depth_dict, min_16s_gnm_multiple, within_genome_16s_divergence_cutoff, min_linkages, min_linkages_for_uniq_linked_16s, file_out):
 
     # get MarkerGene_to_GenomicSeq_dict
     MarkerGene_to_GenomicSeq_dict = {}
@@ -407,6 +407,74 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
 
     # remove tmp file
     # os.remove(file_in_sorted)
+
+
+def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, genomic_seq_depth_dict, marker_gene_depth_dict, min_16s_gnm_multiple, within_genome_16s_divergence_cutoff, min_linkages, min_linkages_for_uniq_linked_16s, file_out):
+    # get MarkerGene_to_GenomicSeq_dict
+    MarkerGene_to_GenomicSeq_dict = {}
+    for each_linkage in open(file_in):
+        if not each_linkage.startswith('MarkerGene,GenomicSeq,Number'):
+            each_linkage_split = each_linkage.strip().split(',')
+            MarkerGene_id = each_linkage_split[0][12:]
+            GenomicSeq_id = each_linkage_split[1][12:]
+            linkage_num = int(each_linkage_split[2])
+            if linkage_num > 1:
+                if MarkerGene_id not in MarkerGene_to_GenomicSeq_dict:
+                    MarkerGene_to_GenomicSeq_dict[MarkerGene_id] = {GenomicSeq_id}
+                else:
+                    MarkerGene_to_GenomicSeq_dict[MarkerGene_id].add(GenomicSeq_id)
+
+    file_in_path, file_in_basename, file_in_extension = sep_path_basename_ext(file_in)
+    file_in_sorted = '%s/%s_sorted%s' % (file_in_path, file_in_basename, file_in_extension)
+
+    # sort file in
+    sort_csv_by_col(file_in, file_in_sorted, sort_by_col_header)
+
+    # fileter linkage
+    gnm_max_link_num_dict = {}
+    file_out_handle = open(file_out, 'w')
+    MarkerGene_with_assignment = set()
+    GenomicSeq_best_marker_dict = {}
+    for each_match in open(file_in_sorted):
+        if each_match.startswith('MarkerGene,GenomicSeq,Number'):
+            file_out_handle.write(each_match)
+        else:
+            match_split = each_match.strip().split(',')
+            MarkerGene = match_split[0][12:]
+            GenomicSeq = match_split[1][12:]
+            linkage_num = int(match_split[2])
+
+            current_min_linkage = min_linkages_for_uniq_linked_16s
+            if MarkerGene in MarkerGene_to_GenomicSeq_dict:
+                if len(MarkerGene_to_GenomicSeq_dict[MarkerGene]) > 1:
+                    current_min_linkage = min_linkages
+
+            if linkage_num >= current_min_linkage:
+
+                if MarkerGene not in MarkerGene_with_assignment:
+
+
+                    if GenomicSeq not in GenomicSeq_best_marker_dict:
+                        GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
+                        gnm_max_link_num_dict[GenomicSeq] = linkage_num
+                        file_out_handle.write(each_match)
+                        MarkerGene_with_assignment.add(MarkerGene)
+                    else:
+                        # get identity with best marker
+                        current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                        key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+                        iden_with_best_marker = pairwise_16s_iden_dict.get(key_str, 0)
+
+                        if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+
+                            gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
+                            if (linkage_num*100/gnm_max_link_num) >= 80:
+                                file_out_handle.write(each_match)
+                                MarkerGene_with_assignment.add(MarkerGene)
+                            else:
+                                MarkerGene_with_assignment.add(MarkerGene)
+
+    file_out_handle.close()
 
 
 def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, file_out_summary, file_out_intersect_linkages):
@@ -1054,28 +1122,48 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                     mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] += 1
 
     mini_assembly_to_16s_dict_reformatted = {}
+    max_link_nun_dict_16s = {}
     for each in mini_assembly_to_16s_dict:
         mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
         seq_16s_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
         linkage_num = mini_assembly_to_16s_dict[each]
         seq_16s_with_num = '%s__num__%s' % (seq_16s_id, linkage_num)
         if linkage_num >= ctg_level_min_link:
+
+            # add to mini_assembly_to_16s_dict_reformatted
             if mini_assembly_id not in mini_assembly_to_16s_dict_reformatted:
                 mini_assembly_to_16s_dict_reformatted[mini_assembly_id] = {seq_16s_with_num}
             else:
                 mini_assembly_to_16s_dict_reformatted[mini_assembly_id].add(seq_16s_with_num)
 
+            # add to max_link_nun_dict_16s
+            if seq_16s_id not in max_link_nun_dict_16s:
+                max_link_nun_dict_16s[seq_16s_id] = linkage_num
+            else:
+                if linkage_num > max_link_nun_dict_16s[seq_16s_id]:
+                    max_link_nun_dict_16s[seq_16s_id] = linkage_num
+
     mini_assembly_to_ctg_dict_reformatted = {}
+    max_link_nun_dict_ctg = {}
     for each in mini_assembly_to_ctg_dict:
         mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
         ctg_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
         linkage_num = mini_assembly_to_ctg_dict[each]
         ctg_with_num = '%s__num__%s' % (ctg_id, linkage_num)
         if linkage_num >= ctg_level_min_link:
+
+            # add to mini_assembly_to_ctg_dict_reformatted
             if mini_assembly_id not in mini_assembly_to_ctg_dict_reformatted:
                 mini_assembly_to_ctg_dict_reformatted[mini_assembly_id] = {ctg_with_num}
             else:
                 mini_assembly_to_ctg_dict_reformatted[mini_assembly_id].add(ctg_with_num)
+
+            # add to max_link_nun_dict_ctg
+            if ctg_id not in max_link_nun_dict_ctg:
+                max_link_nun_dict_ctg[ctg_id] = linkage_num
+            else:
+                if linkage_num > max_link_nun_dict_ctg[ctg_id]:
+                    max_link_nun_dict_ctg[ctg_id] = linkage_num
 
     mini_assembly_linked_both = set(mini_assembly_to_16s_dict_reformatted).intersection(mini_assembly_to_ctg_dict_reformatted)
 
@@ -1090,22 +1178,28 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
         linked_ctg_num_max = max(linked_ctg_num_list)
 
         if (min(linked_16s_num_max, linked_ctg_num_max) * 100 / max(linked_16s_num_max, linked_ctg_num_max)) >= max_between_cate_diff_pct:
+
             linked_16s_filtered = [i for i in linked_16s if int(i.split('__num__')[1])*100/linked_16s_num_max >= max_within_cate_diff_pct]
             linked_ctg_filtered = [i for i in linked_ctg if int(i.split('__num__')[1])*100/linked_ctg_num_max >= max_within_cate_diff_pct]
 
             for each_linked_16s in linked_16s_filtered:
                 linked_16s_id = each_linked_16s.split('__num__')[0]
                 linked_16s_num = int(each_linked_16s.split('__num__')[1])
+                linked_16s_num_pct_by_max = linked_16s_num * 100 / max_link_nun_dict_16s[linked_16s_id]
+
                 for each_linked_ctg in linked_ctg_filtered:
                     linked_ctg_id = each_linked_ctg.split('__num__')[0]
                     linked_gnm_id = linked_ctg_id.split(gnm_to_ctg_connector)[0]
                     linked_ctg_num = int(each_linked_ctg.split('__num__')[1])
-                    stats_GapFilling_ctg_handle.write('%s\t%s\t%s\n' % (linked_16s_id, linked_ctg_id, (linked_16s_num + linked_ctg_num)))
-                    marker_to_gnm_key = '%s%s%s' % (linked_16s_id, marker_to_ctg_gnm_Key_connector, linked_gnm_id)
-                    if marker_to_gnm_key not in stats_GapFilling_gnm_dict:
-                        stats_GapFilling_gnm_dict[marker_to_gnm_key] = (linked_16s_num + linked_ctg_num)
-                    else:
-                        stats_GapFilling_gnm_dict[marker_to_gnm_key] += (linked_16s_num + linked_ctg_num)
+                    linked_ctg_num_pct_by_max = linked_ctg_num*100/max_link_nun_dict_ctg[linked_ctg_id]
+
+                    if (linked_16s_num_pct_by_max >= 50) and (linked_ctg_num_pct_by_max >= 50):
+                        stats_GapFilling_ctg_handle.write('%s\t%s\t%s\n' % (linked_16s_id, linked_ctg_id, (linked_16s_num + linked_ctg_num)))
+                        marker_to_gnm_key = '%s%s%s' % (linked_16s_id, marker_to_ctg_gnm_Key_connector, linked_gnm_id)
+                        if marker_to_gnm_key not in stats_GapFilling_gnm_dict:
+                            stats_GapFilling_gnm_dict[marker_to_gnm_key] = (linked_16s_num + linked_ctg_num)
+                        else:
+                            stats_GapFilling_gnm_dict[marker_to_gnm_key] += (linked_16s_num + linked_ctg_num)
     stats_GapFilling_ctg_handle.close()
 
     stats_GapFilling_gnm_handle = open(stats_GapFilling_gnm, 'w')
@@ -1204,8 +1298,8 @@ def link_16s(args):
     preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 35, 'min_overlap_num': 5}
     preset_dict_sensitive       = {'s1_mpl': 7,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 40, 'min_overlap_num': 5}
     # preset_dict_default       = {'s1_mpl': 10, 's1_mplu': 5,  'min_M_pct': 35, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
-    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 8,  'min_M_pct': 40, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
-    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10, 'min_M_pct': 45, 'mismatch_rd1': 1, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
+    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 7,  'min_M_pct': 35, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
+    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 7,  'min_M_pct': 50, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
 
     preset_to_use = preset_dict_default
     if preset_very_sensitive is True:

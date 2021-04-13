@@ -85,62 +85,46 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-# MarkerMAG_Mita_test_combined_linkages Linkage	51/97(52.58)	51/52(98.08)	10
-# GI_1_70_10_5_combined_linkages        Linkage	109/97(112.37)	109/113(96.46)	4
-# GI_2_70_10_5_combined_linkages        Linkage	141/97(145.36)	141/156(90.38)	11
-# GI_0401_combined_linkages             Linkage	165/97(170.1)	165/187(88.24)	21
-# GI_0405_mis1_combined_linkages        Linkage	211/97(217.53)	211/298(70.81)	25
+# MarkerMAG_linkages          = '/Users/songweizhi/Desktop/step_1_wd/Test_identified_linkages_genome_level.txt'
 
-# default                               Linkage	185/97(190.72)	185/227(81.5)	16
-# super_specific                        Linkage	86/97(88.66)	86/95(90.53)	5
-# super_specific_M75                    Linkage	67/97(69.07)	67/86(77.91)	7
-# super_specific_M40                    Linkage	90/97(92.78)	90/97(92.78)	6
-# super_specific_M40                    Linkage	93/97(95.88)	93/100(93.0)	7
-
-MarkerMAG_linkages          = '%s/GI_0412_very_specific_spades_M2_85_diff_80_20_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0414_specific_identified_linkages_genome_level.txt'             % wd
 
 
 '''
-                                            	Round	|  Link Yes	NA	No	Accuracy	    |	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
-GI_0412_default_spades_M2_85_diff_80_20	        Rd_1	|	178	143	16	19	143/162(88.27)	|	39	35	0	1	3	35/97(36.08)	35/39(89.74)
-GI_0412_default_spades_M2_85_diff_80_20	        Rd_2	|	17	16	1	0	16/16(100.0)	|	13	12	1	0	0	12/97(12.37)	12/12(100.0)
-GI_0412_default_spades_M2_85_diff_80_20	        Both	|	195	159	17	19	159/178(89.33)	|	52	47	1	1	3	47/97(48.45)	47/51(92.16)
+            	        Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
 
-GI_0412_specific_spades_M2_85_diff_80_20	    Rd_1	|	135	115	9	11	115/126(91.27)	|	32	29	0	0	3	29/97(29.9)	    29/32(90.62)
-GI_0412_specific_spades_M2_85_diff_80_20	    Rd_2	|	23	21	1	1	21/22(95.45)	|	18	16	1	1	0	16/97(16.49)	16/17(94.12)
-GI_0412_specific_spades_M2_85_diff_80_20	    Both	|	158	136	10	12	136/148(91.89)	|	50	45	1	1	3	45/97(46.39)	45/49(91.84)
+GI_0414_default	        Rd_1	|	58	56	1	1	56/57(98.25)	|	39	38	0	1	0	38/97(39.18)	38/39(97.44)
+GI_0414_default	        Rd_2	|	15	13	1	1	13/14(92.86)	|	13	11	1	1	0	11/97(11.34)	11/12(91.67)
+GI_0414_default	        Both	|	73	69	2	2	69/71(97.18)	|	52	49	1	2	0	49/97(50.52)	49/51(96.08)
 
-GI_0412_very_specific_spades_M2_85_diff_80_20	Rd_1	|	97	84	5	8	84/92(91.3)	    |	25	22	0	0	3	22/97(22.68)	22/25(88.0)
-GI_0412_very_specific_spades_M2_85_diff_80_20	Rd_2	|	14	14	0	0	14/14(100.0)	|	9	9	0	0	0	9/97(9.28)	    9/9(100.0)
-GI_0412_very_specific_spades_M2_85_diff_80_20	Both	|	111	98	5	8	98/106(92.45)	|	34	31	0	0	3	31/97(31.96)	31/34(91.18)
+GI_0414_specific	    Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0414_specific	    Rd_2	|	22	22	0	0	22/22(100.0)	|	16	16	0	0	0	16/97(16.49)	16/16(100.0)
+GI_0414_specific	    Both	|	72	71	1	0	71/71(100.0)	|	48	48	0	0	0	48/97(49.48)	48/48(100.0)
 
-
-
+GI_0414_very_specific	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0414_very_specific	Rd_2	|	21	21	0	0	21/21(100.0)	|	15	15	0	0	0	15/97(15.46)	15/15(100.0)
+GI_0414_very_specific	Both	|	71	70	1	0	70/70(100.0)	|	47	47	0	0	0	47/97(48.45)	47/47(100.0)
 
 
-
-
-specific        min_M_pct:45;min_overlap_cov:60;min_overlap_iden:100;min_overlap_num:10;mismatch_rd1:1;mismatch_rd2:1;s1_mpl:10;s1_mplu:8       114/97(117.53)	114/135(84.44)	8   
-very_specific   min_M_pct:50;min_overlap_cov:60;min_overlap_iden:100;min_overlap_num:15;mismatch_rd1:1;mismatch_rd2:0;s1_mpl:10;s1_mplu:10    	100/97(103.09)	100/118(84.75)	8
-very_specific   min_M_pct:60;min_overlap_cov:60;min_overlap_iden:100;min_overlap_num:15;mismatch_rd1:0;mismatch_rd2:0;s1_mpl:10;s1_mplu:10      93/97(95.88)	93/110(84.55)	5
-
-very_specific   min_M_pct:55;min_overlap_cov:60;min_overlap_iden:100;min_overlap_num:15;mismatch_rd1:2;mismatch_rd2:0;s1_mpl:10;s1_mplu:10      
-
-very_specific   min_M_pct:70;min_overlap_cov:60;min_overlap_iden:100;min_overlap_num:15;mismatch_rd1:1;mismatch_rd2:0;s1_mpl:10;s1_mplu:10      96/97(98.97)	96/109(88.07)	8
-very_specific   min_M_pct:70;min_overlap_cov:60;min_overlap_iden:100;min_overlap_num:15;mismatch_rd1:0;mismatch_rd2:0;s1_mpl:10;s1_mplu:10      81/97(83.51)	81/116(69.83)	18
-
-
-GI_0409_default             Linkage	185/97(190.72)	185/227(81.5)	16
-GI_0409_default_best_match  Linkage	161/97(165.98)	161/178(90.45)	15
-
-GI_0411_by_blast            Linkage	121/97(124.74)	121/137(88.32)	9
-GI_0411_by_blast_best_match Linkage	121/97(124.74)	121/137(88.32)	9
-
-3_3   Linkage	183/97(188.66)	183/225(81.33)	16      66 links
-3_1   Linkage	169/97(174.23)	169/188(89.89)	15      28 links
-3_0   Linkage	170/97(175.26)	170/188(90.43)	15      26 links
-
-
+3_GI_subsample_100_1437	Refined_31	141	S1	Correct
+3_GI_subsample_75_1079	Refined_31	103	S1	Correct
+3_GI_subsample_75_1075	Refined_31	96	S1	Correct
+3_GI_subsample_75_1076	Refined_31	78	S1	Correct
+3_GI_subsample_75_1078	Refined_31	77	S1	Correct
+3_GI_subsample_50_663	Refined_31	75	S1	Correct
+3_GI_subsample_75_1074	Refined_31	68	S1	Correct
+3_GI_subsample_25_402	Refined_31	40	S1	Correct
+3_GI_subsample_50_712	Refined_31	38	S1	Wrong
+3_GI_subsample_75_1055	Refined_31	33	S1	Wrong
+3_GI_subsample_75_1162	Refined_31	27	S1	Wrong
+3_GI_subsample_75_1057	Refined_31	25	S1	Wrong
+3_GI_subsample_25_431	Refined_31	22	S1	Wrong
+3_GI_subsample_100_1418	Refined_31	19	S1	Wrong
+3_GI_subsample_25_598	Refined_31	14	S1	Wrong
+3_GI_subsample_100_2329	Refined_31	12	S1	Wrong
+3_GI_subsample_50_1728	Refined_31	8	S1	Unknown
+3_GI_subsample_100_3714	Refined_31	8	S1	Unknown
+3_GI_subsample_50_723	Refined_31	7	S1	Wrong
 '''
 
 ########## script ##########
@@ -158,9 +142,9 @@ stats_cluster_to_bin_txt    = '%s/stats_cluster_to_bin_ani%s_imag%s.txt'    % (w
 
 # assessment results
 linkage_file_path, linkage_file_basename, linkage_file_extension = sep_path_basename_ext(MarkerMAG_linkages)
-MarkerMAG_linkages_assessed = '%s/%s_with_assessment_ani%s_imag%s_i16S%s.txt'   % (wd, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
-wrong_linkages_txt          = '%s/%s_wrong_ani%s_imag%s_i16S%s.txt'             % (wd, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
-unknown_linkages_txt        = '%s/%s_unknown_ani%s_imag%s_i16S%s.txt'           % (wd, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
+MarkerMAG_linkages_assessed = '%s/%s_with_assessment_ani%s_imag%s_i16S%s.txt'   % (linkage_file_path, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
+wrong_linkages_txt          = '%s/%s_wrong_ani%s_imag%s_i16S%s.txt'             % (linkage_file_path, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
+unknown_linkages_txt        = '%s/%s_unknown_ani%s_imag%s_i16S%s.txt'           % (linkage_file_path, linkage_file_basename, drep_ani_cutoff, iden_cutoff, iden_cutoff_16s)
 
 
 ################################################# reference to cluster #################################################
@@ -465,7 +449,9 @@ recovery_str_rd1   = '%s/%s(%s)' % (rd1_correct_num,  total_query_mag_num, float
 recovery_str_rd2   = '%s/%s(%s)' % (rd2_correct_num,  total_query_mag_num, float("{0:.2f}".format(rd2_correct_num*100/total_query_mag_num)))
 recovery_str_both  = '%s/%s(%s)' % (correct_num_both, total_query_mag_num, float("{0:.2f}".format(correct_num_both*100/total_query_mag_num)))
 accuracy_str_rd1   = '%s/%s(%s)' % (rd1_correct_num,  (len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)), float("{0:.2f}".format(rd1_correct_num*100/(len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)))))
-accuracy_str_rd2   = '%s/%s(%s)' % (rd2_correct_num,  (len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)), float("{0:.2f}".format(rd2_correct_num*100/(len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)))))
+accuracy_str_rd2 = '0/0(0)'
+if (len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)) > 0:
+    accuracy_str_rd2   = '%s/%s(%s)' % (rd2_correct_num,  (len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)), float("{0:.2f}".format(rd2_correct_num*100/(len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)))))
 accuracy_str_both  = '%s/%s(%s)' % (correct_num_both, (total_linked_mag_num - unknown_gnm_both_num), float("{0:.2f}".format(correct_num_both*100/(total_linked_mag_num - unknown_gnm_both_num))))
 
 correct_link_both = correct_link_rd1 + correct_link_rd2
@@ -473,7 +459,9 @@ wrong_link_both   = wrong_link_rd1 + wrong_link_rd2
 unknown_link_both = unknown_link_rd1 + unknown_link_rd2
 
 accuracy_str_rd1_link_level   = '%s/%s(%s)' % (correct_link_rd1,  (total_linkage_num_rd1 - unknown_link_rd1), float("{0:.2f}".format(correct_link_rd1*100/(total_linkage_num_rd1 - unknown_link_rd1))))
-accuracy_str_rd2_link_level   = '%s/%s(%s)' % (correct_link_rd2,  (total_linkage_num_rd2 - unknown_link_rd2), float("{0:.2f}".format(correct_link_rd2*100/(total_linkage_num_rd2 - unknown_link_rd2))))
+accuracy_str_rd2_link_level = '0/0(0)'
+if (total_linkage_num_rd2 - unknown_link_rd2) > 0:
+    accuracy_str_rd2_link_level   = '%s/%s(%s)' % (correct_link_rd2,  (total_linkage_num_rd2 - unknown_link_rd2), float("{0:.2f}".format(correct_link_rd2*100/(total_linkage_num_rd2 - unknown_link_rd2))))
 accuracy_str_both_link_level  = '%s/%s(%s)' % (correct_link_both, (total_linkage_num_both - unknown_link_both), float("{0:.2f}".format(correct_link_both*100/(total_linkage_num_both - unknown_link_both))))
 
 prefix = os.path.basename(MarkerMAG_linkages).split('_identified_linkages_genome_level')[0]
@@ -486,29 +474,6 @@ print('%s\tBoth\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix
 ########################################################################################################################
 
 '''
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_longkmer_33-127_combined_linkages.txt'                         % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_longkmer_55-127_combined_linkages.txt'                         % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_9_combined_linkages.txt'                                       % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_longkmer_combined_linkages.txt'                                % wd
-MarkerMAG_linkages          = '%s/file_in/CAMI2_GI_mplu5_combined_linkages.txt'                                         % wd
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mita_test_combined_linkages.txt'                                    % wd
-# Linkage	51/97(52.58)	51/52(98.08)	10
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_combined_linkages.txt'                  % wd
-# Linkage	61/97(62.89)	61/68(89.71)	21
-# Linkage	60/97(61.86)	60/67(89.55)	20
-# Linkage	69/97(71.13)	69/76(90.79)	11
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_mismatch0.55_combined_linkages.txt'     % wd
-# 99.5  Linkage	60/97(61.86)	60/67(89.55)	19
-# 99.3  Linkage	68/97(70.1)	    68/75(90.67)	11
-# 99.0  Linkage	72/97(74.23)	72/79(91.14)	7
-
-MarkerMAG_linkages          = '%s/file_in/MarkerMAG_Mira_by_mapping_cigarMpct50_mismatch0.55_mplu10_combined_linkages.txt'                  % wd
-# Linkage	55/97(56.7)	55/62(88.71)	11
-# Linkage	57/97(58.76)	57/64(89.06)	9
-
 
 ########################################################################################################################
 
