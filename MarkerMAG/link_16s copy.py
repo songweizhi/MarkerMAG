@@ -24,7 +24,6 @@ import pandas as pd
 import seaborn as sns
 from Bio import SeqIO
 from Bio.Seq import Seq
-import multiprocessing as mp
 from datetime import datetime
 import plotly.graph_objects as go
 from Bio.SeqRecord import SeqRecord
@@ -947,178 +946,6 @@ def keep_best_matches_in_sam(sam_in, sam_out):
     sam_file_best_match_handle.close()
 
 
-def run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, unpaired_fastq, mira_stdout, force_overwrite):
-
-    # prepare manifest file
-    mira_manifest_handle = open(mira_manifest, 'w')
-    mira_manifest_handle.write('project = %s_mira_est_no_chimera\n' % output_prefix)
-    mira_manifest_handle.write('job=est,denovo,accurate\n')
-    mira_manifest_handle.write('parameters = -CL:ascdc\n')
-    mira_manifest_handle.write('readgroup = SomeUnpairedIlluminaReadsIGotFromTheLab\n')
-    mira_manifest_handle.write('data = %s\n' % os.path.abspath(unpaired_fastq))
-    mira_manifest_handle.write('technology = solexa\n')
-    mira_manifest_handle.close()
-
-    if os.path.isdir(mira_tmp_dir) is False:
-        os.mkdir(mira_tmp_dir)
-
-    # run Mira
-    mira_cmd = 'mira -c %s %s > %s' % (step_2_wd, os.path.abspath(mira_manifest), mira_stdout)
-    if mira_tmp_dir is not None:
-        mira_cmd = 'mira -c %s %s > %s' % (mira_tmp_dir, os.path.abspath(mira_manifest), mira_stdout)
-    os.system(mira_cmd)
-
-    # parse mira output
-    if (mira_tmp_dir is not None) and (mira_tmp_dir != step_2_wd):
-        os.system('cp -r %s/%s_mira_est_no_chimera_assembly %s/' % (mira_tmp_dir, output_prefix, step_2_wd))
-
-
-def extract_reads_worker(argument_list):
-
-    reads_file_in = argument_list[0]
-    reads_fmt = argument_list[1]
-    reads_to_extract = argument_list[2]
-    reads_file_out = argument_list[3]
-
-    reads_file_out_handle = open(reads_file_out, 'w')
-    for read_record in SeqIO.parse(reads_file_in, reads_fmt):
-        if read_record.id in reads_to_extract:
-            if reads_fmt == 'fasta':
-                reads_file_out_handle.write('>%s\n' % read_record.id)
-                reads_file_out_handle.write('%s\n' % read_record.seq)
-            if reads_fmt == 'fastq':
-                SeqIO.write(read_record, reads_file_out_handle, 'fastq')
-    reads_file_out_handle.close()
-
-
-def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
-                                     free_living_ctg_ref_file,
-                                     mini_assembly_to_16s_reads,
-                                     mini_assembly_to_ctg_reads,
-                                     ctg_level_min_link,
-                                     mini_assembly_to_16s_ctg_connector,
-                                     gnm_to_ctg_connector,
-                                     marker_to_ctg_gnm_Key_connector,
-                                     stats_GapFilling_ctg,
-                                     stats_GapFilling_gnm):
-
-    max_within_cate_diff_pct = 80
-    max_between_cate_diff_pct = 20
-
-    round2_free_living_16s_ref_dict = {}
-    for free_living_read_16s in open(free_living_16s_ref_file):
-        free_living_read_16s_split = free_living_read_16s.strip().split('\t')
-        if len(free_living_read_16s_split) > 1:
-            read_16s_id = free_living_read_16s_split[0]
-            read_16s_refs = free_living_read_16s_split[1].split(',')
-            round2_free_living_16s_ref_dict[read_16s_id] = read_16s_refs
-
-    round2_free_living_ctg_ref_dict = {}
-    for free_living_read_ctg in open(free_living_ctg_ref_file):
-        free_living_read_ctg_split = free_living_read_ctg.strip().split('\t')
-        read_ctg_id = free_living_read_ctg_split[0]
-        read_ctg_refs = free_living_read_ctg_split[1].split(',')
-        read_ctg_refs_no_suffix = []
-        for each_read_ctg_ref in read_ctg_refs:
-            if each_read_ctg_ref[-2:] in ['_l', '_r']:
-                each_read_ctg_ref_no_suffix = each_read_ctg_ref[:-2]
-                read_ctg_refs_no_suffix.append(each_read_ctg_ref_no_suffix)
-        round2_free_living_ctg_ref_dict[read_ctg_id] = read_ctg_refs_no_suffix
-
-    mini_assembly_to_16s_dict = {}
-    for each_mini_assembly in open(mini_assembly_to_16s_reads):
-        mini_assembly_split = each_mini_assembly.strip().split('\t')
-        mini_assembly_id = mini_assembly_split[0]
-        mini_assembly_mapped_reads = mini_assembly_split[1].split(',')
-        for each_mapped_read in mini_assembly_mapped_reads:
-            mapped_read_16s_refs = round2_free_living_16s_ref_dict.get(each_mapped_read, [])
-            for each_mapped_read_16s_ref in mapped_read_16s_refs:
-                mini_assembly_to_16s_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_16s_ref)
-                if mini_assembly_to_16s_key not in mini_assembly_to_16s_dict:
-                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] = 1
-                else:
-                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] += 1
-
-    mini_assembly_to_ctg_dict = {}
-    for each_mini_assembly in open(mini_assembly_to_ctg_reads):
-        mini_assembly_split = each_mini_assembly.strip().split('\t')
-        mini_assembly_id = mini_assembly_split[0]
-        mini_assembly_mapped_reads = mini_assembly_split[1].split(',')
-        for each_mapped_read in mini_assembly_mapped_reads:
-            mapped_read_ctg_refs = round2_free_living_ctg_ref_dict.get(each_mapped_read, [])
-            for each_mapped_read_ctg_ref in mapped_read_ctg_refs:
-                mini_assembly_to_ctg_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_ctg_ref)
-                if mini_assembly_to_ctg_key not in mini_assembly_to_ctg_dict:
-                    mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] = 1
-                else:
-                    mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] += 1
-
-    mini_assembly_to_16s_dict_reformatted = {}
-    for each in mini_assembly_to_16s_dict:
-        mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
-        seq_16s_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
-        linkage_num = mini_assembly_to_16s_dict[each]
-        seq_16s_with_num = '%s__num__%s' % (seq_16s_id, linkage_num)
-        if linkage_num >= ctg_level_min_link:
-            if mini_assembly_id not in mini_assembly_to_16s_dict_reformatted:
-                mini_assembly_to_16s_dict_reformatted[mini_assembly_id] = {seq_16s_with_num}
-            else:
-                mini_assembly_to_16s_dict_reformatted[mini_assembly_id].add(seq_16s_with_num)
-
-    mini_assembly_to_ctg_dict_reformatted = {}
-    for each in mini_assembly_to_ctg_dict:
-        mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
-        ctg_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
-        linkage_num = mini_assembly_to_ctg_dict[each]
-        ctg_with_num = '%s__num__%s' % (ctg_id, linkage_num)
-        if linkage_num >= ctg_level_min_link:
-            if mini_assembly_id not in mini_assembly_to_ctg_dict_reformatted:
-                mini_assembly_to_ctg_dict_reformatted[mini_assembly_id] = {ctg_with_num}
-            else:
-                mini_assembly_to_ctg_dict_reformatted[mini_assembly_id].add(ctg_with_num)
-
-    mini_assembly_linked_both = set(mini_assembly_to_16s_dict_reformatted).intersection(mini_assembly_to_ctg_dict_reformatted)
-
-    stats_GapFilling_ctg_handle = open(stats_GapFilling_ctg, 'w')
-    stats_GapFilling_gnm_dict = {}
-    for each_mini_assembly in mini_assembly_linked_both:
-        linked_16s = mini_assembly_to_16s_dict_reformatted[each_mini_assembly]
-        linked_ctg = mini_assembly_to_ctg_dict_reformatted[each_mini_assembly]
-        linked_16s_num_list = [int(i.split('__num__')[1]) for i in linked_16s]
-        linked_ctg_num_list = [int(i.split('__num__')[1]) for i in linked_ctg]
-        linked_16s_num_max = max(linked_16s_num_list)
-        linked_ctg_num_max = max(linked_ctg_num_list)
-
-        if (min(linked_16s_num_max, linked_ctg_num_max) * 100 / max(linked_16s_num_max, linked_ctg_num_max)) >= max_between_cate_diff_pct:
-            linked_16s_filtered = [i for i in linked_16s if int(i.split('__num__')[1])*100/linked_16s_num_max >= max_within_cate_diff_pct]
-            linked_ctg_filtered = [i for i in linked_ctg if int(i.split('__num__')[1])*100/linked_ctg_num_max >= max_within_cate_diff_pct]
-
-            for each_linked_16s in linked_16s_filtered:
-                linked_16s_id = each_linked_16s.split('__num__')[0]
-                linked_16s_num = int(each_linked_16s.split('__num__')[1])
-                for each_linked_ctg in linked_ctg_filtered:
-                    linked_ctg_id = each_linked_ctg.split('__num__')[0]
-                    linked_gnm_id = linked_ctg_id.split(gnm_to_ctg_connector)[0]
-                    linked_ctg_num = int(each_linked_ctg.split('__num__')[1])
-                    stats_GapFilling_ctg_handle.write('%s\t%s\t%s\n' % (linked_16s_id, linked_ctg_id, (linked_16s_num + linked_ctg_num)))
-                    marker_to_gnm_key = '%s%s%s' % (linked_16s_id, marker_to_ctg_gnm_Key_connector, linked_gnm_id)
-                    if marker_to_gnm_key not in stats_GapFilling_gnm_dict:
-                        stats_GapFilling_gnm_dict[marker_to_gnm_key] = (linked_16s_num + linked_ctg_num)
-                    else:
-                        stats_GapFilling_gnm_dict[marker_to_gnm_key] += (linked_16s_num + linked_ctg_num)
-    stats_GapFilling_ctg_handle.close()
-
-    stats_GapFilling_gnm_handle = open(stats_GapFilling_gnm, 'w')
-    stats_GapFilling_gnm_handle.write('MarkerGene,GenomicSeq,Number\n')
-    for each_16s_to_gnm in stats_GapFilling_gnm_dict:
-        each_16s_to_gnm_split = each_16s_to_gnm.split(marker_to_ctg_gnm_Key_connector)
-        id_16s = each_16s_to_gnm_split[0]
-        id_gnm = each_16s_to_gnm_split[1]
-        linkage_num = stats_GapFilling_gnm_dict[each_16s_to_gnm]
-        stats_GapFilling_gnm_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
-    stats_GapFilling_gnm_handle.close()
-
-
 def link_16s(args):
 
     ###################################################### file in/out #####################################################
@@ -1159,25 +986,17 @@ def link_16s(args):
     preset_specific                     = args['specific']
     preset_very_specific                = args['very_specific']
 
-    # by assembly
-    round_2_spades                      = args['spades']
-    mira_tmp_dir                        = args['mira_tmp']
-
     pwd_makeblastdb_exe                 = 'makeblastdb'
     pwd_blastn_exe                      = 'blastn'
     pwd_bowtie2_build_exe               = 'bowtie2-build'
     pwd_bowtie2_exe                     = 'bowtie2'
     pwd_samtools_exe                    = 'samtools'
     pwd_bbmap_exe                       = 'bbmap.sh'
-    pwd_spades_exe                      = 'spades.py'
 
     marker_to_ctg_gnm_Key_connector     = '___M___'
     gnm_to_ctg_connector                = '___C___'
     end_seq_len                         = 500
 
-    # by assembly
-    ctg_level_min_link = 3
-    mini_assembly_to_16s_ctg_connector = '___Mini___'
 
     ################################################ prepare preset parameters to use ################################################
 
@@ -1199,13 +1018,12 @@ def link_16s(args):
     # min_clp_M_len     = 20
     # min_M_len         = 30
     # min_overlap_len   = 50
-    min_M_pct_rd2 = 85
 
-    preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 35, 'min_overlap_num': 5}
-    preset_dict_sensitive       = {'s1_mpl': 7,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 40, 'min_overlap_num': 5}
-    # preset_dict_default       = {'s1_mpl': 10, 's1_mplu': 5,  'min_M_pct': 35, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
-    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 8,  'min_M_pct': 40, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
-    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10, 'min_M_pct': 45, 'mismatch_rd1': 1, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
+    preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 35, 'min_overlap_num': 5}
+    preset_dict_sensitive       = {'s1_mpl': 5,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 40, 'min_overlap_num': 5}
+    # preset_dict_default       = {'s1_mpl': 10, 's1_mplu': 5,  'min_M_pct': 40, 'mismatch_rd1': 3, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
+    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 8,  'min_M_pct': 50, 'mismatch_rd1': 1, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
+    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10, 'min_M_pct': 70, 'mismatch_rd1': 0, 'mismatch_rd2': 0, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
 
     preset_to_use = preset_dict_default
     if preset_very_sensitive is True:
@@ -1270,37 +1088,6 @@ def link_16s(args):
     step_1_wd = '%s/%s_step_1_wd' % (working_directory, output_prefix)
     step_2_wd = '%s/%s_step_2_wd' % (working_directory, output_prefix)
     os.mkdir(step_1_wd)
-
-    ############################################## check input reads format ############################################
-
-    r1_path, r1_basename, r1_ext = sep_path_basename_ext(reads_file_r1)
-    r2_path, r2_basename, r2_ext = sep_path_basename_ext(reads_file_r2)
-
-    reads_file_r1_fasta = reads_file_r1
-    reads_file_r2_fasta = reads_file_r2
-    if ('q' in r1_ext) and ('q' in r2_ext):
-
-        reads_file_r1_fasta_to_check = '%s/%s.fasta' % (r1_path, r1_basename)
-        reads_file_r2_fasta_to_check = '%s/%s.fasta' % (r2_path, r2_basename)
-
-        if (os.path.isfile(reads_file_r1_fasta_to_check) is True) and (os.path.isfile(reads_file_r2_fasta_to_check) is True):
-            reads_file_r1_fasta = reads_file_r1_fasta_to_check
-            reads_file_r2_fasta = reads_file_r2_fasta_to_check
-
-        else:
-            reads_file_r1_fasta = '%s/%s.fasta' % (step_1_wd, r1_basename)
-            reads_file_r2_fasta = '%s/%s.fasta' % (step_1_wd, r2_basename)
-
-            if num_threads >= 2:
-                num_threads_SeqIO_convert_worker = 2
-            else:
-                num_threads_SeqIO_convert_worker = 1
-
-            pool = mp.Pool(processes=num_threads_SeqIO_convert_worker)
-            pool.map(SeqIO_convert_worker, [[reads_file_r1, 'fastq', reads_file_r1_fasta, 'fasta-2line'], [reads_file_r2, 'fastq', reads_file_r2_fasta, 'fasta-2line']])
-            pool.close()
-            pool.join()
-
 
     ######################## check genomic sequence type and prepare files for making blast db #########################
 
@@ -1384,8 +1171,8 @@ def link_16s(args):
     combined_1st_round_unlinked_mags_sam        = '%s/round_1_unlinked_gnm.sam'                     % step_2_wd
     combined_1st_round_unlinked_mags_sam_best_match  = '%s/round_1_unlinked_gnm_best_match.sam'     % step_2_wd
     combined_1st_round_unlinked_ctgs            = '%s/round_1_unlinked_ctg.fa'                      % step_2_wd
-    stats_GapFilling_file                       = '%s/stats_GapFilling_gnm.txt'                         % step_2_wd
-    stats_GapFilling_file_filtered              = '%s/stats_GapFilling_gnm_filtered.txt'                % step_2_wd
+    stats_GapFilling_file                       = '%s/stats_GapFilling.txt'                         % step_2_wd
+    stats_GapFilling_file_filtered              = '%s/stats_GapFilling_filtered.txt'                % step_2_wd
     free_living_16s_R1                          = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
     free_living_16s_R2                          = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
     free_living_16s_UP                          = '%s/round2_free_living_16s_UP.fa'                 % step_2_wd
@@ -1398,39 +1185,6 @@ def link_16s(args):
     free_living_ctg_ref_file                    = '%s/round2_free_living_ctg_refs.txt'              % step_2_wd
     free_living_blast_result                    = '%s/free_living_reads_blastn.tab'                 % step_2_wd
 
-    # by assembly
-    free_living_all                             = '%s/round2_free_living_all.fa'                    % step_2_wd
-    free_living_all_fq_r1                       = '%s/round2_free_living_all_R1.fq'                 % step_2_wd
-    free_living_all_fq_r2                       = '%s/round2_free_living_all_R2.fq'                 % step_2_wd
-    free_living_all_fq                          = '%s/round2_free_living_all.fq'                    % step_2_wd
-    free_living_R1                              = '%s/round2_free_living_R1.fa'                     % step_2_wd
-    free_living_R2                              = '%s/round2_free_living_R2.fa'                     % step_2_wd
-    free_living_UP                              = '%s/round2_free_living_UP.fa'                     % step_2_wd
-
-    spades_wd                                   = '%s/mini_assembly_SPAdes_wd'                   % step_2_wd
-    spades_log                                  = '%s/SPAdes_stdout.txt'                         % step_2_wd
-    mira_manifest                               = '%s/mira_manifest.txt'                         % step_2_wd
-    mira_stdout                                 = '%s/mira_stdout.txt'                           % step_2_wd
-
-    sam_file_mini_assembly_P                    = '%s/scaffolds_P.sam'                           % step_2_wd
-    sam_file_mini_assembly_UP                   = '%s/scaffolds_UP.sam'                          % step_2_wd
-    sam_file_mini_assembly_stderr_P             = '%s/scaffolds_bbmap_stderr_P.txt'              % step_2_wd
-    sam_file_mini_assembly_stderr_UP            = '%s/scaffolds_bbmap_stderr_UP.txt'             % step_2_wd
-
-    sam_file_mini_assembly_combined             = '%s/scaffolds_combined.sam'                    % step_2_wd
-
-    sam_file_mini_assembly_16s          = '%s/scaffolds_16s.sam'                    % step_2_wd
-    sam_file_mini_assembly_ctg          = '%s/scaffolds_ctg.sam'                    % step_2_wd
-    sam_file_mini_assembly_16s_stderr   = '%s/scaffolds_16s_stderr.txt'             % step_2_wd
-    sam_file_mini_assembly_ctg_stderr   = '%s/scaffolds_ctg_stderr.txt'             % step_2_wd
-
-    sam_file_mini_assembly_16s_best_match          = '%s/scaffolds_16s_best_match.sam'                    % step_2_wd
-    sam_file_mini_assembly_ctg_best_match          = '%s/scaffolds_ctg_best_match.sam'                    % step_2_wd
-
-    mini_assembly_to_16s_reads      = '%s/mini_assembly_to_16s_reads.txt'                    % step_2_wd
-    mini_assembly_to_ctg_reads      = '%s/mini_assembly_to_ctg_reads.txt'                    % step_2_wd
-
-    stats_GapFilling_ctg            = '%s/stats_GapFilling_ctg.txt'                 % step_2_wd
 
     ################################################# combine linkages from two steps #################################################
 
@@ -2465,143 +2219,15 @@ def link_16s(args):
     free_living_ctg_UP_handle.close()
     free_living_ctg_refs_file_handle.close()
 
-    os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, free_living_16s))
-    os.system('cat %s %s %s > %s' % (free_living_ctg_R1, free_living_ctg_R2, free_living_ctg_UP, free_living_ctg))
-
 
     ####################################################################################################################
     ######################################### second round linking by assembly #########################################
     ####################################################################################################################
 
-    rd2_by_assembly = True
+    rd2_by_assembly = False
 
     if rd2_by_assembly is True:
-        os.system('cat %s %s > %s' % (free_living_16s, free_living_ctg, free_living_all))
-
-        # assemble
-        if round_2_spades is False:
-
-            free_living_all_id_r1 = set()
-            free_living_all_id_r2 = set()
-            for each_read in open(free_living_all):
-                if each_read.startswith('>'):
-                    read_id = each_read.split(' ')[0]
-                    if read_id[-1] == '1':
-                        free_living_all_id_r1.add(read_id)
-                    if read_id[-1] == '2':
-                        free_living_all_id_r2.add(read_id)
-
-            argument_list_r1 = [reads_file_r1, 'fastq', free_living_all_id_r1, free_living_all_fq_r1]
-            argument_list_r2 = [reads_file_r2, 'fastq', free_living_all_id_r2, free_living_all_fq_r2]
-
-            # extract reads with multiprocessing
-            pool = mp.Pool(processes=2)
-            pool.map(extract_reads_worker, [argument_list_r1, argument_list_r2])
-            pool.close()
-            pool.join()
-
-            os.system('cat %s %s > %s' % (free_living_all_fq_r1, free_living_all_fq_r2, free_living_all_fq))
-            report_and_log(('Round 2: running Mira on extracted reads'), pwd_log_file, keep_quiet)
-            run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, free_living_all_fq, mira_stdout, force_overwrite)
-            mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
-        else:
-            report_and_log(('Round 2: running SPAdes on extracted reads'), pwd_log_file, keep_quiet)
-            spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 49,75,99,127 > %s' % (pwd_spades_exe, free_living_all, spades_wd, num_threads, spades_log)
-            os.system(spades_cmd)
-            mini_assemblies = '%s/scaffolds.fasta' % spades_wd
-
-        # mapping extracted reads to mini assemblies with bbmap
-        report_and_log(('Round 2: mapping extracted reads to mini assemblies with bbmap'), pwd_log_file, keep_quiet)
-        # bbmap_cmd_miniassembly_paired   = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, free_living_R1, free_living_R2, sam_file_mini_assembly_P, bbmap_parameter, sam_file_mini_assembly_stderr_P)
-        # bbmap_cmd_miniassembly_unpaired = '%s ref=%s in=%s outm=%s %s 2> %s'        % (pwd_bbmap_exe, mini_assemblies, free_living_UP, sam_file_mini_assembly_UP, bbmap_parameter, sam_file_mini_assembly_stderr_UP)
-        # os.system(bbmap_cmd_miniassembly_paired)
-        # os.system(bbmap_cmd_miniassembly_unpaired)
-
-        bbmap_cmd_miniassembly_free_living_16s = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, free_living_16s, sam_file_mini_assembly_16s, bbmap_parameter, sam_file_mini_assembly_16s_stderr)
-        bbmap_cmd_miniassembly_free_living_ctg = '%s ref=%s in=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, mini_assemblies, free_living_ctg, sam_file_mini_assembly_ctg, bbmap_parameter, sam_file_mini_assembly_ctg_stderr)
-        os.system(bbmap_cmd_miniassembly_free_living_16s)
-        os.system(bbmap_cmd_miniassembly_free_living_ctg)
-
-        keep_best_matches_in_sam(sam_file_mini_assembly_16s, sam_file_mini_assembly_16s_best_match)
-        keep_best_matches_in_sam(sam_file_mini_assembly_ctg, sam_file_mini_assembly_ctg_best_match)
-
-
-        #################################################### parse sam file ####################################################
-
-        # combine sam files
-        # os.system('cat %s %s > %s' % (sam_file_mini_assembly_P, sam_file_mini_assembly_UP, sam_file_mini_assembly_combined))
-
-        report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
-
-        # get gap seq to 16s reads dict
-        gap_seq_to_16s_reads_dict = {}
-        for each_read in open(sam_file_mini_assembly_16s_best_match):
-            if not each_read.startswith('@'):
-                each_read_split = each_read.strip().split('\t')
-                cigar = each_read_split[5]
-                if cigar != '*':
-                    read_id = each_read_split[0]
-                    ref_id = each_read_split[2]
-                    cigar_splitted = cigar_splitter(cigar)
-                    aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-                    if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct_rd2) and (mismatch_pct <= max_mis_pct_rd2):
-                        if ref_id not in gap_seq_to_16s_reads_dict:
-                            gap_seq_to_16s_reads_dict[ref_id] = [read_id]
-                        else:
-                            gap_seq_to_16s_reads_dict[ref_id].append(read_id)
-
-        # get gap seq to ctg reads dict
-        gap_seq_to_ctg_reads_dict = {}
-        for each_read in open(sam_file_mini_assembly_ctg_best_match):
-            if not each_read.startswith('@'):
-                each_read_split = each_read.strip().split('\t')
-                cigar = each_read_split[5]
-                if cigar != '*':
-                    read_id = each_read_split[0]
-                    ref_id = each_read_split[2]
-                    cigar_splitted = cigar_splitter(cigar)
-                    aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-                    if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct_rd2) and (mismatch_pct <= max_mis_pct_rd2):
-                        if ref_id not in gap_seq_to_ctg_reads_dict:
-                            gap_seq_to_ctg_reads_dict[ref_id] = [read_id]
-                        else:
-                            gap_seq_to_ctg_reads_dict[ref_id].append(read_id)
-
-
-        mini_assembly_to_16s_reads_handle = open(mini_assembly_to_16s_reads, 'w')
-        for each_mini_assembly in gap_seq_to_16s_reads_dict:
-            mini_assembly_to_16s_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(gap_seq_to_16s_reads_dict[each_mini_assembly])))
-        mini_assembly_to_16s_reads_handle.close()
-
-        mini_assembly_to_ctg_reads_handle = open(mini_assembly_to_ctg_reads, 'w')
-        for each_mini_assembly in gap_seq_to_ctg_reads_dict:
-            mini_assembly_to_ctg_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(gap_seq_to_ctg_reads_dict[each_mini_assembly])))
-        mini_assembly_to_ctg_reads_handle.close()
-
-
-        ############################################# get_GapFilling_stats #############################################
-
-        get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
-                                         free_living_ctg_ref_file,
-                                         mini_assembly_to_16s_reads,
-                                         mini_assembly_to_ctg_reads,
-                                         ctg_level_min_link,
-                                         mini_assembly_to_16s_ctg_connector,
-                                         gnm_to_ctg_connector,
-                                         marker_to_ctg_gnm_Key_connector,
-                                         stats_GapFilling_ctg,
-                                         stats_GapFilling_file)
-
-        filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, round_2_min_link_num, round_2_min_link_num, stats_GapFilling_file_filtered)
-
-        free_living_16s_to_ctg_linkage_dict_to_use = {}
-        for each_ctg_level_link in open(stats_GapFilling_ctg):
-            each_ctg_level_link_split = each_ctg_level_link.split('\t')
-            marker_id = each_ctg_level_link_split[0]
-            ctg_id = each_ctg_level_link_split[1]
-            link_num = int(each_ctg_level_link_split[2])
-            current_key = '%s%s%s' % (marker_id, marker_to_ctg_gnm_Key_connector, ctg_id)
-            free_living_16s_to_ctg_linkage_dict_to_use[current_key] = link_num
+        pass
 
 
     ####################################################################################################################
@@ -2610,6 +2236,8 @@ def link_16s(args):
 
     if rd2_by_assembly is False:
 
+        os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, free_living_16s))
+        os.system('cat %s %s %s > %s' % (free_living_ctg_R1, free_living_ctg_R2, free_living_ctg_UP, free_living_ctg))
         makeblastdb_cmd = 'makeblastdb -in %s -dbtype nucl -parse_seqids'  % free_living_ctg
         blastn_cmd      = 'blastn -query %s -db %s -out %s %s'             % (free_living_16s, free_living_ctg, free_living_blast_result, blast_parameters)
         os.system(makeblastdb_cmd)
@@ -2877,7 +2505,7 @@ if __name__ == '__main__':
 
     # parameters for both rounds linking
     link_16s_parser_both_rds.add_argument('-min_M_len',     required=False, metavar='', type=int,   default=30,             help='minimum aligned length (bp), (default: %(default)s)')
-    link_16s_parser_both_rds.add_argument('-min_M_pct',     required=False, metavar='', type=float, default=35,             help='minimum aligned percentage, (default: %(default)s)')
+    link_16s_parser_both_rds.add_argument('-min_M_pct',     required=False, metavar='', type=float, default=40,             help='minimum aligned percentage, (default: %(default)s)')
 
     # parameters for 1st round linking
     link_16s_parser_rd1.add_argument('-min_clp_len',        required=False, metavar='', type=int,   default=30,             help='minimum clipping sequence length (bp), (default: %(default)s)')
@@ -2891,7 +2519,7 @@ if __name__ == '__main__':
     link_16s_parser_rd2.add_argument('-min_overlap_cov',    required=False, metavar='', type=float, default=50,            help='min_overlap_cov, (default: %(default)s)')
     link_16s_parser_rd2.add_argument('-min_overlap_len',    required=False, metavar='', type=int,   default=50,            help='min_overlap_len, (default: %(default)s)')
     link_16s_parser_rd2.add_argument('-min_overlap_num',    required=False, metavar='', type=int,   default=10,            help='minimum number of overlapping reads for a linkages to be reported, (default: %(default)s)')
-    link_16s_parser_rd2.add_argument('-mismatch_rd2',       required=False, metavar='', type=float, default=3,              help='maximum mismatch percentage, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-mismatch_rd2',       required=False, metavar='', type=float, default=1,              help='maximum mismatch percentage, (default: %(default)s)')
 
     # preset parameters
     link_16s_parser_preset.add_argument('-very_sensitive',  required=False, action="store_true",                            help='for greater sensitivity, shortcut for  "min_overlap_iden 99.5 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3"')
@@ -2905,10 +2533,6 @@ if __name__ == '__main__':
     link_16s_parser_others.add_argument('-tmp',             required=False, action="store_true",                            help='keep temporary files')
     link_16s_parser_others.add_argument('-quiet',           required=False, action="store_true",                            help='not report progress')
     link_16s_parser_others.add_argument('-force',           required=False, action="store_true",                            help='force overwrite existing results')
-
-    # by assembly
-    link_16s_parser.add_argument('-mira_tmp',        required=False, default=None,                      help='tmp dir for mira')
-    link_16s_parser.add_argument('-spades',          required=False, action="store_true",               help='run spades, instead of Mira')
 
     # for debugging
     link_16s_parser_debug.add_argument('-test_mode',        required=False, action="store_true",                            help='only for debugging, do not provide')
@@ -2926,5 +2550,4 @@ if __name__ == '__main__':
 5. check the structure of assembled sequences? v1, 2, 3 or v4, 5, 6? how?
 6. add "16S_reads" to SortMeRNA's output prefix
 7. estimate cutoffs to use based sensitive or specific
-8. add --careful to spades?
 '''
