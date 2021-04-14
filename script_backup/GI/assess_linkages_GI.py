@@ -58,7 +58,7 @@ wd = '/Users/songweizhi/Desktop/assess_linkages'
 
 ########## reference to cluster ##########
 
-drep_ani_cutoff             = 95
+drep_ani_cutoff             = 97
 drep_cdb_file               = '%s/file_in/Cdb_%s.csv'                                       % (wd, drep_ani_cutoff)
 ref_to_strain_file          = '%s/file_in/ref_to_strain.txt'                                % wd
 
@@ -69,9 +69,16 @@ blastn_bin_vs_ref           = '%s/file_in/bin_vs_ref.tab'                       
 iden_cutoff                 = 99.5
 aln_len_cutoff              = 1500
 cov_q_cutoff                = 90
-min_match_length            = 102400  # 100 Kbp
+min_match_length            = 524288  # 100 Kbp  102400
 mag_metadata                = '%s/file_in/MAG_metadata.txt'                                 % wd
 
+'''
+GI_0414_specific	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0414_specific	Rd_2	|	22	22	0	0	22/22(100.0)	|	16	16	0	0	0	16/97(16.49)	16/16(100.0)
+GI_0414_specific	Both	|	72	71	1	0	71/71(100.0)	|	48	48	0	0	0	48/97(49.48)	48/48(100.0)
+
+
+'''
 ########## 16S to reference ##########
 
 perform_blastn_16s_vs_refs  = False  # True or False
@@ -125,6 +132,7 @@ GI_0414_very_specific	Both	|	71	70	1	0	70/70(100.0)	|	47	47	0	0	0	47/97(48.45)	4
 3_GI_subsample_50_1728	Refined_31	8	S1	Unknown
 3_GI_subsample_100_3714	Refined_31	8	S1	Unknown
 3_GI_subsample_50_723	Refined_31	7	S1	Wrong
+
 '''
 
 ########## script ##########

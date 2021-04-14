@@ -1289,17 +1289,17 @@ def link_16s(args):
                            'min_overlap_num' : round_2_min_link_num}
 
     # not included parameters (set their cutoffs according read length):
-    # min_clp_len       = 30
-    # min_clp_M_len     = 20
+    # min_clp_len       = 45
+    # min_clp_M_len     = 35
     # min_M_len         = 30
     # min_overlap_len   = 50
     min_M_pct_rd2 = 85
 
-    preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 35, 'min_overlap_num': 5}
-    preset_dict_sensitive       = {'s1_mpl': 7,  's1_mplu': 3,  'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 40, 'min_overlap_num': 5}
-    # preset_dict_default       = {'s1_mpl': 10, 's1_mplu': 5,  'min_M_pct': 35, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
-    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 7,  'min_M_pct': 35, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
-    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 7,  'min_M_pct': 50, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
+    preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 5,   'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 35, 'min_overlap_num': 5}
+    preset_dict_sensitive       = {'s1_mpl': 7,  's1_mplu': 7,   'min_M_pct': 30, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 40, 'min_overlap_num': 5}
+    # preset_dict_default       = {'s1_mpl': 8,  's1_mplu': 8,   'min_M_pct': 30, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
+    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 35, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
+    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 50, 'mismatch_rd1': 1, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
 
     preset_to_use = preset_dict_default
     if preset_very_sensitive is True:
@@ -1478,8 +1478,8 @@ def link_16s(args):
     combined_1st_round_unlinked_mags_sam        = '%s/round_1_unlinked_gnm.sam'                     % step_2_wd
     combined_1st_round_unlinked_mags_sam_best_match  = '%s/round_1_unlinked_gnm_best_match.sam'     % step_2_wd
     combined_1st_round_unlinked_ctgs            = '%s/round_1_unlinked_ctg.fa'                      % step_2_wd
-    stats_GapFilling_file                       = '%s/stats_GapFilling_gnm.txt'                         % step_2_wd
-    stats_GapFilling_file_filtered              = '%s/stats_GapFilling_gnm_filtered.txt'                % step_2_wd
+    stats_GapFilling_file                       = '%s/stats_GapFilling_gnm.txt'                     % step_2_wd
+    stats_GapFilling_file_filtered              = '%s/stats_GapFilling_gnm_filtered.txt'            % step_2_wd
     free_living_16s_R1                          = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
     free_living_16s_R2                          = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
     free_living_16s_UP                          = '%s/round2_free_living_16s_UP.fa'                 % step_2_wd
@@ -1497,34 +1497,31 @@ def link_16s(args):
     free_living_all_fq_r1                       = '%s/round2_free_living_all_R1.fq'                 % step_2_wd
     free_living_all_fq_r2                       = '%s/round2_free_living_all_R2.fq'                 % step_2_wd
     free_living_all_fq                          = '%s/round2_free_living_all.fq'                    % step_2_wd
+
     free_living_R1                              = '%s/round2_free_living_R1.fa'                     % step_2_wd
     free_living_R2                              = '%s/round2_free_living_R2.fa'                     % step_2_wd
     free_living_UP                              = '%s/round2_free_living_UP.fa'                     % step_2_wd
 
-    spades_wd                                   = '%s/mini_assembly_SPAdes_wd'                   % step_2_wd
-    spades_log                                  = '%s/SPAdes_stdout.txt'                         % step_2_wd
-    mira_manifest                               = '%s/mira_manifest.txt'                         % step_2_wd
-    mira_stdout                                 = '%s/mira_stdout.txt'                           % step_2_wd
+    spades_wd                                   = '%s/mini_assembly_SPAdes_wd'                      % step_2_wd
+    spades_log                                  = '%s/SPAdes_stdout.txt'                            % step_2_wd
+    mira_manifest                               = '%s/mira_manifest.txt'                            % step_2_wd
+    mira_stdout                                 = '%s/mira_stdout.txt'                              % step_2_wd
 
-    sam_file_mini_assembly_P                    = '%s/scaffolds_P.sam'                           % step_2_wd
-    sam_file_mini_assembly_UP                   = '%s/scaffolds_UP.sam'                          % step_2_wd
-    sam_file_mini_assembly_stderr_P             = '%s/scaffolds_bbmap_stderr_P.txt'              % step_2_wd
-    sam_file_mini_assembly_stderr_UP            = '%s/scaffolds_bbmap_stderr_UP.txt'             % step_2_wd
+    sam_file_mini_assembly_P                    = '%s/scaffolds_P.sam'                              % step_2_wd
+    sam_file_mini_assembly_UP                   = '%s/scaffolds_UP.sam'                             % step_2_wd
+    sam_file_mini_assembly_stderr_P             = '%s/scaffolds_bbmap_stderr_P.txt'                 % step_2_wd
+    sam_file_mini_assembly_stderr_UP            = '%s/scaffolds_bbmap_stderr_UP.txt'                % step_2_wd
+    sam_file_mini_assembly_combined             = '%s/scaffolds_combined.sam'                       % step_2_wd
 
-    sam_file_mini_assembly_combined             = '%s/scaffolds_combined.sam'                    % step_2_wd
-
-    sam_file_mini_assembly_16s          = '%s/scaffolds_16s.sam'                    % step_2_wd
-    sam_file_mini_assembly_ctg          = '%s/scaffolds_ctg.sam'                    % step_2_wd
-    sam_file_mini_assembly_16s_stderr   = '%s/scaffolds_16s_stderr.txt'             % step_2_wd
-    sam_file_mini_assembly_ctg_stderr   = '%s/scaffolds_ctg_stderr.txt'             % step_2_wd
-
-    sam_file_mini_assembly_16s_best_match          = '%s/scaffolds_16s_best_match.sam'                    % step_2_wd
-    sam_file_mini_assembly_ctg_best_match          = '%s/scaffolds_ctg_best_match.sam'                    % step_2_wd
-
-    mini_assembly_to_16s_reads      = '%s/mini_assembly_to_16s_reads.txt'                    % step_2_wd
-    mini_assembly_to_ctg_reads      = '%s/mini_assembly_to_ctg_reads.txt'                    % step_2_wd
-
-    stats_GapFilling_ctg            = '%s/stats_GapFilling_ctg.txt'                 % step_2_wd
+    sam_file_mini_assembly_16s                  = '%s/scaffolds_16s.sam'                            % step_2_wd
+    sam_file_mini_assembly_ctg                  = '%s/scaffolds_ctg.sam'                            % step_2_wd
+    sam_file_mini_assembly_16s_stderr           = '%s/scaffolds_16s_stderr.txt'                     % step_2_wd
+    sam_file_mini_assembly_ctg_stderr           = '%s/scaffolds_ctg_stderr.txt'                     % step_2_wd
+    sam_file_mini_assembly_16s_best_match       = '%s/scaffolds_16s_best_match.sam'                 % step_2_wd
+    sam_file_mini_assembly_ctg_best_match       = '%s/scaffolds_ctg_best_match.sam'                 % step_2_wd
+    mini_assembly_to_16s_reads                  = '%s/mini_assembly_to_16s_reads.txt'               % step_2_wd
+    mini_assembly_to_ctg_reads                  = '%s/mini_assembly_to_ctg_reads.txt'               % step_2_wd
+    stats_GapFilling_ctg                        = '%s/stats_GapFilling_ctg.txt'                     % step_2_wd
 
     ################################################# combine linkages from two steps #################################################
 
@@ -1636,6 +1633,15 @@ def link_16s(args):
 
     ##################################################### parse sam file ####################################################
 
+    def check_both_ends_clipping(cigar_splitted):
+
+        both_ends_clipping = False
+        if len(cigar_splitted) >= 3:
+            if (cigar_splitted[0][-1] in ['S', 's']) and (cigar_splitted[-1][-1] in ['S', 's']):
+                both_ends_clipping = True
+
+        return both_ends_clipping
+
     report_and_log(('Round 1: parse sam file'), pwd_log_file, keep_quiet)
 
     keep_best_matches_in_sam(input_reads_to_16s_sam, input_reads_to_16s_sam_best_match)
@@ -1658,8 +1664,9 @@ def link_16s(args):
                 ref_id_with_pos = '%s_pos_%s' % (ref_id, ref_pos)
                 cigar_splitted = cigar_splitter(cigar)
                 aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
+                both_ends_clp = check_both_ends_clipping(cigar_splitted)
 
-                if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= (max_mis_pct_rd1)):
+                if (aligned_len >= min_M_len) and (aligned_pct >= min_M_pct) and (mismatch_pct <= max_mis_pct_rd1) and (both_ends_clp is False):
                     if read_id_base not in MappingRecord_dict:
                         MappingRecord_dict[read_id_base] = MappingRecord()
                     if read_strand == '1':
@@ -1727,27 +1734,30 @@ def link_16s(args):
 
             # consider as clipping mapped
             if max_value >= min_clp_len:
+                best_cigar_aligned_len, best_cigar_aligned_pct, best_cigar_clipping_len, best_cigar_clipping_pct, best_cigar_mismatch_pct = get_cigar_stats(cigar_splitter(best_cigar))
+                if best_cigar_mismatch_pct == 0:
 
-                current_clipping_seq = ''
-                if best_cigar_rc is False:
-                    if max_value_index == 'r1_l':
-                        current_clipping_seq = current_mp_record.r1_seq[:max_value]
-                    if max_value_index == 'r1_r':
-                        current_clipping_seq = current_mp_record.r1_seq[-max_value:]
+                    current_mp_record.consider_r1_clipping_part = True
 
-                if best_cigar_rc is True:
-                    r1_seq_rc = get_rc(current_mp_record.r1_seq)
+                    current_clipping_seq = ''
+                    if best_cigar_rc is False:
+                        if max_value_index == 'r1_l':
+                            current_clipping_seq = current_mp_record.r1_seq[:max_value]
+                        if max_value_index == 'r1_r':
+                            current_clipping_seq = current_mp_record.r1_seq[-max_value:]
 
-                    if max_value_index == 'r1_l':
-                        current_clipping_seq_rc = r1_seq_rc[:max_value]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                    if best_cigar_rc is True:
+                        r1_seq_rc = get_rc(current_mp_record.r1_seq)
 
-                    if max_value_index == 'r1_r':
-                        current_clipping_seq_rc = r1_seq_rc[-max_value:]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                        if max_value_index == 'r1_l':
+                            current_clipping_seq_rc = r1_seq_rc[:max_value]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                current_mp_record.consider_r1_clipping_part = True
-                current_mp_record.r1_clipping_seq = current_clipping_seq
+                        if max_value_index == 'r1_r':
+                            current_clipping_seq_rc = r1_seq_rc[-max_value:]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
+
+                    current_mp_record.r1_clipping_seq = current_clipping_seq
 
         # only r2 mapped
         elif (current_mp_r1_refs == {}) and (current_mp_r2_refs != {}):
@@ -1759,78 +1769,84 @@ def link_16s(args):
 
             # consider as clipping mapped
             if max_value >= min_clp_len:
+                best_cigar_aligned_len, best_cigar_aligned_pct, best_cigar_clipping_len, best_cigar_clipping_pct, best_cigar_mismatch_pct = get_cigar_stats(cigar_splitter(best_cigar))
+                if best_cigar_mismatch_pct == 0:
 
-                current_clipping_seq = ''
-                if best_cigar_rc is False:
-                    if max_value_index == 'r2_l':
-                        current_clipping_seq = current_mp_record.r2_seq[:max_value]
-                    if max_value_index == 'r2_r':
-                        current_clipping_seq = current_mp_record.r2_seq[-max_value:]
+                    current_mp_record.consider_r2_clipping_part = True
 
-                if best_cigar_rc is True:
-                    r2_seq_rc = get_rc(current_mp_record.r2_seq)
+                    current_clipping_seq = ''
+                    if best_cigar_rc is False:
+                        if max_value_index == 'r2_l':
+                            current_clipping_seq = current_mp_record.r2_seq[:max_value]
+                        if max_value_index == 'r2_r':
+                            current_clipping_seq = current_mp_record.r2_seq[-max_value:]
 
-                    if max_value_index == 'r2_l':
-                        current_clipping_seq_rc = r2_seq_rc[:max_value]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                    if best_cigar_rc is True:
+                        r2_seq_rc = get_rc(current_mp_record.r2_seq)
 
-                    if max_value_index == 'r2_r':
-                        current_clipping_seq_rc = r2_seq_rc[-max_value:]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                        if max_value_index == 'r2_l':
+                            current_clipping_seq_rc = r2_seq_rc[:max_value]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                current_mp_record.consider_r2_clipping_part = True
-                current_mp_record.r2_clipping_seq = current_clipping_seq
+                        if max_value_index == 'r2_r':
+                            current_clipping_seq_rc = r2_seq_rc[-max_value:]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
+
+                    current_mp_record.r2_clipping_seq = current_clipping_seq
 
         # both of r1 and r2 mapped
         else:
             if max_value >= min_clp_len:
-                current_mp_record.qualified_reads = True
+                best_cigar_aligned_len, best_cigar_aligned_pct, best_cigar_clipping_len, best_cigar_clipping_pct, best_cigar_mismatch_pct = get_cigar_stats(cigar_splitter(best_cigar))
+                if best_cigar_mismatch_pct == 0:
 
-                # for clipping part, the refs from its mate are also considered !!!
-                current_clipping_seq = ''
-                if best_cigar_rc is False:
+                    current_mp_record.qualified_reads = True
 
-                    if max_value_index == 'r1_l':
-                        current_clipping_seq = current_mp_record.r1_seq[:max_value]
+                    # for clipping part, the refs from its mate are also considered !!!
+                    current_clipping_seq = ''
+                    if best_cigar_rc is False:
 
-                    if max_value_index == 'r1_r':
-                        current_clipping_seq = current_mp_record.r1_seq[-max_value:]
+                        if max_value_index == 'r1_l':
+                            current_clipping_seq = current_mp_record.r1_seq[:max_value]
 
-                    if max_value_index == 'r2_l':
-                        current_clipping_seq = current_mp_record.r2_seq[:max_value]
+                        if max_value_index == 'r1_r':
+                            current_clipping_seq = current_mp_record.r1_seq[-max_value:]
 
-                    if max_value_index == 'r2_r':
-                        current_clipping_seq = current_mp_record.r2_seq[-max_value:]
+                        if max_value_index == 'r2_l':
+                            current_clipping_seq = current_mp_record.r2_seq[:max_value]
 
-                if best_cigar_rc is True:
+                        if max_value_index == 'r2_r':
+                            current_clipping_seq = current_mp_record.r2_seq[-max_value:]
 
-                    r1_seq_rc = get_rc(current_mp_record.r1_seq)
-                    r2_seq_rc = get_rc(current_mp_record.r2_seq)
+                    if best_cigar_rc is True:
 
-                    if max_value_index == 'r1_l':
-                        current_clipping_seq_rc = r1_seq_rc[:max_value]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                        r1_seq_rc = get_rc(current_mp_record.r1_seq)
+                        r2_seq_rc = get_rc(current_mp_record.r2_seq)
 
-                    if max_value_index == 'r1_r':
-                        current_clipping_seq_rc = r1_seq_rc[-max_value:]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                        if max_value_index == 'r1_l':
+                            current_clipping_seq_rc = r1_seq_rc[:max_value]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                    if max_value_index == 'r2_l':
-                        current_clipping_seq_rc = r2_seq_rc[:max_value]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                        if max_value_index == 'r1_r':
+                            current_clipping_seq_rc = r1_seq_rc[-max_value:]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                    if max_value_index == 'r2_r':
-                        current_clipping_seq_rc = r2_seq_rc[-max_value:]
-                        current_clipping_seq = get_rc(current_clipping_seq_rc)
+                        if max_value_index == 'r2_l':
+                            current_clipping_seq_rc = r2_seq_rc[:max_value]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
 
-                if max_value_index in ['r1_l', 'r1_r']:
-                    current_mp_record.consider_r1_clipping_part = True
-                    current_mp_record.r1_clipping_seq = current_clipping_seq
-                    current_mp_record.r1_filtered_refs = current_mp_all_refs_no_pos
-                if max_value_index in ['r2_l', 'r2_r']:
-                    current_mp_record.consider_r2_clipping_part = True
-                    current_mp_record.r2_clipping_seq = current_clipping_seq
-                    current_mp_record.r2_filtered_refs = current_mp_all_refs_no_pos
+                        if max_value_index == 'r2_r':
+                            current_clipping_seq_rc = r2_seq_rc[-max_value:]
+                            current_clipping_seq = get_rc(current_clipping_seq_rc)
+
+                    if max_value_index in ['r1_l', 'r1_r']:
+                        current_mp_record.consider_r1_clipping_part = True
+                        current_mp_record.r1_clipping_seq = current_clipping_seq
+                        current_mp_record.r1_filtered_refs = current_mp_all_refs_no_pos
+                    if max_value_index in ['r2_l', 'r2_r']:
+                        current_mp_record.consider_r2_clipping_part = True
+                        current_mp_record.r2_clipping_seq = current_clipping_seq
+                        current_mp_record.r2_filtered_refs = current_mp_all_refs_no_pos
 
     # remove unqualified mapping record from dict
     for each_mp in MappingRecord_dict.copy():
@@ -1903,7 +1919,7 @@ def link_16s(args):
                     if read_strand == '2':
                         MappingRecord_dict[read_id_base].unmapped_r2_refs.add(ref_id)
 
-    #################################### parse blast results for clipping mapped reads #####################################
+    #################################### parse mapping results for clipping mapped reads #####################################
 
     report_and_log(('Round 1: Parsing mapping results for clipping sequences'), pwd_log_file, keep_quiet)
 
@@ -2971,21 +2987,21 @@ if __name__ == '__main__':
 
     # parameters for both rounds linking
     link_16s_parser_both_rds.add_argument('-min_M_len',     required=False, metavar='', type=int,   default=30,             help='minimum aligned length (bp), (default: %(default)s)')
-    link_16s_parser_both_rds.add_argument('-min_M_pct',     required=False, metavar='', type=float, default=35,             help='minimum aligned percentage, (default: %(default)s)')
+    link_16s_parser_both_rds.add_argument('-min_M_pct',     required=False, metavar='', type=float, default=30,             help='minimum aligned percentage, (default: %(default)s)')
 
     # parameters for 1st round linking
-    link_16s_parser_rd1.add_argument('-min_clp_len',        required=False, metavar='', type=int,   default=30,             help='minimum clipping sequence length (bp), (default: %(default)s)')
-    link_16s_parser_rd1.add_argument('-min_clp_M_len',      required=False, metavar='', type=int,   default=20,             help='minimum aligned clipping sequence length (bp), (default: %(default)s)')
-    link_16s_parser_rd1.add_argument('-s1_mpl',             required=False, metavar='', type=int,   default=10,             help='minimum number of paired reads provided linkages to report, (default: %(default)s)')
-    link_16s_parser_rd1.add_argument('-s1_mplu',            required=False, metavar='', type=int,   default=5,              help='minimum number of paired reads provided linkages to report (for uniq linked 16S), (default: %(default)s)')
-    link_16s_parser_rd1.add_argument('-mismatch_rd1',       required=False, metavar='', type=float, default=3,              help='maximum mismatch percentage, (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-min_clp_len',        required=False, metavar='', type=int,   default=45,             help='minimum clipping sequence length (bp), (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-min_clp_M_len',      required=False, metavar='', type=int,   default=35,             help='minimum aligned clipping sequence length (bp), (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-s1_mpl',             required=False, metavar='', type=int,   default=8,             help='minimum number of paired reads provided linkages to report, (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-s1_mplu',            required=False, metavar='', type=int,   default=8,              help='minimum number of paired reads provided linkages to report (for uniq linked 16S), (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-mismatch_rd1',       required=False, metavar='', type=float, default=2,              help='maximum mismatch percentage, (default: %(default)s)')
 
     # parameters for 2nd round linking
     link_16s_parser_rd2.add_argument('-min_overlap_iden',   required=False, metavar='', type=float, default=100,           help='min_overlap_iden, (default: %(default)s)')
     link_16s_parser_rd2.add_argument('-min_overlap_cov',    required=False, metavar='', type=float, default=50,            help='min_overlap_cov, (default: %(default)s)')
     link_16s_parser_rd2.add_argument('-min_overlap_len',    required=False, metavar='', type=int,   default=50,            help='min_overlap_len, (default: %(default)s)')
     link_16s_parser_rd2.add_argument('-min_overlap_num',    required=False, metavar='', type=int,   default=10,            help='minimum number of overlapping reads for a linkages to be reported, (default: %(default)s)')
-    link_16s_parser_rd2.add_argument('-mismatch_rd2',       required=False, metavar='', type=float, default=3,              help='maximum mismatch percentage, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-mismatch_rd2',       required=False, metavar='', type=float, default=2,              help='maximum mismatch percentage, (default: %(default)s)')
 
     # preset parameters
     link_16s_parser_preset.add_argument('-very_sensitive',  required=False, action="store_true",                            help='for greater sensitivity, shortcut for  "min_overlap_iden 99.5 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3"')
@@ -3021,4 +3037,6 @@ if __name__ == '__main__':
 6. add "16S_reads" to SortMeRNA's output prefix
 7. estimate cutoffs to use based sensitive or specific
 8. add --careful to spades?
+9. for clipping mapped reads, the mismatch of clipping part must be 0
+
 '''
