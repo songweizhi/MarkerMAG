@@ -1288,18 +1288,29 @@ def link_16s(args):
                            'min_overlap_len' : round_2_min_aln_len,
                            'min_overlap_num' : round_2_min_link_num}
 
-    # not included parameters (set their cutoffs according read length):
+    # not included parameters (set their cutoffs according to read length):
     # min_clp_len       = 45
     # min_clp_M_len     = 35
     # min_M_len         = 30
     # min_overlap_len   = 50
-    min_M_pct_rd2 = 85
 
+    # 04-14
+    min_M_pct_rd2 = 75
+    min_clp_len = 30
+    min_clp_M_len = 25
     preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 5,   'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 35, 'min_overlap_num': 5}
     preset_dict_sensitive       = {'s1_mpl': 7,  's1_mplu': 7,   'min_M_pct': 30, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 40, 'min_overlap_num': 5}
     # preset_dict_default       = {'s1_mpl': 8,  's1_mplu': 8,   'min_M_pct': 30, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
     preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 35, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
     preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 50, 'mismatch_rd1': 1, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
+
+    # 0415
+    preset_dict_very_sensitive  = {'s1_mpl': 5,  's1_mplu': 5,   'min_M_pct': 30, 'mismatch_rd1': 3, 'mismatch_rd2': 3, 'min_overlap_iden': 100, 'min_overlap_cov': 35, 'min_overlap_num': 5}
+    preset_dict_sensitive       = {'s1_mpl': 7,  's1_mplu': 7,   'min_M_pct': 30, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 40, 'min_overlap_num': 5}
+    # preset_dict_default       = {'s1_mpl': 8,  's1_mplu': 8,   'min_M_pct': 30, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
+    preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 45, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
+    preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 50, 'mismatch_rd1': 1, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
+
 
     preset_to_use = preset_dict_default
     if preset_very_sensitive is True:
@@ -1531,6 +1542,14 @@ def link_16s(args):
     linkage_plot_rd1_html                       = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
     linkage_plot_rd2_html                       = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
 
+
+    parameter_list.append('min_M_pct_rd2:%s' % (min_M_pct_rd2))
+    parameter_list.append('min_clp_len:%s'   % (min_clp_len))
+    parameter_list.append('min_clp_M_len:%s' % (min_clp_M_len))
+    parameter_list.append('ctg_level_min_link:%s' % (ctg_level_min_link))
+    parameter_list.append('end_seq_len:%s' % (end_seq_len))
+    parameter_str = ';'.join(sorted(parameter_list))
+    report_and_log(('Specified parameters: %s' % parameter_str), pwd_log_file, keep_quiet)
 
     #################################### calculate mean depth for genome/assemblies ####################################
 
@@ -1941,6 +1960,7 @@ def link_16s(args):
                         MappingRecord_dict[read_id_base].clipping_r1_refs.add(ref_id)
                     if read_strand == '2':
                         MappingRecord_dict[read_id_base].clipping_r2_refs.add(ref_id)
+
 
     ############################################## get pairwise_16s_iden_dict ##############################################
 
@@ -2616,6 +2636,9 @@ def link_16s(args):
             mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
         else:
             report_and_log(('Round 2: running SPAdes on extracted reads'), pwd_log_file, keep_quiet)
+            #spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 59,75,99,127 > %s' % (pwd_spades_exe, free_living_all, spades_wd, num_threads, spades_log)
+            #spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 75,99,127 > %s' % (pwd_spades_exe, free_living_all, spades_wd, num_threads, spades_log)
+            #spades_cmd = '%s --only-assembler --careful -s %s -o %s -t %s -k 59,75,99,127 > %s' % (pwd_spades_exe, free_living_all, spades_wd, num_threads, spades_log)
             spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 49,75,99,127 > %s' % (pwd_spades_exe, free_living_all, spades_wd, num_threads, spades_log)
             os.system(spades_cmd)
             mini_assemblies = '%s/scaffolds.fasta' % spades_wd
@@ -2856,7 +2879,6 @@ def link_16s(args):
             link_step = each_linkage_split[3]
 
             if link_step == 'S1':
-
                 # first go through link num dict by paired reads
                 counted_16s_to_ctg_key = set()
                 for each_paired_link in marker_to_ctg_link_num_dict_pair:
@@ -2886,7 +2908,6 @@ def link_16s(args):
                                 counted_16s_to_ctg_key.add(each_clip_link)
 
             if link_step == 'S2':
-
                 for each_rd2_linkage in free_living_16s_to_ctg_linkage_dict_to_use:
                     rd2_link_16s_id = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)[0]
                     rd2_link_ctg_id = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)[1]
@@ -2966,6 +2987,7 @@ if __name__ == '__main__':
     link_16s_parser_rd1         = link_16s_parser.add_argument_group("parameters for linking (round 1)")
     link_16s_parser_rd2         = link_16s_parser.add_argument_group("parameters for linking (round 2)")
     link_16s_parser_preset      = link_16s_parser.add_argument_group("preset parameters, decide automatically if not specified")
+    link_16s_parser_dependency  = link_16s_parser.add_argument_group("provide if dependencies are not in your system path")
     link_16s_parser_others      = link_16s_parser.add_argument_group("program settings")
     link_16s_parser_debug       = link_16s_parser.add_argument_group("for debugging, do NOT specify")
 
@@ -2992,15 +3014,15 @@ if __name__ == '__main__':
     # parameters for 1st round linking
     link_16s_parser_rd1.add_argument('-min_clp_len',        required=False, metavar='', type=int,   default=45,             help='minimum clipping sequence length (bp), (default: %(default)s)')
     link_16s_parser_rd1.add_argument('-min_clp_M_len',      required=False, metavar='', type=int,   default=35,             help='minimum aligned clipping sequence length (bp), (default: %(default)s)')
-    link_16s_parser_rd1.add_argument('-s1_mpl',             required=False, metavar='', type=int,   default=8,             help='minimum number of paired reads provided linkages to report, (default: %(default)s)')
+    link_16s_parser_rd1.add_argument('-s1_mpl',             required=False, metavar='', type=int,   default=8,              help='minimum number of paired reads provided linkages to report, (default: %(default)s)')
     link_16s_parser_rd1.add_argument('-s1_mplu',            required=False, metavar='', type=int,   default=8,              help='minimum number of paired reads provided linkages to report (for uniq linked 16S), (default: %(default)s)')
     link_16s_parser_rd1.add_argument('-mismatch_rd1',       required=False, metavar='', type=float, default=2,              help='maximum mismatch percentage, (default: %(default)s)')
 
     # parameters for 2nd round linking
-    link_16s_parser_rd2.add_argument('-min_overlap_iden',   required=False, metavar='', type=float, default=100,           help='min_overlap_iden, (default: %(default)s)')
-    link_16s_parser_rd2.add_argument('-min_overlap_cov',    required=False, metavar='', type=float, default=50,            help='min_overlap_cov, (default: %(default)s)')
-    link_16s_parser_rd2.add_argument('-min_overlap_len',    required=False, metavar='', type=int,   default=50,            help='min_overlap_len, (default: %(default)s)')
-    link_16s_parser_rd2.add_argument('-min_overlap_num',    required=False, metavar='', type=int,   default=10,            help='minimum number of overlapping reads for a linkages to be reported, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_iden',   required=False, metavar='', type=float, default=100,            help='min_overlap_iden, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_cov',    required=False, metavar='', type=float, default=50,             help='min_overlap_cov, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_len',    required=False, metavar='', type=int,   default=50,             help='min_overlap_len, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-min_overlap_num',    required=False, metavar='', type=int,   default=10,             help='minimum number of overlapping reads for a linkages to be reported, (default: %(default)s)')
     link_16s_parser_rd2.add_argument('-mismatch_rd2',       required=False, metavar='', type=float, default=2,              help='maximum mismatch percentage, (default: %(default)s)')
 
     # preset parameters
@@ -3017,8 +3039,10 @@ if __name__ == '__main__':
     link_16s_parser_others.add_argument('-force',           required=False, action="store_true",                            help='force overwrite existing results')
 
     # by assembly
-    link_16s_parser.add_argument('-mira_tmp',        required=False, default=None,                      help='tmp dir for mira')
-    link_16s_parser.add_argument('-spades',          required=False, action="store_true",               help='run spades, instead of Mira')
+    link_16s_parser.add_argument('-mira_tmp',               required=False, default=None,                                   help='tmp dir for mira')
+    link_16s_parser.add_argument('-spades',                 required=False, action="store_true",                            help='run spades, instead of Mira')
+
+    # dependency related
 
     # for debugging
     link_16s_parser_debug.add_argument('-test_mode',        required=False, action="store_true",                            help='only for debugging, do not provide')
@@ -3026,7 +3050,6 @@ if __name__ == '__main__':
 
     args = vars(link_16s_parser.parse_args())
     link_16s(args)
-
 
 '''
 1. how to incorporate the taxonomy of MAGs and 16S sequences
@@ -3038,5 +3061,5 @@ if __name__ == '__main__':
 7. estimate cutoffs to use based sensitive or specific
 8. add --careful to spades?
 9. for clipping mapped reads, the mismatch of clipping part must be 0
-
+10. insert size is important
 '''

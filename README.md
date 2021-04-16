@@ -78,22 +78,28 @@ Notes
 
 1. :warning: All MAGs derived from a metagenomic dataset should be included in MarkerMAG run. (more details need to be added)
 
+1. Parameters presets: 
+
+    + Parameters presets will be choosen by MarkerMAG automatically, no need to specify.
+    + Available options: `-very_sensitive, -sensitive, -specific, -very_specific`
+    + Please note that once one of the parameter preset was specified, all parameters included in it can not be modified, even if there were provided in your commands line.
+    + The default line below just shows the default values of the parameters included in the presets. The `default` itself is not one of the presets. 
+
+          very_sensitive:  -s1_mpl 5  -s1_mplu 3  -min_M_pct 20 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 25 -min_overlap_num 3
+          sensitive:       -s1_mpl 5  -s1_mplu 3  -min_M_pct 20 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 30 -min_overlap_num 5        
+          default:         -s1_mpl 10 -s1_mplu 5  -min_M_pct 25 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 35 -min_overlap_num 5
+          specific:        -s1_mpl 10 -s1_mplu 5  -min_M_pct 30 -mismatch 2 -min_overlap_iden 100  -min_overlap_cov 55 -min_overlap_num 8
+          very_specific:   -s1_mpl 10 -s1_mplu 10 -min_M_pct 35 -mismatch 1 -min_overlap_iden 100  -min_overlap_cov 75 -min_overlap_num 10
 
 How to run:
 ---
+
++ Make sure you have bbmap, BLAST+ and Spades in your path.
 
 + Link 16S rRNA gene sequences with MAGs: 
 
       MarkerMAG link -p Soil -r1 R1.fastq -r2 R2.fastq -marker Soil_16S_uclust_0.999.fasta -mag refined_MAG -x fasta -t 12 -tmp -force
 
-+ Preset parameters: 
-
-      very_sensitive:  -s1_mpl 5  -s1_mplu 3  -min_M_pct 20 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 25 -min_overlap_num 3
-      sensitive:       -s1_mpl 5  -s1_mplu 3  -min_M_pct 20 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 30 -min_overlap_num 5        
-      default:         -s1_mpl 10 -s1_mplu 5  -min_M_pct 25 -mismatch 3 -min_overlap_iden 99.9 -min_overlap_cov 35 -min_overlap_num 5
-      specific:        -s1_mpl 10 -s1_mplu 5  -min_M_pct 30 -mismatch 2 -min_overlap_iden 100  -min_overlap_cov 55 -min_overlap_num 8
-      very_specific:   -s1_mpl 10 -s1_mplu 10 -min_M_pct 35 -mismatch 1 -min_overlap_iden 100  -min_overlap_cov 75 -min_overlap_num 10
-      super_specific:  -s1_mpl 10 -s1_mplu 10 -min_M_pct 35 -mismatch 1 -min_overlap_iden 100  -min_overlap_cov 85 -min_overlap_num 10
 
 
 Output files:

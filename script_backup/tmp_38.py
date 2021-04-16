@@ -107,10 +107,34 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
 
     mini_assembly_linked_both = set(mini_assembly_to_16s_dict_reformatted).intersection(mini_assembly_to_ctg_dict_reformatted)
 
-    print(max_link_nun_dict_16s['3_GI_subsample_75_1022'])
-    print(max_link_nun_dict_ctg['Refined_28___C___NODE_4309_length_14678_cov_0.076146'])
 
+    ######################### debug report #########################
 
+    check_list_gnm  = []
+    check_list_16s  = []
+
+    check_list_gnm = ['Refined_28']
+    check_list_16s = ['3_GI_subsample_75_963']
+
+    report_all      = False
+
+    '''
+    # 3_GI_subsample_75_963
+    NODE_4066_length_298_cov_0.076023	3_GI_subsample_75_963(20)	Refined_28___C___NODE_4309_length_14678_cov_0.076146(6)
+    NODE_660_length_449_cov_0.232919	3_GI_subsample_75_963(8)	Refined_84___C___NODE_14371_length_3638_cov_0.021646(3)
+    NODE_660_length_449_cov_0.232919	3_GI_subsample_75_963(8)	Refined_91___C___NODE_3602_length_17682_cov_0.132270(6)
+    NODE_12_length_1555_cov_0.052521	3_GI_subsample_75_963(160)	Refined_51___C___NODE_7061_length_8073_cov_0.110244(51)
+    NODE_12_length_1555_cov_0.052521	3_GI_subsample_75_963(160)	Refined_28___C___NODE_4309_length_14678_cov_0.076146(96)
+    
+    # Refined_28
+ 
+    '''
+
+    ################################################################
+
+    # for report
+    error_report_linked_gnm_list = []
+    error_report_linked_16s_list = []
     stats_GapFilling_ctg_handle = open(stats_GapFilling_ctg, 'w')
     stats_GapFilling_gnm_dict = {}
     for each_mini_assembly in mini_assembly_linked_both:
@@ -121,6 +145,7 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
         linked_16s_num_max = max(linked_16s_num_list)
         linked_ctg_num_max = max(linked_ctg_num_list)
 
+
         for each_linked_16s in linked_16s:
             linked_16s_id = each_linked_16s.split('__num__')[0]
             linked_16s_num = int(each_linked_16s.split('__num__')[1])
@@ -128,12 +153,15 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                 linked_ctg_id = each_linked_ctg.split('__num__')[0]
                 linked_gnm_id = linked_ctg_id.split(gnm_to_ctg_connector)[0]
                 linked_ctg_num = int(each_linked_ctg.split('__num__')[1])
-                if linked_gnm_id in ['Refined_28']:
-                    #print('%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_gnm_id, linked_ctg_num))
-                    pass
-                if linked_16s_id in ['3_GI_subsample_75_1022']:
-                    #print('%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_ctg_id, linked_ctg_num))
-                    pass
+                error_report_str_linked_gnm = '%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_gnm_id, linked_ctg_num)
+                error_report_str_linked_16s = '%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_ctg_id, linked_ctg_num)
+
+                if report_all is True:
+                    if linked_gnm_id in check_list_gnm:
+                        error_report_linked_gnm_list.append(error_report_str_linked_gnm)
+                    if linked_16s_id in check_list_16s:
+                        error_report_linked_16s_list.append(error_report_str_linked_16s)
+
 
         if (min(linked_16s_num_max, linked_ctg_num_max) * 100 / max(linked_16s_num_max, linked_ctg_num_max)) >= max_between_cate_diff_pct:
 
@@ -150,13 +178,15 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
 
                     linked_16s_max_num = max_link_nun_dict_16s[linked_16s_id]
                     linked_ctg_max_num = max_link_nun_dict_ctg[linked_ctg_id]
-                    # print('linked_16s_max_num: %s' % linked_16s_max_num)
-                    # print('linked_ctg_max_num: %s' % linked_ctg_max_num)
-                    # if linked_gnm_id in ['Refined_28']:
-                    #     print('%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_gnm_id, linked_ctg_num))
-                    #
-                    # if linked_16s_id in ['3_GI_subsample_75_1022']:
-                    #     print('%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_ctg_id, linked_ctg_num))
+                    error_report_str_linked_gnm = '%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_gnm_id, linked_ctg_num)
+                    error_report_str_linked_16s = '%s\t%s(%s)\t%s(%s)' % (each_mini_assembly, linked_16s_id, linked_16s_num, linked_ctg_id, linked_ctg_num)
+
+                    if report_all is False:
+                        if linked_gnm_id in check_list_gnm:
+                            error_report_linked_gnm_list.append(error_report_str_linked_gnm)
+                        if linked_16s_id in check_list_16s:
+                            error_report_linked_16s_list.append(error_report_str_linked_16s)
+
                     linked_16s_num_pct_by_max = linked_16s_num*100/linked_16s_max_num
                     linked_ctg_num_pct_by_max = linked_ctg_num*100/linked_ctg_max_num
 
@@ -169,6 +199,23 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                             stats_GapFilling_gnm_dict[marker_to_gnm_key] += (linked_16s_num + linked_ctg_num)
     stats_GapFilling_ctg_handle.close()
 
+    ######################### debug report #########################
+
+
+    if check_list_gnm != []:
+        print('Mini-assembly linked to:\t%s' % ', '.join(check_list_gnm))
+        for each_link_gnm in error_report_linked_gnm_list:
+            print(each_link_gnm)
+        print()
+
+    if check_list_16s != []:
+        print('Mini-assembly linked to:\t%s' % ', '.join(check_list_16s))
+        for each_link_16s in error_report_linked_16s_list:
+            print(each_link_16s)
+        print()
+
+    ################################################################
+
     stats_GapFilling_gnm_handle = open(stats_GapFilling_gnm, 'w')
     stats_GapFilling_gnm_handle.write('MarkerGene,GenomicSeq,Number\n')
     for each_16s_to_gnm in stats_GapFilling_gnm_dict:
@@ -179,15 +226,34 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
         stats_GapFilling_gnm_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
     stats_GapFilling_gnm_handle.close()
 
+'''
+14
+Mini-assembly linked to:	Refined_28
+NODE_419_length_586_cov_0.065359	3_GI_subsample_25_431(14)	Refined_28(45)
+NODE_4801_length_285_cov_0.082278	3_GI_subsample_50_581(26)	Refined_28(6)
+NODE_4801_length_285_cov_0.082278	3_GI_subsample_75_961(29)	Refined_28(6)
+NODE_2373_length_336_cov_0.062201	3_GI_subsample_50_782(11)	Refined_28(5)
+NODE_2373_length_336_cov_0.062201	3_GI_subsample_100_1646(13)	Refined_28(5)
 
 
-step_2_wd                   = '/Users/songweizhi/Desktop/step_2_wd_GI'
-free_living_16s_ref_file    = '%s/round2_free_living_16s_refs.txt'  % step_2_wd
-free_living_ctg_ref_file    = '%s/round2_free_living_ctg_refs.txt'  % step_2_wd
-mini_assembly_to_16s_reads  = '%s/mini_assembly_to_16s_reads.txt'   % step_2_wd
-mini_assembly_to_ctg_reads  = '%s/mini_assembly_to_ctg_reads.txt'   % step_2_wd
-stats_GapFilling_ctg        = '%s/stats_GapFilling_ctg.txt'         % step_2_wd
-stats_GapFilling_gnm        = '%s/stats_GapFilling_gnm.txt'         % step_2_wd
+15
+Mini-assembly linked to:	Refined_28
+NODE_4066_length_298_cov_0.076023	3_GI_subsample_75_961(29)	Refined_28(6)
+NODE_4066_length_298_cov_0.076023	3_GI_subsample_50_581(26)	Refined_28(6)
+NODE_12_length_1555_cov_0.052521	3_GI_subsample_75_963(160)	Refined_28(96)
+NODE_2978_length_321_cov_0.000000	3_GI_subsample_100_1646(13)	Refined_28(5)
+NODE_2978_length_321_cov_0.000000	3_GI_subsample_50_782(11)	Refined_28(5)
+NODE_417_length_586_cov_0.089325	3_GI_subsample_25_431(14)	Refined_28(45)
+
+'''
+
+step_2_wd                   = '/Users/songweizhi/Desktop/step_2_wd_GI_15'
+free_living_16s_ref_file    = '%s/round2_free_living_16s_refs.txt'      % step_2_wd
+free_living_ctg_ref_file    = '%s/round2_free_living_ctg_refs.txt'      % step_2_wd
+mini_assembly_to_16s_reads  = '%s/mini_assembly_to_16s_reads.txt'       % step_2_wd
+mini_assembly_to_ctg_reads  = '%s/mini_assembly_to_ctg_reads.txt'       % step_2_wd
+stats_GapFilling_ctg        = '%s/stats_GapFilling_ctg.txt'             % step_2_wd
+stats_GapFilling_gnm        = '%s/stats_GapFilling_gnm.txt'             % step_2_wd
 ctg_level_min_link = 3
 mini_assembly_to_16s_ctg_connector = '___Mini___'
 gnm_to_ctg_connector = '___C___'
@@ -204,119 +270,3 @@ get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                                  marker_to_ctg_gnm_Key_connector,
                                  stats_GapFilling_ctg,
                                  stats_GapFilling_gnm)
-
-
-'''
-3_GI_subsample_10_82	Refined_19	2369	S2	Correct
-3_GI_subsample_100_563	Refined_19	2224	S2	Correct
-3_GI_subsample_50_207	Refined_19	2219	S2	Correct
-3_GI_subsample_50_890	Refined_6	525	S2	Correct
-3_GI_subsample_100_1450	Refined_53	496	S2	Correct
-3_GI_subsample_100_1692	Refined_37	428	S2	Correct
-3_GI_subsample_75_487	Refined_1	289	S2	Correct
-3_GI_subsample_100_577	Refined_8	129	S2	Correct
-3_GI_subsample_50_241	Refined_61	113	S2	Unknown
-3_GI_subsample_100_579	Refined_8	113	S2	Correct
-3_GI_subsample_100_1740	Refined_45	75	S2	Correct
-3_GI_subsample_50_234	Refined_24	60	S2	Correct
-3_GI_subsample_100_1404	Refined_38	56	S2	Correct
-3_GI_subsample_50_647	Refined_38	50	S2	Correct
-3_GI_subsample_100_1342	Refined_46	48	S2	Correct
-3_GI_subsample_100_331	Refined_15	48	S2	Correct
-3_GI_subsample_100_878	Refined_15	42	S2	Correct
-3_GI_subsample_75_1022	Refined_28	41	S2	Wrong
-3_GI_subsample_100_2288	Refined_89	28	S2	Correct
-3_GI_subsample_75_2796	Refined_73	27	S2	Correct
-3_GI_subsample_75_746	Refined_49	21	S2	Correct
-3_GI_subsample_75_1549	Refined_26	13	S2	Correct
-3_GI_subsample_100_457	Refined_54	13	S2	Correct
-
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1022(64)	Refined_28(10)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_75_1022(25)	Refined_65(3)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_75_1022(25)	Refined_28(16)
-
-
-
-NODE_375_length_663_cov_0.011194	3_GI_subsample_100_991(16)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_100_1043(16)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_50_761(7)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_50_741(7)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_75_1(17)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_50_743(5)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_75_1267(5)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_75_1022(25)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_50_708(3)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_100_1392(19)	Refined_28(16)
-NODE_375_length_663_cov_0.011194	3_GI_subsample_75_2092(7)	Refined_28(16)
-NODE_328_length_709_cov_0.273196	3_GI_subsample_100_578(4)	Refined_28(6)
-NODE_328_length_709_cov_0.273196	3_GI_subsample_100_577(4)	Refined_28(6)
-NODE_328_length_709_cov_0.273196	3_GI_subsample_100_1755(4)	Refined_28(6)
-NODE_328_length_709_cov_0.273196	3_GI_subsample_100_1450(322)	Refined_28(6)
-NODE_328_length_709_cov_0.273196	3_GI_subsample_50_672(122)	Refined_28(6)
-NODE_328_length_709_cov_0.273196	3_GI_subsample_100_579(4)	Refined_28(6)
-NODE_667_length_449_cov_0.080745	3_GI_subsample_100_1740(31)	Refined_28(5)
-NODE_667_length_449_cov_0.080745	3_GI_subsample_100_2291(21)	Refined_28(5)
-NODE_667_length_449_cov_0.080745	3_GI_subsample_50_739(3)	Refined_28(5)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_743(152)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_100_1538(12)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_741(299)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_100_1517(3)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_725(34)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_10_219(23)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_711(56)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_2065(3)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1129(16)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_742(55)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_100_1554(3)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_436(19)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_100_1587(21)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_735(3)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_100_1658(151)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_692(6)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_649(3)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_424(43)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_100_1519(6)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_757(50)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_727(249)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1170(22)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_761(283)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_100_1491(38)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_695(42)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_692(151)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1267(247)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1181(36)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_693(4)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_694(38)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_734(3)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_724(121)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_434(54)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_447(20)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_788(18)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_738(25)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_449(13)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_10_211(4)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_739(264)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1009(9)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_438(6)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_740(73)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_709(3)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_729(37)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_435(8)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_728(64)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_710(38)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_444(13)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1143(21)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1111(35)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_25_443(12)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_726(45)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1344(17)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1203(11)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_708(22)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_699(5)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_50_730(58)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_5_117(35)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1295(25)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_1022(64)	Refined_28(10)
-NODE_3887_length_301_cov_0.597701	3_GI_subsample_75_2092(8)	Refined_28(10)
-
-'''

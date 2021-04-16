@@ -94,11 +94,60 @@ total_query_mag_num         = 97
 
 # MarkerMAG_linkages          = '/Users/songweizhi/Desktop/step_1_wd/Test_identified_linkages_genome_level.txt'
 
-MarkerMAG_linkages          = '%s/GI_0414_specific_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0416_specific_Mrd2_75_identified_linkages_genome_level.txt'             % wd
 
 
 '''
-            	        Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0416_specific_Mrd2_60	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0416_specific_Mrd2_60	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0416_specific_Mrd2_60	Rd_2	|	21	20	0	1	20/21(95.24)	|	17	16	0	1	0	16/97(16.49)	16/17(94.12)
+GI_0416_specific_Mrd2_60	Both	|	71	69	1	1	69/70(98.57)	|	49	48	0	1	0	48/97(49.48)	48/49(97.96)
+
+GI_0416_specific_Mrd2_75	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0416_specific_Mrd2_75	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0416_specific_Mrd2_75	Rd_2	|	21	20	0	1	20/21(95.24)	|	17	16	0	1	0	16/97(16.49)	16/17(94.12)
+GI_0416_specific_Mrd2_75	Both	|	71	69	1	1	69/70(98.57)	|	49	48	0	1	0	48/97(49.48)	48/49(97.96)
+
+GI_0415_specific_min_M_pct45_mink75	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0415_specific_min_M_pct45_mink75	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0415_specific_min_M_pct45_mink75	Rd_2	|	11	10	0	1	10/11(90.91)	|	8	7	0	1	0	7/97(7.22)	7/8(87.5)
+GI_0415_specific_min_M_pct45_mink75	Both	|	61	59	1	1	59/60(98.33)	|	40	39	0	1	0	39/97(40.21)	39/40(97.5)
+
+
+GI_0415_specific_min_M_pct45_mink49_careful	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0415_specific_min_M_pct45_mink49_careful	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0415_specific_min_M_pct45_mink49_careful	Rd_2	|	20	19	0	1	19/20(95.0)	|	16	15	0	1	0	15/97(15.46)	15/16(93.75)
+GI_0415_specific_min_M_pct45_mink49_careful	Both	|	70	68	1	1	68/69(98.55)	|	48	47	0	1	0	47/97(48.45)	47/48(97.92)
+
+
+
+
+
+
+
+GI_0415_default2	    Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
+GI_0415_default2	    Rd_1	|	53	51	2	0	51/51(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
+GI_0415_default2	    Rd_2	|	19	18	0	1	18/19(94.74)	|	15	14	0	1	0	14/97(14.43)	14/15(93.33)
+GI_0415_default2	    Both	|	72	69	2	1	69/70(98.57)	|	50	48	1	1	0	48/97(49.48)	48/49(97.96)
+
+GI_0415_specific2	    Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
+GI_0415_specific2	    Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0415_specific2	    Rd_2	|	21	20	0	1	20/21(95.24)	|	17	16	0	1	0	16/97(16.49)	16/17(94.12)
+GI_0415_specific2	    Both	|	71	69	1	1	69/70(98.57)	|	49	48	0	1	0	48/97(49.48)	48/49(97.96)
+
+# 3_GI_subsample_75_963	Refined_28	260	S2	Wrong
+
+GI_0415_very_specific2	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
+GI_0415_very_specific2	Rd_1	|	38	37	1	0	37/37(100.0)	|	25	25	0	0	0	25/97(25.77)	25/25(100.0)
+GI_0415_very_specific2	Rd_2	|	9	9	0	0	9/9(100.0)	    |	7	7	0	0	0	7/97(7.22)	    7/7(100.0)
+GI_0415_very_specific2	Both	|	47	46	1	0	46/46(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+
+
+
+
+
+
+            	        Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
 
 GI_0414_default	        Rd_1	|	58	56	1	1	56/57(98.25)	|	39	38	0	1	0	38/97(39.18)	38/39(97.44)
 GI_0414_default	        Rd_2	|	15	13	1	1	13/14(92.86)	|	13	11	1	1	0	11/97(11.34)	11/12(91.67)
@@ -133,7 +182,77 @@ GI_0414_very_specific	Both	|	71	70	1	0	70/70(100.0)	|	47	47	0	0	0	47/97(48.45)	4
 3_GI_subsample_100_3714	Refined_31	8	S1	Unknown
 3_GI_subsample_50_723	Refined_31	7	S1	Wrong
 
+
+
+
+
+
+
+3_GI_subsample_10_82	Refined_19	2370	S2	Correct
+3_GI_subsample_100_563	Refined_19	2224	S2	Correct
+3_GI_subsample_50_207	Refined_19	2219	S2	Correct
+3_GI_subsample_100_1450	Refined_53	497	S2	Correct
+3_GI_subsample_100_1692	Refined_37	428	S2	Correct
+3_GI_subsample_75_487	Refined_1	289	S2	Correct
+3_GI_subsample_75_963	Refined_28	260	S2	Wrong       (got this in the new round) 
+3_GI_subsample_100_577	Refined_8	119	S2	Correct
+3_GI_subsample_100_579	Refined_8	107	S2	Correct
+3_GI_subsample_100_578	Refined_8	103	S2	Correct
+3_GI_subsample_100_1740	Refined_45	77	S2	Correct
+3_GI_subsample_50_234	Refined_24	60	S2	Correct
+3_GI_subsample_100_1404	Refined_38	56	S2	Correct
+3_GI_subsample_50_647	Refined_38	50	S2	Correct
+3_GI_subsample_100_1342	Refined_46	48	S2	Correct
+3_GI_subsample_100_331	Refined_15	48	S2	Correct
+3_GI_subsample_100_878	Refined_15	42	S2	Correct
+3_GI_subsample_50_811	Refined_32	30	S2	Correct
+3_GI_subsample_100_2288	Refined_89	28	S2	Correct
+3_GI_subsample_75_2796	Refined_73	27	S2	Correct
+3_GI_subsample_75_746	Refined_49	21	S2	Correct
+3_GI_subsample_100_457	Refined_54	13	S2	Correct
+3_GI_subsample_75_1549	Refined_26	13	S2	Correct
+
+
+=========================================================================================
+
+3_GI_subsample_75_963	Refined_28	256	S2  Wrong       (got this in the new round) 
+NODE_4309_length_14678_cov_0.076146
+
+
+0414
+MarkerGene__3_GI_subsample_10_82,GenomicSeq__Refined_19,2370    =
+MarkerGene__3_GI_subsample_100_563,GenomicSeq__Refined_19,2224  =
+MarkerGene__3_GI_subsample_50_207,GenomicSeq__Refined_19,2219   =
+MarkerGene__3_GI_subsample_100_1450,GenomicSeq__Refined_53,497  =
+MarkerGene__3_GI_subsample_100_1692,GenomicSeq__Refined_37,428  =
+MarkerGene__3_GI_subsample_75_487,GenomicSeq__Refined_1,289     = good
+MarkerGene__3_GI_subsample_100_577,GenomicSeq__Refined_8,119    = good
+MarkerGene__3_GI_subsample_100_579,GenomicSeq__Refined_8,107    =
+MarkerGene__3_GI_subsample_100_578,GenomicSeq__Refined_8,103    !!! not in below
+MarkerGene__3_GI_subsample_100_1740,GenomicSeq__Refined_45,77   =
+
+
+
+0415
+MarkerGene__3_GI_subsample_10_82,GenomicSeq__Refined_19,2384    =
+MarkerGene__3_GI_subsample_50_207,GenomicSeq__Refined_19,2230   =
+MarkerGene__3_GI_subsample_100_563,GenomicSeq__Refined_19,2227  =
+MarkerGene__3_GI_subsample_100_1450,GenomicSeq__Refined_53,502  =
+MarkerGene__3_GI_subsample_100_1692,GenomicSeq__Refined_37,435  =
+MarkerGene__3_GI_subsample_75_487,GenomicSeq__Refined_1,291     = good
+MarkerGene__3_GI_subsample_75_963,GenomicSeq__Refined_28,256    !!!
+MarkerGene__3_GI_subsample_100_577,GenomicSeq__Refined_8,131    = good
+MarkerGene__3_GI_subsample_100_579,GenomicSeq__Refined_8,113    =
+MarkerGene__3_GI_subsample_100_1740,GenomicSeq__Refined_45,80   =
+
+
+
+
+
+
+
 '''
+
 
 ########## script ##########
 
