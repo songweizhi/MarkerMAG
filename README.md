@@ -118,4 +118,5 @@ Output files:
     | Soil_subsample_100_262 | Refined_MAG_31| 7 | S2 |
 
 1. Visualization of linkages
-![linkages](doc/images/linkage.png) 
+![linkages](doc/images/linkages.png)
+   
