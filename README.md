@@ -36,7 +36,7 @@ Dependencies
 + Dependencies for the `link` module: 
 
   [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/)
-  
+  and 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 
 + Dependencies for other supplementary modules can be found from their own manual page.
@@ -101,7 +101,6 @@ How to run:
       MarkerMAG link -p Soil -r1 R1.fastq -r2 R2.fastq -marker Soil_16S_uclust_0.999.fasta -mag refined_MAG -x fasta -t 12 -tmp -force
 
 
-
 Output files:
 ---
 
@@ -119,4 +118,4 @@ Output files:
     | Soil_subsample_100_262 | Refined_MAG_31| 7 | S2 |
 
 1. Visualization of linkages
-![linkages](images/linkage.png) 
+![linkages](doc/images/linkage.png) 

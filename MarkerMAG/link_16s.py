@@ -1294,6 +1294,7 @@ def link_16s(args):
     # min_M_len         = 30
     # min_overlap_len   = 50
 
+
     # 04-14
     min_M_pct_rd2 = 75
     min_clp_len = 30
@@ -1310,6 +1311,10 @@ def link_16s(args):
     # preset_dict_default       = {'s1_mpl': 8,  's1_mplu': 8,   'min_M_pct': 30, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 50, 'min_overlap_num': 10}
     preset_dict_specific        = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 45, 'mismatch_rd1': 2, 'mismatch_rd2': 2, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 10}
     preset_dict_very_specific   = {'s1_mpl': 10, 's1_mplu': 10,  'min_M_pct': 50, 'mismatch_rd1': 1, 'mismatch_rd2': 1, 'min_overlap_iden': 100, 'min_overlap_cov': 60, 'min_overlap_num': 15}
+
+    read_len = 100
+    if read_len == 100:
+        min_M_len = 30
 
 
     preset_to_use = preset_dict_default

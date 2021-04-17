@@ -18,11 +18,21 @@ def sep_path_basename_ext(file_in):
     return file_path, file_basename, file_extension
 
 
-def mview_linkage(msa_file, plot_title, mview_exe):
+def mview_linkage(seq_file, plot_title, mafft_exe, mview_exe):
 
-    msa_path, msa_basename, msa_ext = sep_path_basename_ext(msa_file)
-    msa_file_mview         = '%s/%s_MView.aln' % (msa_path, msa_basename)
-    msa_file_mviewd_html   = '%s/%s_MView.html' % (msa_path, msa_basename)
+    # define file name
+    seq_path, seq_basename, seq_ext = sep_path_basename_ext(seq_file)
+    msa_file                    = '%s/%s.aln'               % (seq_path, seq_basename)
+    msa_file_mview              = '%s/%s_MView.aln'         % (seq_path, seq_basename)
+    msa_file_mviewd_html_tmp    = '%s/%s_MView_tmp.html'    % (seq_path, seq_basename)
+    msa_file_mviewd_html        = '%s/%s_MView.html'        % (seq_path, seq_basename)
+
+    gap_char                = '-'
+    break_line_char         = '='
+
+    # align sequences
+    mafft_cmd = '%s --quiet --retree 1 %s > %s' % (mafft_exe, seq_file, msa_file)
+    os.system(mafft_cmd)
 
     mapped_reads_dict = {}
     ref_id = ''
@@ -50,6 +60,7 @@ def mview_linkage(msa_file, plot_title, mview_exe):
 
         current_line += 1
 
+    # create an empty list to hold all sequences in a msa
     seq_record_list = []
 
     # add ref_seq to seq_record_list
@@ -64,7 +75,7 @@ def mview_linkage(msa_file, plot_title, mview_exe):
     seq_record_list.append(SeqRecord(Seq(ref_seq_updated), id=ref_id, description='Reference'))
 
     # add break line
-    seq_record_list.append(SeqRecord(Seq('='*len(ref_seq_updated)), id='#', description=''))
+    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
 
     # add paired reads to seq_record_list
     singleton_dict = {}
@@ -94,10 +105,10 @@ def mview_linkage(msa_file, plot_title, mview_exe):
                         merge_r1_r2 += bp1
                     if (bp1 == '-') and (bp2 != '-'):
                         merge_r1_r2 += bp2
-                seq_record_list.append(SeqRecord(Seq(merge_r1_r2), id=each_read_base, description='In Pair'))
+                seq_record_list.append(SeqRecord(Seq(merge_r1_r2), id=each_read_base, description='In_Pair'))
 
     # add break line
-    seq_record_list.append(SeqRecord(Seq('='*len(ref_seq_updated)), id='#', description=''))
+    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
 
     # add singleton to seq_record_list
     for each_singleton in singleton_dict:
@@ -111,13 +122,19 @@ def mview_linkage(msa_file, plot_title, mview_exe):
             seq_record_list.append(SeqRecord(Seq(r2_seq), id=r2_id, description='Unpaired'))
 
     # add break line
-    seq_record_list.append(SeqRecord(Seq('='*len(ref_seq_updated)), id='#', description=''))
+    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
 
     # add overlapped reads to seq_record_list
-    # to be added
+    for each_overlapping_reads in overlapping_reads_dict:
+        r1_id  = '%s.1' % each_overlapping_reads
+        r2_id  = '%s.2' % each_overlapping_reads
+        r1_seq = overlapping_reads_dict[each_overlapping_reads][0]
+        r2_seq = overlapping_reads_dict[each_overlapping_reads][1]
+        seq_record_list.append(SeqRecord(Seq(r1_seq), id=r1_id, description='Overlapped'))
+        seq_record_list.append(SeqRecord(Seq(r2_seq), id=r2_id, description='Overlapped'))
 
     # add break line
-    seq_record_list.append(SeqRecord(Seq('='*len(ref_seq_updated)), id='#', description=''))
+    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
 
     # get updated msa record
     align_record_mview = MultipleSeqAlignment(seq_record_list)
@@ -129,13 +146,23 @@ def mview_linkage(msa_file, plot_title, mview_exe):
 
     # visualize update msa
     # coloring: any,identity,mismatch,consensus,group
-    mview_parameter_str = '-in fasta -moltype dna -colormap CLUSTAL_NUC -coloring any -css on -html head -ruler off -label0 -label4 -label5'
-    mview_cmd = '%s %s -title %s %s > %s' % (mview_exe, mview_parameter_str, plot_title, msa_file_mview, msa_file_mviewd_html)
+    mview_parameter_str = '-in fasta -moltype dna -colormap CLUSTAL_NUC -coloring any -css on -html head -ruler off -label0 -label4 -label5 -gap "%s"' % gap_char
+    mview_cmd = '%s %s -title %s %s > %s' % (mview_exe, mview_parameter_str, plot_title, msa_file_mview, msa_file_mviewd_html_tmp)
     os.system(mview_cmd)
 
+    msa_file_mviewd_html_handle = open(msa_file_mviewd_html, 'w')
+    for each_line in open(msa_file_mviewd_html_tmp):
+        print(each_line)
+        if not (('Reference sequence' in each_line) or ('Colored by' in each_line)):
+            msa_file_mviewd_html_handle.write(each_line)
 
-msa_file                = '/Users/songweizhi/Desktop/vis_msa/combined.aln'
-mview_exe               = '/Users/songweizhi/bin/mview'
-html_page_title         = 'Reads_linking_16S_and_contig'
+    msa_file_mviewd_html_handle.close()
 
-mview_linkage(msa_file, html_page_title, mview_exe)
+
+combined_ref_reads  = '/Users/songweizhi/Desktop/vis_msa/combined.fa'
+msa_file            = '/Users/songweizhi/Desktop/vis_msa/combined.aln'
+mview_exe           = '/Users/songweizhi/bin/mview'
+html_page_title     = 'Reads_linking_16S_and_contig'
+mafft_exe           = 'mafft'
+
+mview_linkage(combined_ref_reads, html_page_title, mafft_exe, mview_exe)
