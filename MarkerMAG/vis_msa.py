@@ -27,7 +27,7 @@ def mview_linkage(seq_file, plot_title, mafft_exe, mview_exe):
     msa_file_mviewd_html_tmp    = '%s/%s_MView_tmp.html'    % (seq_path, seq_basename)
     msa_file_mviewd_html        = '%s/%s_MView.html'        % (seq_path, seq_basename)
 
-    gap_char                = '-'
+    gap_char                = ' '
     break_line_char         = '='
 
     # align sequences
@@ -110,6 +110,18 @@ def mview_linkage(seq_file, plot_title, mafft_exe, mview_exe):
     # add break line
     seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
 
+    # add overlapped reads to seq_record_list
+    for each_overlapping_reads in overlapping_reads_dict:
+        r1_id  = '%s.1' % each_overlapping_reads
+        r2_id  = '%s.2' % each_overlapping_reads
+        r1_seq = overlapping_reads_dict[each_overlapping_reads][0]
+        r2_seq = overlapping_reads_dict[each_overlapping_reads][1]
+        seq_record_list.append(SeqRecord(Seq(r1_seq), id=r1_id, description='Overlapped'))
+        seq_record_list.append(SeqRecord(Seq(r2_seq), id=r2_id, description='Overlapped'))
+
+    # add break line
+    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
+
     # add singleton to seq_record_list
     for each_singleton in singleton_dict:
         r1_id  = '%s.1' % each_singleton
@@ -120,18 +132,6 @@ def mview_linkage(seq_file, plot_title, mafft_exe, mview_exe):
             seq_record_list.append(SeqRecord(Seq(r1_seq), id=r1_id, description='Unpaired'))
         if (r1_seq == '') and (r2_seq != ''):
             seq_record_list.append(SeqRecord(Seq(r2_seq), id=r2_id, description='Unpaired'))
-
-    # add break line
-    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
-
-    # add overlapped reads to seq_record_list
-    for each_overlapping_reads in overlapping_reads_dict:
-        r1_id  = '%s.1' % each_overlapping_reads
-        r2_id  = '%s.2' % each_overlapping_reads
-        r1_seq = overlapping_reads_dict[each_overlapping_reads][0]
-        r2_seq = overlapping_reads_dict[each_overlapping_reads][1]
-        seq_record_list.append(SeqRecord(Seq(r1_seq), id=r1_id, description='Overlapped'))
-        seq_record_list.append(SeqRecord(Seq(r2_seq), id=r2_id, description='Overlapped'))
 
     # add break line
     seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
@@ -152,7 +152,6 @@ def mview_linkage(seq_file, plot_title, mafft_exe, mview_exe):
 
     msa_file_mviewd_html_handle = open(msa_file_mviewd_html, 'w')
     for each_line in open(msa_file_mviewd_html_tmp):
-        print(each_line)
         if not (('Reference sequence' in each_line) or ('Colored by' in each_line)):
             msa_file_mviewd_html_handle.write(each_line)
 

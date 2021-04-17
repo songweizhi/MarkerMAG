@@ -120,3 +120,5 @@ Output files:
 1. Visualization of linkages
 ![linkages](doc/images/linkages_plot.png)
    
+1. Linking reads
+![linkages](doc/images/linking_reads.png)
