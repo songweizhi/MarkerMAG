@@ -19,7 +19,6 @@
 import sys
 import warnings
 import argparse
-from MarkerMAG.MarkerMAG_config import config_dict
 
 
 def version(config_dict):

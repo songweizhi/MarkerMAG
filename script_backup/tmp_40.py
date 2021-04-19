@@ -1,16 +1,5 @@
-import os
-import glob
-import shutil
-import argparse
-import pandas as pd
 import seaborn as sns
-from Bio import SeqIO
-from Bio.Seq import Seq
-import multiprocessing as mp
-from datetime import datetime
 import plotly.graph_objects as go
-from Bio.SeqRecord import SeqRecord
-from distutils.spawn import find_executable
 
 
 def get_sankey_plot(node_list, source_list, target_list, value_list, color_list, plot_title, plot_height, output_html):

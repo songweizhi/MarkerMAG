@@ -94,10 +94,38 @@ total_query_mag_num         = 97
 
 # MarkerMAG_linkages          = '/Users/songweizhi/Desktop/step_1_wd/Test_identified_linkages_genome_level.txt'
 
-MarkerMAG_linkages          = '%s/GI_0416_specific_Mrd2_75_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0418_mis1_identified_linkages_genome_level.txt'             % wd
 
 
 '''
+
+GI_0418_mis1	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
+GI_0418_mis1	Rd_1	|	40	39	1	0	39/39(100.0)	|	26	26	0	0	0	26/97(26.8)	    26/26(100.0)
+GI_0418_mis1	Rd_2	|	14	13	0	1	13/14(92.86)	|	10	9	0	1	0	9/97(9.28)	    9/10(90.0)
+GI_0418_mis1	Both	|	54	52	1	1	52/53(98.11)	|	36	35	0	1	0	35/97(36.08)	35/36(97.22)
+
+GI_0418_mis2	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
+GI_0418_mis2	Rd_2	|	19	18	0	1	18/19(94.74)	|	15	14	0	1	0	14/97(14.43)	14/15(93.33)
+GI_0418_mis2	Both	|	73	70	2	1	70/71(98.59)	|	50	48	1	1	0	48/97(49.48)	48/49(97.96)
+
+GI_0418_mis3	Rd_1	|	52	51	1	0	51/51(100.0)	|	35	35	0	0	0	35/97(36.08)	35/35(100.0)
+GI_0418_mis3	Rd_2	|	24	18	1	5	18/23(78.26)	|	15	12	1	2	0	12/97(12.37)	12/14(85.71)
+GI_0418_mis3	Both	|	76	69	2	5	69/74(93.24)	|	50	47	1	2	0	47/97(48.45)	47/49(95.92)
+
+
+
+
+GI_0418_very_specific	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0418_very_specific	Rd_1	|	40	39	1	0	39/39(100.0)	|	25	25	0	0	0	25/97(25.77)	25/25(100.0)
+GI_0418_very_specific	Rd_2	|	10	10	0	0	10/10(100.0)	|	7	7	0	0	0	7/97(7.22)	7/7(100.0)
+GI_0418_very_specific	Both	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+
+GI_0418_specific	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0418_specific	Rd_1	|	51	50	1	0	50/50(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0418_specific	Rd_2	|	22	20	0	2	20/22(90.91)	|	18	16	0	2	0	16/97(16.49)	16/18(88.89)
+GI_0418_specific	Both	|	73	70	1	2	70/72(97.22)	|	50	48	0	2	0	48/97(49.48)	48/50(96.0)
+
+
 GI_0416_specific_Mrd2_60	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
 GI_0416_specific_Mrd2_60	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
 GI_0416_specific_Mrd2_60	Rd_2	|	21	20	0	1	20/21(95.24)	|	17	16	0	1	0	16/97(16.49)	16/17(94.12)

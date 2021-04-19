@@ -33,8 +33,7 @@ MarkerMAG modules:
 Dependencies
 ---
  
-+ Dependencies for the `link` module: 
-
++ Dependencies for the `link` module:
   [bbmap](https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/)
   and 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
@@ -75,7 +74,7 @@ Notes
 1. Although you can use your preferred tool to reconstruct 16S rRNA gene sequences from the metagenomic dataset, 
    MarkerMAG does have a supplementary module (`matam_16s`) to reconstruct 16S using Matam. 
    Please refer to the manual [here](doc/README_matam_16s.md) if you want to use it.
-
+   
 1. :warning: All MAGs derived from a metagenomic dataset should be included in MarkerMAG run. (more details need to be added)
 
 1. Parameters presets: 
@@ -122,3 +121,4 @@ Output files:
    
 1. Linking reads
 ![linkages](doc/images/linking_reads.png)
+   
