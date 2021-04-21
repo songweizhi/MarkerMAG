@@ -103,7 +103,7 @@ How to run:
 Output files:
 ---
 
-1. Linkage table
++ #### Summary of identified linkages at genome level
 
     | MarkerGene | Genome | Linkages | Step |
     |:---:|:---:|:---:|:---:|
@@ -116,9 +116,28 @@ Output files:
     | Soil_subsample_100_133 | Refined_MAG_42| 11| S2 |
     | Soil_subsample_100_262 | Refined_MAG_31| 7 | S2 |
 
-1. Visualization of linkages
-![linkages](doc/images/linkages_plot.png)
-   
-1. Linking reads
-![linkages](doc/images/linking_reads.png)
++ #### Summary of identified linkages at contig level
+
+    |Marker___Genome(total_number_of_linkages)	|Contig	|Paired	|Clipping	|Overlapped	|Step|
+    |:---:|:---:|:---:|:---:|:---:|:---:|
+    |cami_SILVA138_id99_subsample_100_310___cami_MAG_1(284)|	Contig_C12361|	72	|1|	0|	S1|
+    |cami_SILVA138_id99_subsample_100_310___cami_MAG_1(284)|	Contig_C15695|	72	|1|	0|	S1|
+    |cami_SILVA138_id99_subsample_100_310___cami_MAG_1(284)|	Contig_C52142|	61	|0|	0|	S1|
+    |cami_SILVA138_id99_subsample_100_284___cami_MAG_16(109)|	Contig_C28768|	81	|28|	0|	S1|
+    |cami_SILVA138_id99_subsample_75_135___cami_MAG_10(57)|	Contig_C4223|	44	|8	|0|	S1|
+    |cami_SILVA138_id99_subsample_75_135___cami_MAG_10(68)|	Contig_C44260|	32|	3	|0|	S1|
+    |cami_SILVA138_id99_subsample_100_162___cami_MAG_10(60)|	Contig_C4223|	42	|4|	0|	S1|
+    |cami_SILVA138_id99_subsample_100_162___cami_MAG_10(56)|	Contig_C44260|	51	|3|	0|	S1|
+    |cami_SILVA138_id99_subsample_50_12___cami_MAG_10(51)|	Contig_C4223|	42|	4	|0	|S1|
+    |cami_SILVA138_id99_subsample_50_12___cami_MAG_10(42)|	Contig_C44260|	51|	3	|0	|S1|
+    |cami_SILVA138_id99_subsample_50_142___cami_MAG_15(59)|	Contig_C685|	54|	5	|0|	S1|
+    |cami_SILVA138_id99_subsample_100_235___cami_MAG_15(49)|	Contig_C685|	45|	4	|0|	S1|
+    |cami_SILVA138_id99_subsample_75_12___cami_MAG_35(80)|	Contig_C65|	0|	0|	80	|S2|
+    |cami_SILVA138_id99_subsample_100_25___cami_MAG_35(69)|	Contig_C65|	0|	0|	69	|S2|
+    |cami_SILVA138_id99_subsample_100_23___cami_MAG_35(39)|	Contig_C65|	0|	0|	39	|S2|
+
+    ![linkages](doc/images/linkages_plot.png)
+
++ #### Visualization of linkages
+    ![linkages](doc/images/linking_reads.png)
    

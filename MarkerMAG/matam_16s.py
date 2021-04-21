@@ -378,7 +378,7 @@ if __name__ == '__main__':
     matam_16s_parser.add_argument('-r16s',           required=False, default=None,                                      help='extracted 16S reads')
     matam_16s_parser.add_argument('-pct',            required=True,  type=str, default='1,5,10,25,50,75,100',           help='subsample percentage, must be integer, between 1-100, deafault: 1,5,10,25,50,75,100')
     matam_16s_parser.add_argument('-d',              required=False, type=str,                                          help='MATAM ref db, same as "-d" in Matam')
-    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.9999,                         help='cluster identity cutoff (0-1), default: 0.9999')
+    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.999,                         help='cluster identity cutoff (0-1), default: 0.999')
     matam_16s_parser.add_argument('-t',              required=False, type=int, default=1,                               help='number of threads, default: 1')
     matam_16s_parser.add_argument('-force',          required=False, action="store_true",                               help='force overwrite existing results')
     matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                               help='not report progress')
@@ -389,3 +389,12 @@ if __name__ == '__main__':
     args = vars(matam_16s_parser.parse_args())
     matam_16s(args)
 
+'''
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_SILVA138_id99_Matam16S_wd_1-50
+cat /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_SILVA138_id99_Matam16S_wd_1-50/cami_hc_SILVA138_id99_16S_reads_subset_1_Matam_wd/workdir/scaffolds.NR.min_500bp.prefixed.fa /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_SILVA138_id99_Matam16S_wd_1-50/cami_hc_SILVA138_id99_16S_reads_subset_5_Matam_wd/workdir/scaffolds.NR.min_500bp.prefixed.fa /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_SILVA138_id99_Matam16S_wd_1-50/cami_hc_SILVA138_id99_16S_reads_subset_10_Matam_wd/workdir/scaffolds.NR.min_500bp.prefixed.fa /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_SILVA138_id99_Matam16S_wd_1-50/cami_hc_SILVA138_id99_16S_reads_subset_25_Matam_wd/workdir/scaffolds.NR.min_500bp.prefixed.fa /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_SILVA138_id99_Matam16S_wd_1-50/cami_hc_SILVA138_id99_16S_reads_subset_50_Matam_wd/workdir/scaffolds.NR.min_500bp.prefixed.fa > cami_hc_SILVA138_id99_combined_unclustered_16S.fa
+usearch -cluster_fast cami_hc_SILVA138_id99_combined_unclustered_16S.fa -id 0.999 -centroids cami_hc_SILVA138_id99_assembled_16S_uclust_0.999.fasta -uc cami_hc_SILVA138_id99_assembled_16S_uclust_0.999.uc -sort length -quiet
+
+
+
+'''

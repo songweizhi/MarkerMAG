@@ -141,6 +141,7 @@ def filter_linkages_iteratively_backup(file_in, sort_by_col_header, pairwise_16s
 def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, genomic_seq_depth_dict,
                                 marker_gene_depth_dict, min_16s_gnm_multiple, within_genome_16s_divergence_cutoff,
                                 min_linkages, min_linkages_for_uniq_linked_16s, file_out):
+
     # get MarkerGene_to_GenomicSeq_dict
     MarkerGene_to_GenomicSeq_dict = {}
     for each_linkage in open(file_in):

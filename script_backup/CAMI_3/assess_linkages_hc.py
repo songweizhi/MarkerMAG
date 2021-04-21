@@ -54,37 +54,30 @@ def gnm_level_asessment(linked_mag_dict_rd1):
 
 ########################################################################################################################
 
-wd = '/Users/songweizhi/Desktop/assess_linkages'
+wd = '/Users/songweizhi/Desktop/assess_linkages_hc'
 
 ########## reference to cluster ##########
 
 drep_ani_cutoff             = 97
 drep_cdb_file               = '%s/file_in/Cdb_%s.csv'                                       % (wd, drep_ani_cutoff)
-ref_to_strain_file          = '%s/file_in/ref_to_strain.txt'                                % wd
+#ref_to_strain_file          = '%s/file_in/ref_to_strain.txt'                                % wd
 
 ########## bin to reference ##########
 
-parse_blastn_bin_vs_ref     = False  # True or False
+parse_blastn_bin_vs_ref     = True  # True or False
 blastn_bin_vs_ref           = '%s/file_in/bin_vs_ref.tab'                                   % wd
 iden_cutoff                 = 99.5
 aln_len_cutoff              = 1500
 cov_q_cutoff                = 90
-min_match_length            = 524288  # 100 Kbp  102400
-mag_metadata                = '%s/file_in/MAG_metadata.txt'                                 % wd
+min_match_length            = 102400  # 100Kbp:102400, 500Kbp:524288,
+#mag_metadata                = '%s/file_in/MAG_metadata.txt'                                 % wd
 
-'''
-GI_0414_specific	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0414_specific	Rd_2	|	22	22	0	0	22/22(100.0)	|	16	16	0	0	0	16/97(16.49)	16/16(100.0)
-GI_0414_specific	Both	|	72	71	1	0	71/71(100.0)	|	48	48	0	0	0	48/97(49.48)	48/48(100.0)
-
-
-'''
 ########## 16S to reference ##########
 
 perform_blastn_16s_vs_refs  = False  # True or False
-combined_GI_ref_16S         = '%s/file_in/combined_GI_ref_16S.ffn'                          % wd
-matam_16s_seqs              = '%s/file_in/3_GI_assembled_16S_uclust_0.999.fasta'            % wd
-matam_16s_blastn            = '%s/file_in/3_GI_assembled_16S_uclust_0.999_vs_ref.tab'       % wd
+combined_GI_ref_16S         = '%s/file_in/combined_hc_ref_16S.ffn'                                  % wd
+matam_16s_seqs              = '%s/file_in/cami_hc_SILVA138_id99_assembled_16S_uclust_0.999.fasta'   % wd
+matam_16s_blastn            = '%s/file_in/matam_16S_uclust_0.999_vs_ref.tab'                        % wd
 iden_cutoff_16s             = 99.5  # 99.3 (best), 99.5
 aln_len_cutoff_16s          = 500
 cov_q_cutoff_16s            = 70
@@ -92,242 +85,7 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-# MarkerMAG_linkages          = '/Users/songweizhi/Desktop/step_1_wd/Test_identified_linkages_genome_level.txt'
-
-MarkerMAG_linkages          = '%s/GI_0420_bias20_identified_linkages_genome_level.txt'             % wd
-
-
-'''
-GI_0420_bias20	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
-GI_0420_bias20	Rd_2	|	20	19	0	1	19/20(95.0)	    |	16	15	0	1	0	15/97(15.46)	15/16(93.75)
-GI_0420_bias20	Both	|	74	71	2	1	71/72(98.61)	|	51	49	1	1	0	49/97(50.52)	49/50(98.0)
-
-GI_0420_bias30	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
-GI_0420_bias30	Rd_2	|	18	17	0	1	17/18(94.44)	|	14	13	0	1	0	13/97(13.4)	    13/14(92.86)
-GI_0420_bias30	Both	|	72	69	2	1	69/70(98.57)	|	49	47	1	1	0	47/97(48.45)	47/48(97.92)
-
-GI_0420_bias40	Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
-GI_0420_bias40	Rd_2	|	17	17	0	0	17/17(100.0)	|	13	13	0	0	0	13/97(13.4)	    13/13(100.0)
-GI_0420_bias40	Both	|	70	69	1	0	69/69(100.0)	|	47	47	0	0	0	47/97(48.45)	47/47(100.0)
-
-GI_0420_bias50	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
-GI_0420_bias50	Rd_2	|	14	14	0	0	14/14(100.0)	|	11	11	0	0	0	11/97(11.34)	11/11(100.0)
-GI_0420_bias50	Both	|	68	66	2	0	66/66(100.0)	|	46	45	1	0	0	45/97(46.39)	45/45(100.0)
-
-
-GI_0420_godddd	Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
-GI_0420_godddd	Rd_2	|	21	19	0	2	19/21(90.48)	|	17	15	0	2	0	15/97(15.46)	15/17(88.24)
-GI_0420_godddd	Both	|	74	71	1	2	71/73(97.26)	|	51	49	0	2	0	49/97(50.52)	49/51(96.08)
-
-GI_0420_meta	Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
-GI_0420_meta	Rd_2	|	21	19	0	2	19/21(90.48)	|	17	15	0	2	0	15/97(15.46)	15/17(88.24)
-GI_0420_meta	Both	|	74	71	1	2	71/73(97.26)	|	51	49	0	2	0	49/97(50.52)	49/51(96.08)
-
-GI_0420_careful	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
-GI_0420_careful	Rd_2	|	17	16	0	1	16/17(94.12)	|	12	11	0	1	0	11/97(11.34)	11/12(91.67)
-GI_0420_careful	Both	|	71	68	2	1	68/69(98.55)	|	47	45	1	1	0	45/97(46.39)	45/46(97.83)
-
-GI_0419_mira	Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
-GI_0419_mira	Rd_2	|	20	19	0	1	19/20(95.0)	    |	17	16	0	1	0	16/97(16.49)	16/17(94.12)
-GI_0419_mira	Both	|	73	71	1	1	71/72(98.61)	|	51	50	0	1	0	50/97(51.55)	50/51(98.04)
-
-GI_0419_mira_assemble_clp	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
-GI_0419_mira_assemble_clp	Rd_2	|	21	18	1	2	18/20(90.0)	    |	18	15	1	2	0	15/97(15.46)	15/17(88.24)
-GI_0419_mira_assemble_clp	Both	|	75	70	3	2	70/72(97.22)	|	53	49	2	2	0	49/97(50.52)	49/51(96.08)
-
-GI_0418_mis2_1_no_clp	Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
-GI_0418_mis2_1_no_clp	Rd_2	|	16	15	0	1	15/16(93.75)	|	9	8	0	1	0	8/97(8.25)	    8/9(88.89)
-GI_0418_mis2_1_no_clp	Both	|	69	67	1	1	67/68(98.53)	|	43	42	0	1	0	42/97(43.3)	    42/43(97.67)
-
-GI_0418_mis2_clp	Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
-GI_0418_mis2_clp	Rd_2	|	21	16	0	5	16/21(76.19)	|	14	12	0	2	0	12/97(12.37)	12/14(85.71)
-GI_0418_mis2_clp	Both	|	74	68	1	5	68/73(93.15)	|	48	46	0	2	0	46/97(47.42)	46/48(95.83)
-
-GI_0418_mis2_no_clp	Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
-GI_0418_mis2_no_clp	Rd_2	|	19	18	0	1	18/19(94.74)	|	15	14	0	1	0	14/97(14.43)	14/15(93.33)
-GI_0418_mis2_no_clp	Both	|	72	70	1	1	70/71(98.59)	|	49	48	0	1	0	48/97(49.48)	48/49(97.96)
-
-GI_0418_mis1	Rd_1	|	40	39	1	0	39/39(100.0)	|	26	26	0	0	0	26/97(26.8)	    26/26(100.0)
-GI_0418_mis1	Rd_2	|	14	13	0	1	13/14(92.86)	|	10	9	0	1	0	9/97(9.28)	    9/10(90.0)
-GI_0418_mis1	Both	|	54	52	1	1	52/53(98.11)	|	36	35	0	1	0	35/97(36.08)	35/36(97.22)
-
-GI_0418_mis2	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
-GI_0418_mis2	Rd_2	|	19	18	0	1	18/19(94.74)	|	15	14	0	1	0	14/97(14.43)	14/15(93.33)
-GI_0418_mis2	Both	|	73	70	2	1	70/71(98.59)	|	50	48	1	1	0	48/97(49.48)	48/49(97.96)
-
-GI_0418_mis3	Rd_1	|	52	51	1	0	51/51(100.0)	|	35	35	0	0	0	35/97(36.08)	35/35(100.0)
-GI_0418_mis3	Rd_2	|	24	18	1	5	18/23(78.26)	|	15	12	1	2	0	12/97(12.37)	12/14(85.71)
-GI_0418_mis3	Both	|	76	69	2	5	69/74(93.24)	|	50	47	1	2	0	47/97(48.45)	47/49(95.92)
-
-
-
-
-GI_0418_very_specific	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0418_very_specific	Rd_1	|	40	39	1	0	39/39(100.0)	|	25	25	0	0	0	25/97(25.77)	25/25(100.0)
-GI_0418_very_specific	Rd_2	|	10	10	0	0	10/10(100.0)	|	7	7	0	0	0	7/97(7.22)	    7/7(100.0)
-GI_0418_very_specific	Both	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-
-GI_0418_specific	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0418_specific	Rd_1	|	51	50	1	0	50/50(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0418_specific	Rd_2	|	22	20	0	2	20/22(90.91)	|	18	16	0	2	0	16/97(16.49)	16/18(88.89)
-GI_0418_specific	Both	|	73	70	1	2	70/72(97.22)	|	50	48	0	2	0	48/97(49.48)	48/50(96.0)
-
-
-GI_0416_specific_Mrd2_60	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0416_specific_Mrd2_60	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0416_specific_Mrd2_60	Rd_2	|	21	20	0	1	20/21(95.24)	|	17	16	0	1	0	16/97(16.49)	16/17(94.12)
-GI_0416_specific_Mrd2_60	Both	|	71	69	1	1	69/70(98.57)	|	49	48	0	1	0	48/97(49.48)	48/49(97.96)
-
-GI_0416_specific_Mrd2_75	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0416_specific_Mrd2_75	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0416_specific_Mrd2_75	Rd_2	|	21	20	0	1	20/21(95.24)	|	17	16	0	1	0	16/97(16.49)	16/17(94.12)
-GI_0416_specific_Mrd2_75	Both	|	71	69	1	1	69/70(98.57)	|	49	48	0	1	0	48/97(49.48)	48/49(97.96)
-
-GI_0415_specific_min_M_pct45_mink75	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0415_specific_min_M_pct45_mink75	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0415_specific_min_M_pct45_mink75	Rd_2	|	11	10	0	1	10/11(90.91)	|	8	7	0	1	0	7/97(7.22)	    7/8(87.5)
-GI_0415_specific_min_M_pct45_mink75	Both	|	61	59	1	1	59/60(98.33)	|	40	39	0	1	0	39/97(40.21)	39/40(97.5)
-
-
-GI_0415_specific_min_M_pct45_mink49_careful	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0415_specific_min_M_pct45_mink49_careful	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0415_specific_min_M_pct45_mink49_careful	Rd_2	|	20	19	0	1	19/20(95.0)	    |	16	15	0	1	0	15/97(15.46)	15/16(93.75)
-GI_0415_specific_min_M_pct45_mink49_careful	Both	|	70	68	1	1	68/69(98.55)	|	48	47	0	1	0	47/97(48.45)	47/48(97.92)
-
-
-
-
-
-
-
-GI_0415_default2	    Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0415_default2	    Rd_1	|	53	51	2	0	51/51(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
-GI_0415_default2	    Rd_2	|	19	18	0	1	18/19(94.74)	|	15	14	0	1	0	14/97(14.43)	14/15(93.33)
-GI_0415_default2	    Both	|	72	69	2	1	69/70(98.57)	|	50	48	1	1	0	48/97(49.48)	48/49(97.96)
-
-GI_0415_specific2	    Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0415_specific2	    Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0415_specific2	    Rd_2	|	21	20	0	1	20/21(95.24)	|	17	16	0	1	0	16/97(16.49)	16/17(94.12)
-GI_0415_specific2	    Both	|	71	69	1	1	69/70(98.57)	|	49	48	0	1	0	48/97(49.48)	48/49(97.96)
-
-# 3_GI_subsample_75_963	Refined_28	260	S2	Wrong
-
-GI_0415_very_specific2	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0415_very_specific2	Rd_1	|	38	37	1	0	37/37(100.0)	|	25	25	0	0	0	25/97(25.77)	25/25(100.0)
-GI_0415_very_specific2	Rd_2	|	9	9	0	0	9/9(100.0)	    |	7	7	0	0	0	7/97(7.22)	    7/7(100.0)
-GI_0415_very_specific2	Both	|	47	46	1	0	46/46(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-
-
-
-
-
-
-            	        Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-
-GI_0414_default	        Rd_1	|	58	56	1	1	56/57(98.25)	|	39	38	0	1	0	38/97(39.18)	38/39(97.44)
-GI_0414_default	        Rd_2	|	15	13	1	1	13/14(92.86)	|	13	11	1	1	0	11/97(11.34)	11/12(91.67)
-GI_0414_default	        Both	|	73	69	2	2	69/71(97.18)	|	52	49	1	2	0	49/97(50.52)	49/51(96.08)
-
-GI_0414_specific	    Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0414_specific	    Rd_2	|	22	22	0	0	22/22(100.0)	|	16	16	0	0	0	16/97(16.49)	16/16(100.0)
-GI_0414_specific	    Both	|	72	71	1	0	71/71(100.0)	|	48	48	0	0	0	48/97(49.48)	48/48(100.0)
-
-GI_0414_very_specific	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0414_very_specific	Rd_2	|	21	21	0	0	21/21(100.0)	|	15	15	0	0	0	15/97(15.46)	15/15(100.0)
-GI_0414_very_specific	Both	|	71	70	1	0	70/70(100.0)	|	47	47	0	0	0	47/97(48.45)	47/47(100.0)
-
-
-3_GI_subsample_100_1437	Refined_31	141	S1	Correct
-3_GI_subsample_75_1079	Refined_31	103	S1	Correct
-3_GI_subsample_75_1075	Refined_31	96	S1	Correct
-3_GI_subsample_75_1076	Refined_31	78	S1	Correct
-3_GI_subsample_75_1078	Refined_31	77	S1	Correct
-3_GI_subsample_50_663	Refined_31	75	S1	Correct
-3_GI_subsample_75_1074	Refined_31	68	S1	Correct
-3_GI_subsample_25_402	Refined_31	40	S1	Correct
-3_GI_subsample_50_712	Refined_31	38	S1	Wrong
-3_GI_subsample_75_1055	Refined_31	33	S1	Wrong
-3_GI_subsample_75_1162	Refined_31	27	S1	Wrong
-3_GI_subsample_75_1057	Refined_31	25	S1	Wrong
-3_GI_subsample_25_431	Refined_31	22	S1	Wrong
-3_GI_subsample_100_1418	Refined_31	19	S1	Wrong
-3_GI_subsample_25_598	Refined_31	14	S1	Wrong
-3_GI_subsample_100_2329	Refined_31	12	S1	Wrong
-3_GI_subsample_50_1728	Refined_31	8	S1	Unknown
-3_GI_subsample_100_3714	Refined_31	8	S1	Unknown
-3_GI_subsample_50_723	Refined_31	7	S1	Wrong
-
-
-
-
-
-
-
-3_GI_subsample_10_82	Refined_19	2370	S2	Correct
-3_GI_subsample_100_563	Refined_19	2224	S2	Correct
-3_GI_subsample_50_207	Refined_19	2219	S2	Correct
-3_GI_subsample_100_1450	Refined_53	497	S2	Correct
-3_GI_subsample_100_1692	Refined_37	428	S2	Correct
-3_GI_subsample_75_487	Refined_1	289	S2	Correct
-3_GI_subsample_75_963	Refined_28	260	S2	Wrong       (got this in the new round) 
-3_GI_subsample_100_577	Refined_8	119	S2	Correct
-3_GI_subsample_100_579	Refined_8	107	S2	Correct
-3_GI_subsample_100_578	Refined_8	103	S2	Correct
-3_GI_subsample_100_1740	Refined_45	77	S2	Correct
-3_GI_subsample_50_234	Refined_24	60	S2	Correct
-3_GI_subsample_100_1404	Refined_38	56	S2	Correct
-3_GI_subsample_50_647	Refined_38	50	S2	Correct
-3_GI_subsample_100_1342	Refined_46	48	S2	Correct
-3_GI_subsample_100_331	Refined_15	48	S2	Correct
-3_GI_subsample_100_878	Refined_15	42	S2	Correct
-3_GI_subsample_50_811	Refined_32	30	S2	Correct
-3_GI_subsample_100_2288	Refined_89	28	S2	Correct
-3_GI_subsample_75_2796	Refined_73	27	S2	Correct
-3_GI_subsample_75_746	Refined_49	21	S2	Correct
-3_GI_subsample_100_457	Refined_54	13	S2	Correct
-3_GI_subsample_75_1549	Refined_26	13	S2	Correct
-
-
-=========================================================================================
-
-3_GI_subsample_75_963	Refined_28	256	S2  Wrong       (got this in the new round) 
-NODE_4309_length_14678_cov_0.076146
-
-
-0414
-MarkerGene__3_GI_subsample_10_82,GenomicSeq__Refined_19,2370    =
-MarkerGene__3_GI_subsample_100_563,GenomicSeq__Refined_19,2224  =
-MarkerGene__3_GI_subsample_50_207,GenomicSeq__Refined_19,2219   =
-MarkerGene__3_GI_subsample_100_1450,GenomicSeq__Refined_53,497  =
-MarkerGene__3_GI_subsample_100_1692,GenomicSeq__Refined_37,428  =
-MarkerGene__3_GI_subsample_75_487,GenomicSeq__Refined_1,289     = good
-MarkerGene__3_GI_subsample_100_577,GenomicSeq__Refined_8,119    = good
-MarkerGene__3_GI_subsample_100_579,GenomicSeq__Refined_8,107    =
-MarkerGene__3_GI_subsample_100_578,GenomicSeq__Refined_8,103    !!! not in below
-MarkerGene__3_GI_subsample_100_1740,GenomicSeq__Refined_45,77   =
-
-
-
-0415
-MarkerGene__3_GI_subsample_10_82,GenomicSeq__Refined_19,2384    =
-MarkerGene__3_GI_subsample_50_207,GenomicSeq__Refined_19,2230   =
-MarkerGene__3_GI_subsample_100_563,GenomicSeq__Refined_19,2227  =
-MarkerGene__3_GI_subsample_100_1450,GenomicSeq__Refined_53,502  =
-MarkerGene__3_GI_subsample_100_1692,GenomicSeq__Refined_37,435  =
-MarkerGene__3_GI_subsample_75_487,GenomicSeq__Refined_1,291     = good
-MarkerGene__3_GI_subsample_75_963,GenomicSeq__Refined_28,256    !!!
-MarkerGene__3_GI_subsample_100_577,GenomicSeq__Refined_8,131    = good
-MarkerGene__3_GI_subsample_100_579,GenomicSeq__Refined_8,113    =
-MarkerGene__3_GI_subsample_100_1740,GenomicSeq__Refined_45,80   =
-
-
-
-
-
-
-
-'''
-
+MarkerMAG_linkages          = '%s/CAMI_hc_0421_identified_linkages_genome_level.txt'             % wd
 
 ########## script ##########
 
@@ -336,11 +94,11 @@ pwd_plot_sankey_R = '%s/file_in/get_sankey_plot.R' % wd
 ############################################### define file/folder name ################################################
 
 # bin to reference
-bin_vs_ref_txt              = '%s/bin_vs_ref_imag%s.txt'                    % (wd, iden_cutoff)
-stats_bin_to_ref_txt        = '%s/stats_bin_to_ref_imag%s.txt'              % (wd, iden_cutoff)
-stats_ref_to_bin_txt        = '%s/stats_ref_to_bin_imag%s.txt'              % (wd, iden_cutoff)
-stats_bin_to_cluster_txt    = '%s/stats_bin_to_cluster_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
-stats_cluster_to_bin_txt    = '%s/stats_cluster_to_bin_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
+bin_vs_ref_txt              = '%s/bin_vs_ref_imag%s.txt'                        % (wd, iden_cutoff)
+stats_bin_to_ref_txt        = '%s/stats_bin_to_ref_imag%s.txt'                  % (wd, iden_cutoff)
+stats_ref_to_bin_txt        = '%s/stats_ref_to_bin_imag%s.txt'                  % (wd, iden_cutoff)
+stats_bin_to_cluster_txt    = '%s/stats_bin_to_cluster_ani%s_imag%s.txt'        % (wd, drep_ani_cutoff, iden_cutoff)
+stats_cluster_to_bin_txt    = '%s/stats_cluster_to_bin_ani%s_imag%s.txt'        % (wd, drep_ani_cutoff, iden_cutoff)
 
 # assessment results
 linkage_file_path, linkage_file_basename, linkage_file_extension = sep_path_basename_ext(MarkerMAG_linkages)
@@ -365,7 +123,6 @@ for each_ref in open(drep_cdb_file):
         else:
             cluster_to_ref_dict[ref_cluster].append(ref_file_name_no_ext)
 
-print('cluster_to_ref_dict: %s' % len(cluster_to_ref_dict) )
 
 ################################################### bin to reference ###################################################
 
@@ -373,16 +130,16 @@ bin_ref_connector           = '__|__'
 
 # get ref_to_strain_dict
 ref_to_strain_dict = {}
-for ref in open(ref_to_strain_file):
-    ref_split = ref.strip().split('\t')
-    ref_to_strain_dict[ref_split[0]] = ref_split[1]
+# for ref in open(ref_to_strain_file):
+#     ref_split = ref.strip().split('\t')
+#     ref_to_strain_dict[ref_split[0]] = ref_split[1]
 
 if parse_blastn_bin_vs_ref is True:
     bin_vs_ref_dict = {}
     for match in open(blastn_bin_vs_ref):
         match_split = match.strip().split('\t')
         query = match_split[0]
-        query_genome = '_'.join(query.split('_')[:2])
+        query_genome = '_'.join(query.split('_')[:3])
         subject = match_split[1]
         subject_genome = '_'.join(subject.split('_')[:2])
         iden = float(match_split[2])
@@ -449,7 +206,7 @@ if parse_blastn_bin_vs_ref is True:
 
     ref_to_bin_txt_handle = open(stats_ref_to_bin_txt, 'w')
     for each_ref in ref_to_bin_dict:
-        ref_to_bin_txt_handle.write('%s\t%s\t%s\n' % (each_ref, ','.join(ref_to_bin_dict[each_ref]), ref_to_strain_dict[each_ref]))
+        ref_to_bin_txt_handle.write('%s\t%s\t%s\n' % (each_ref, ','.join(ref_to_bin_dict[each_ref]), ref_to_strain_dict.get(each_ref, 'NA')))
     ref_to_bin_txt_handle.close()
 
     stats_bin_to_cluster_txt_handle = open(stats_bin_to_cluster_txt, 'w')
@@ -530,6 +287,7 @@ for each_linkage in open(MarkerMAG_linkages):
         each_linkage_split = each_linkage.strip().split('\t')
         id_16s = each_linkage_split[0]
         id_mag = each_linkage_split[1]
+        print('id_mag: %s' % id_mag)
         key_16s_mag = '%s___%s' % (id_16s, id_mag)
 
         matched_cluster_16s = {}
@@ -540,6 +298,9 @@ for each_linkage in open(MarkerMAG_linkages):
         if id_mag in bin_to_cluster_dict:
             matched_cluster_mag = bin_to_cluster_dict[id_mag]
 
+        print('matched_cluster_16s: %s' % matched_cluster_16s)
+        print('matched_cluster_mag: %s' % matched_cluster_mag)
+        print()
         if (matched_cluster_16s != {}) and (matched_cluster_mag != {}):
 
             if overlap_between_list(matched_cluster_mag, matched_cluster_16s) is True:
@@ -561,12 +322,12 @@ for each_linkage in open(MarkerMAG_linkages):
                 for each_16s_cluster in matched_cluster_16s:
                     current_16s_cluster_ref = cluster_to_ref_dict[each_16s_cluster]
                     for each_ref_1 in current_16s_cluster_ref:
-                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict[each_ref_1]))
+                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict.get(each_ref_1, 'NA')))
 
                 for each_mag_cluster in matched_cluster_mag:
                     current_mag_cluster_ref = cluster_to_ref_dict[each_mag_cluster]
                     for each_ref_2 in current_mag_cluster_ref:
-                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict[each_ref_2]))
+                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict.get(each_ref_2, 'NA')))
                 wrong_linkages_txt_handle.write('\n')
         else:
             linkage_num_unknown += 1
@@ -579,11 +340,11 @@ for each_linkage in open(MarkerMAG_linkages):
             for each_16s_cluster in matched_cluster_16s:
                 current_16s_cluster_ref = cluster_to_ref_dict[each_16s_cluster]
                 for each_ref_1 in current_16s_cluster_ref:
-                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict[each_ref_1]))
+                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict.get(each_ref_1, 'NA')))
             for each_mag_cluster in matched_cluster_mag:
                 current_mag_cluster_ref = cluster_to_ref_dict[each_mag_cluster]
                 for each_ref_2 in current_mag_cluster_ref:
-                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict[each_ref_2]))
+                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict.get(each_ref_2, 'NA')))
             unknown_linkages_txt_handle.write('\n')
 wrong_linkages_txt_handle.close()
 unknown_linkages_txt_handle.close()
@@ -672,20 +433,3 @@ print('%s\tRound\t|\tLink\tYes\tNA\tNo\tAccuracy\t|\tMAG\tYes\tNA\tNo\tY/N\tReco
 print('%s\tRd_1\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_rd1,  correct_link_rd1,  unknown_link_rd1,  wrong_link_rd1,  accuracy_str_rd1_link_level,  len(linked_mag_dict_rd1), rd1_correct_num,  len(rd1_unknown_gnm), len(rd1_wrong_gnm), len(rd1_ambiguous_gnm), recovery_str_rd1, accuracy_str_rd1))
 print('%s\tRd_2\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_rd2,  correct_link_rd2,  unknown_link_rd2,  wrong_link_rd2,  accuracy_str_rd2_link_level,  len(linked_mag_dict_rd2), rd2_correct_num,  len(rd2_unknown_gnm), len(rd2_wrong_gnm), len(rd2_ambiguous_gnm), recovery_str_rd2, accuracy_str_rd2))
 print('%s\tBoth\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_both, correct_link_both, unknown_link_both, wrong_link_both, accuracy_str_both_link_level, total_linked_mag_num,      correct_num_both, unknown_gnm_both_num, wrong_gnm_both_num, ambiguous_gnm_both_num, recovery_str_both, accuracy_str_both))
-
-
-########################################################################################################################
-
-'''
-
-########################################################################################################################
-
-# use 80_20 in round 2
-GI_0412_specific_spades_M2_85_diff_80_20	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-GI_0412_specific_spades_M2_85_diff_80_20	Rd_2	|	23	    21	1	1	21/22(95.45)|	18	16	1	1	0	16/97(16.49)	16/17(94.12)
-GI_0412_specific_spades_M2_85_diff_75_20	Rd_2	|	26	    23	1	2	23/25(92.0)	|	17	15	1	1	0	15/97(15.46)	15/16(93.75)
-GI_0412_specific_spades_M2_85_diff_50_20	Rd_2	|	42	    37	1	4	37/41(90.24)|	17	15	1	1	0	15/97(15.46)	15/16(93.75)
-
-########################################################################################################################
-
-'''
