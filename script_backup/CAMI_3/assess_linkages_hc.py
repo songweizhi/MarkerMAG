@@ -64,8 +64,8 @@ drep_cdb_file               = '%s/file_in/Cdb_%s.csv'                           
 
 ########## bin to reference ##########
 
-parse_blastn_bin_vs_ref     = True  # True or False
-blastn_bin_vs_ref           = '%s/file_in/bin_vs_ref.tab'                                   % wd
+parse_blastn_bin_vs_ref     = False  # True or False
+blastn_bin_vs_ref           = '%s/file_in/cami_hc_bin_vs_ref.tab'                                   % wd
 iden_cutoff                 = 99.5
 aln_len_cutoff              = 1500
 cov_q_cutoff                = 90
@@ -85,7 +85,7 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/CAMI_hc_0421_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/CAMI_hc_0425_identified_linkages_genome_level.txt'             % wd
 
 ########## script ##########
 
@@ -287,7 +287,7 @@ for each_linkage in open(MarkerMAG_linkages):
         each_linkage_split = each_linkage.strip().split('\t')
         id_16s = each_linkage_split[0]
         id_mag = each_linkage_split[1]
-        print('id_mag: %s' % id_mag)
+        #print('id_mag: %s' % id_mag)
         key_16s_mag = '%s___%s' % (id_16s, id_mag)
 
         matched_cluster_16s = {}
@@ -298,9 +298,6 @@ for each_linkage in open(MarkerMAG_linkages):
         if id_mag in bin_to_cluster_dict:
             matched_cluster_mag = bin_to_cluster_dict[id_mag]
 
-        print('matched_cluster_16s: %s' % matched_cluster_16s)
-        print('matched_cluster_mag: %s' % matched_cluster_mag)
-        print()
         if (matched_cluster_16s != {}) and (matched_cluster_mag != {}):
 
             if overlap_between_list(matched_cluster_mag, matched_cluster_16s) is True:
@@ -312,6 +309,9 @@ for each_linkage in open(MarkerMAG_linkages):
                     linkage_assessment_dict[id_mag].append('Correct')
 
             else:
+                print('matched_cluster_16s: %s' % matched_cluster_16s)
+                print('matched_cluster_mag: %s' % matched_cluster_mag)
+                print()
                 linkage_num_wrong += 1
                 MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
                 if id_mag not in linkage_assessment_dict:
