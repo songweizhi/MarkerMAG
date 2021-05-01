@@ -85,7 +85,42 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/CAMI_hc_0425_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/stats_combined_filtered.txt'             % wd
+linkages_from_rd1           = True
+
+
+'''
+stats_combined_filtered.txt	Rd_1	|	57	55	2	0	55/55(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
+stats_combined_filtered.txt	Rd_1	|	55	53	2	0	53/53(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
+
+
+	                                                    Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
+CAMI_hc_0428_stats_combined_filtered.txt	            Rd_1	|	49	41	4	4	41/45(91.11)	|	41	33	4	4	0	33/97(34.02)	33/37(89.19)
+CAMI_hc_0428_specific_stats_combined_filtered.txt	    Rd_1	|	48	41	3	4	41/45(91.11)	|	40	33	3	4	0	33/97(34.02)	33/37(89.19)
+CAMI_hc_0428_very_specific_stats_combined_filtered.txt	Rd_1	|	42	34	3	5	34/39(87.18)	|	38	30	3	5	0	30/97(30.93)	30/35(85.71)
+
+
+1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	16S	C246_1	tax_1137264	NA
+1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	16S	C246_1	tax_1169165	NA
+1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	MAG	C248_0	tax_134676	NA
+
+2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	16S	C229_0	tax_1051629	NA
+2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	MAG	C246_1	tax_1137264	NA
+2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	MAG	C246_1	tax_1169165	NA
+
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_1124469	NA
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_991945	NA
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_991968	NA
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	MAG	C100_0	tax_349966	NA
+
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_1160164	NA
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_1328339	NA
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_520453	NA
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	MAG	C277_0	tax_1287182	NA
+
+
+
+'''
 
 ########## script ##########
 
@@ -281,12 +316,25 @@ linkage_num_wrong = 0
 linkage_num_unknown = 0
 linkage_assessment_dict = {}
 for each_linkage in open(MarkerMAG_linkages):
-    if each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tStep'):
+    #if each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tStep'):
+    if ('MarkerGene\tGenomicSeq\tLinkage\tStep' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
         MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\tAssessment\n')
     else:
-        each_linkage_split = each_linkage.strip().split('\t')
-        id_16s = each_linkage_split[0]
-        id_mag = each_linkage_split[1]
+
+        id_16s = ''
+        id_mag = ''
+        link_num = ''
+        if linkages_from_rd1 is False:
+            each_linkage_split = each_linkage.strip().split('\t')
+            id_16s = each_linkage_split[0]
+            id_mag = each_linkage_split[1]
+            link_num = each_linkage_split[2]
+        else:
+            each_linkage_split = each_linkage.strip().split(',')
+            id_16s = each_linkage_split[0][12:]
+            id_mag = each_linkage_split[1][12:]
+            link_num = each_linkage_split[2]
+
         #print('id_mag: %s' % id_mag)
         key_16s_mag = '%s___%s' % (id_16s, id_mag)
 
@@ -302,7 +350,12 @@ for each_linkage in open(MarkerMAG_linkages):
 
             if overlap_between_list(matched_cluster_mag, matched_cluster_16s) is True:
                 linkage_num_right += 1
-                MarkerMAG_linkages_assessed_handle.write('%s\tCorrect\n' % each_linkage.strip())
+
+                if linkages_from_rd1 is False:
+                    MarkerMAG_linkages_assessed_handle.write('%s\tCorrect\n' % each_linkage.strip())
+                else:
+                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tCorrect\n' % (id_16s, id_mag, link_num))
+
                 if id_mag not in linkage_assessment_dict:
                     linkage_assessment_dict[id_mag] = ['Correct']
                 else:
@@ -313,7 +366,12 @@ for each_linkage in open(MarkerMAG_linkages):
                 print('matched_cluster_mag: %s' % matched_cluster_mag)
                 print()
                 linkage_num_wrong += 1
-                MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
+
+                if linkages_from_rd1 is False:
+                    MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
+                else:
+                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tWrong\n' % (id_16s, id_mag, link_num))
+
                 if id_mag not in linkage_assessment_dict:
                     linkage_assessment_dict[id_mag] = ['Wrong']
                 else:
@@ -331,7 +389,12 @@ for each_linkage in open(MarkerMAG_linkages):
                 wrong_linkages_txt_handle.write('\n')
         else:
             linkage_num_unknown += 1
-            MarkerMAG_linkages_assessed_handle.write('%s\tUnknown\n' % each_linkage.strip())
+
+            if linkages_from_rd1 is False:
+                MarkerMAG_linkages_assessed_handle.write('%s\tUnknown\n' % each_linkage.strip())
+            else:
+                MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tUnknown\n' % (id_16s, id_mag, link_num))
+
             if id_mag not in linkage_assessment_dict:
                 linkage_assessment_dict[id_mag] = ['Unknown']
             else:
