@@ -85,8 +85,8 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/stats_combined_filtered.txt'             % wd
-linkages_from_rd1           = True
+MarkerMAG_linkages          = '%s/CAMI_hc_0501_very_specific_identified_linkages_genome_level.txt'             % wd
+linkages_from_rd1           = False
 
 
 '''

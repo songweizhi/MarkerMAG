@@ -92,9 +92,9 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-# MarkerMAG_linkages          = '/Users/songweizhi/Desktop/step_1_wd/Test_identified_linkages_genome_level.txt'
+MarkerMAG_linkages          = '%s/GI_0501_very_specific_identified_linkages_genome_level.txt'             % wd
 
-MarkerMAG_linkages          = '%s/GI_0420_bias20_identified_linkages_genome_level.txt'             % wd
+
 
 
 '''

@@ -31,7 +31,7 @@ mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'             
 # Kelp_0406_specific_identified_linkages_genome_level.txt
 # Kelp_0406_very_specific_identified_linkages_genome_level.txt
 # Kelp_0406_super_specific_identified_linkages_genome_level.txt
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0413_specific_identified_linkages_genome_level.txt'
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0501_specific_identified_linkages_genome_level.txt'
 
 '''
 Linkage accuracy: Kelp_0413_very_sensitive_identified_linkages_genome_level
