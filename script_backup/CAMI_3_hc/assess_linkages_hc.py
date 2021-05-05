@@ -85,11 +85,59 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/CAMI_hc_0501_very_specific_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/CAMI_hc_0503_mis2_identified_linkages_genome_level.txt'             % wd
 linkages_from_rd1           = False
 
 
 '''
+
+correct
+cami_hc_SILVA138_id99_75_subsample_75_924	cami_hc_100	76	S1	Correct
+cami_hc_SILVA138_id99_75_subsample_75_974	cami_hc_100	72	S1	Correct
+cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_100	64	S1	Correct
+
+wrong
+cami_hc_SILVA138_id99_50_subsample_50_3187	cami_hc_100	98	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_50_3088	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_75_subsample_75_4393	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_75_subsample_75_3140	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_75_subsample_75_4214	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_50_2994	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_75_subsample_75_2124	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_50_3281	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_25_1418	cami_hc_100	79	S1	Wrong
+cami_hc_SILVA138_id99_75_subsample_75_924   cami_hc_100 66  
+cami_hc_SILVA138_id99_75_subsample_75_974   cami_hc_100 50  
+cami_hc_SILVA138_id99_50_subsample_50_710   cami_hc_100 57  
+
+cami_hc_SILVA138_id99_50_subsample_50_3187
+cami_hc_SILVA138_id99_50_subsample_50_3088
+cami_hc_SILVA138_id99_75_subsample_75_4393
+cami_hc_SILVA138_id99_75_subsample_75_3140
+cami_hc_SILVA138_id99_75_subsample_75_4214
+cami_hc_SILVA138_id99_50_subsample_50_2994
+cami_hc_SILVA138_id99_75_subsample_75_2124
+cami_hc_SILVA138_id99_50_subsample_50_3281
+cami_hc_SILVA138_id99_50_subsample_25_1418
+cami_hc_SILVA138_id99_75_subsample_75_924
+cami_hc_SILVA138_id99_75_subsample_75_974
+cami_hc_SILVA138_id99_50_subsample_50_710
+
+
+
+hc_0505_mis2_75_45	    Rd_1	|	60	41	2	17	41/58(70.69)	|	37	30	2	5	0	30/97(30.93)	30/35(85.71)
+hc_0505_mis2_75_45	    Rd_2	|	12	9	2	1	9/10(90.0)	    |	8	6	1	1	0	6/97(6.19)	    6/7(85.71)
+hc_0505_mis2_75_45	    Both	|	72	50	4	18	50/68(73.53)	|	45	36	3	6	0	36/97(37.11)	36/42(85.71)
+
+hc_0505_mis1.9_75_45	Rd_1	|	72	42	2	28	42/70(60.0)	    |	37	27	2	8	0	27/97(27.84)	27/35(77.14)
+hc_0505_mis1.9_75_45	Rd_2	|	13	7	2	4	7/11(63.64)	    |	9	6	1	2	0	6/97(6.19)	    6/8(75.0)
+hc_0505_mis1.9_75_45	Both	|	85	49	4	32	49/81(60.49)	|	46	33	3	10	0	33/97(34.02)	33/43(76.74)
+
+hc_0505_mis1.8_75_45	Rd_1	|	73	42	3	28	42/70(60.0)	    |	37	27	2	8	0	27/97(27.84)	27/35(77.14)
+hc_0505_mis1.8_75_45	Rd_2	|	15	7	2	6	7/13(53.85)	    |	10	6	1	3	0	6/97(6.19)	    6/9(66.67)
+hc_0505_mis1.8_75_45	Both	|	88	49	5	34	49/83(59.04)	|	47	33	3	11	0	33/97(34.02)	33/44(75.0)
+
+
 stats_combined_filtered.txt	Rd_1	|	57	55	2	0	55/55(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
 stats_combined_filtered.txt	Rd_1	|	55	53	2	0	53/53(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
 
@@ -320,7 +368,6 @@ for each_linkage in open(MarkerMAG_linkages):
     if ('MarkerGene\tGenomicSeq\tLinkage\tStep' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
         MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\tAssessment\n')
     else:
-
         id_16s = ''
         id_mag = ''
         link_num = ''

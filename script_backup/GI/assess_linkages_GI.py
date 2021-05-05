@@ -92,12 +92,120 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0501_very_specific_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0505_mis2_75_45_identified_linkages_genome_level.txt'             % wd
+linkages_from_rd1           = False
 
 
 
 
 '''
+GI_0505_mis2_75_45	Rd_1	|	83	78	4	1	78/79(98.73)	|	28	27	0	0	1	27/97(27.84)	27/28(96.43)
+GI_0505_mis2_75_45	Rd_2	|	11	10	1	0	10/10(100.0)	|	7	6	1	0	0	6/97(6.19)	    6/6(100.0)
+GI_0505_mis2_75_45	Both	|	94	88	5	1	88/89(98.88)	|	35	33	1	0	1	33/97(34.02)	33/34(97.06)
+
+GI_0505_mis2_80_45	Rd_1	|	76	71	4	1	71/72(98.61)	|	26	25	0	0	1	25/97(25.77)	25/26(96.15)
+GI_0505_mis2_80_45	Rd_2	|	20	11	1	8	11/19(57.89)	|	9	7	1	1	0	7/97(7.22)	    7/8(87.5)
+GI_0505_mis2_80_45	Both	|	96	82	5	9	82/91(90.11)	|	35	32	1	1	1	32/97(32.99)	32/34(94.12)
+
+GI_0505_mis2_85_45	Rd_1	|	76	68	5	3	68/71(95.77)	|	22	20	0	1	1	20/97(20.62)	20/22(90.91)
+GI_0505_mis2_85_45	Rd_2	|	70	15	0	55	15/70(21.43)	|	12	9	0	3	0	9/97(9.28)	    9/12(75.0)
+GI_0505_mis2_85_45	Both	|	146	83	5	58	83/141(58.87)	|	34	29	0	4	1	29/97(29.9)	    29/34(85.29)
+
+GI_0505_mis2_90_45	Rd_1	|	80	68	9	3	68/71(95.77)	|	22	20	0	1	1	20/97(20.62)	20/22(90.91)
+GI_0505_mis2_90_45	Rd_2	|	20	11	1	8	11/19(57.89)	|	9	7	1	1	0	7/97(7.22)	    7/8(87.5)
+GI_0505_mis2_90_45	Both	|	100	79	10	11	79/90(87.78)	|	31	27	1	2	1	27/97(27.84)	27/30(90.0)
+
+
+1	3_GI_subsample_75_1644___Refined_4	MAG	C46_1	OTU_97.1182.0	CP013239.1 Clostridium butyricum strain CDC_51208
+1	3_GI_subsample_75_1644___Refined_4	MAG	C46_1	OTU_97.15599.0	CP013352.1 Clostridium butyricum strain JKY6D1
+1	3_GI_subsample_75_1644___Refined_4	MAG	C46_1	OTU_97.16157.0	CP016332.1 Clostridium butyricum strain TK520
+1	3_GI_subsample_75_1644___Refined_4	MAG	C46_1	OTU_97.326.0	CP013252.1 Clostridium butyricum strain KNU-L09
+1	3_GI_subsample_75_1644___Refined_4	MAG	C46_1	OTU_97.365.0	CP014704.1 Clostridium butyricum strain TOA
+
+
+
+
+GI_0505_mis2_75_45	Rd_1	|	83	78	4	1	78/79(98.73)	|	28	27	0	0	1	27/97(27.84)	27/28(96.43)
+GI_0505_mis2_75_45	Rd_2	|	11	10	1	0	10/10(100.0)	|	7	6	1	0	0	6/97(6.19)	    6/6(100.0)
+GI_0505_mis2_75_45	Both	|	94	88	5	1	88/89(98.88)	|	35	33	1	0	1	33/97(34.02)	33/34(97.06)
+
+GI_0420_good	    Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
+GI_0420_good	    Rd_2	|	21	19	0	2	19/21(90.48)	|	17	15	0	2	0	15/97(15.46)	15/17(88.24)
+GI_0420_good	    Both	|	74	71	1	2	71/73(97.26)	|	51	49	0	2	0	49/97(50.52)	49/51(96.08)
+
+
+GI_0504_mis2_75_45	    Rd_1	|	85	74	4	7	74/81(91.36)	|	28	25	0	2	1	25/97(25.77)	25/28(89.29)
+GI_0504_mis2_75_45	    Rd_2	|	11	10	1	0	10/10(100.0)	|	7	6	1	0	0	6/97(6.19)	    6/6(100.0)
+GI_0504_mis2_75_45	    Both	|	96	84	5	7	84/91(92.31)	|	35	31	1	2	1	31/97(31.96)	31/34(91.18)
+
+GI_0504_mis1.5_75_45	Rd_1	|	96	75	16	5	75/80(93.75)	|	28	25	0	2	1	25/97(25.77)	25/28(89.29)
+GI_0504_mis1.5_75_45	Rd_2	|	7	6	1	0	6/6(100.0)	    |	5	4	1	0	0	4/97(4.12)	    4/4(100.0)
+GI_0504_mis1.5_75_45	Both	|	103	81	17	5	81/86(94.19)	|	33	29	1	2	1	29/97(29.9)	    29/32(90.62)
+
+GI_0504_mis1_75_45	    Rd_1	|	95	67	16	12	67/79(84.81)	|	24	19	0	4	1	19/97(19.59)	19/24(79.17)
+GI_0504_mis1_75_45	    Rd_2	|	11	11	0	0	11/11(100.0)	|	8	8	0	0	0	8/97(8.25)	    8/8(100.0)
+GI_0504_mis1_75_45	    Both	|	106	78	16	12	78/90(86.67)	|	32	27	0	4	1	27/97(27.84)	27/32(84.38)
+
+
+
+
+
+
+GI_0503_mis1_75_75	Rd_1	|	56	50	4	2	50/52(96.15)	|	10	9	0	0	1	9/97(9.28)	    9/10(90.0)
+GI_0503_mis1_75_75	Rd_2	|	8	8	0	0	8/8(100.0)	    |	5	5	0	0	0	5/97(5.15)	    5/5(100.0)
+GI_0503_mis1_75_75	Both	|	64	58	4	2	58/60(96.67)	|	15	14	0	0	1	14/97(14.43)	14/15(93.33)
+
+GI_0503_mis1_75_45	Rd_1	|	127	64	7	56	64/120(53.33)	|	25	19	0	5	1	19/97(19.59)	19/25(76.0)
+GI_0503_mis1_75_45	Rd_2	|	3	3	0	0	3/3(100.0)	    |	3	3	0	0	0	3/97(3.09)	    3/3(100.0)
+GI_0503_mis1_75_45	Both	|	130	67	7	56	67/123(54.47)	|	28	22	0	5	1	22/97(22.68)	22/28(78.57)
+
+GI_0503_mis1_45_45	Rd_1	|	225	85	11	129	85/214(39.72)	|	31	22	0	8	1	22/97(22.68)	22/31(70.97)
+GI_0503_mis1_45_45	Rd_2	|	7	7	0	0	7/7(100.0)	    |	6	6	0	0	0	6/97(6.19)	    6/6(100.0)
+GI_0503_mis1_45_45	Both	|	232	92	11	129	92/221(41.63)	|	37	28	0	8	1	28/97(28.87)	28/37(75.68)
+
+
+GI_0420_good	    Rd_1	|	53	52	1	0	52/52(100.0)	|	34	34	0	0	0	34/97(35.05)	34/34(100.0)
+GI_0420_good	    Rd_2	|	21	19	0	2	19/21(90.48)	|	17	15	0	2	0	15/97(15.46)	15/17(88.24)
+GI_0420_good	    Both	|	74	71	1	2	71/73(97.26)	|	51	49	0	2	0	49/97(50.52)	49/51(96.08)
+
+
+
+
+GI_0503_mis2_75_75	Rd_1	|	84	80	4	0	80/80(100.0)	|	23	23	0	0	0	23/97(23.71)	23/23(100.0)
+GI_0503_mis2_75_75	Rd_2	|	10	10	0	0	10/10(100.0)	|	6	6	0	0	0	6/97(6.19)	    6/6(100.0)
+GI_0503_mis2_75_75	Both	|	94	90	4	0	90/90(100.0)	|	29	29	0	0	0	29/97(29.9)	    29/29(100.0)
+
+GI_0503_mis2_75_45	Rd_1	|	141	63	7	71	63/134(47.01)	|	27	20	0	6	1	20/97(20.62)	20/27(74.07)
+GI_0503_mis2_75_45	Rd_2	|	13	11	0	2	11/13(84.62)	|	7	6	0	1	0	6/97(6.19)	    6/7(85.71)
+GI_0503_mis2_75_45	Both	|	154	74	7	73	74/147(50.34)	|	34	26	0	7	1	26/97(26.8)	    26/34(76.47)
+
+GI_0503_mis2_45_45	Rd_1	|	244	87	18	139	87/226(38.5)	|	34	24	0	9	1	24/97(24.74)	24/34(70.59)
+GI_0503_mis2_45_45	Rd_2	|	16	15	1	0	15/15(100.0)	|	11	10	1	0	0	10/97(10.31)	10/10(100.0)
+GI_0503_mis2_45_45	Both	|	260	102	19	139	102/241(42.32)	|	45	34	1	9	1	34/97(35.05)	34/44(77.27)
+
+GI_0503_mis2	Rd_1	|	117	76	17	24	76/100(76.0)	|	22	20	0	2	0	20/97(20.62)	20/22(90.91)
+GI_0503_mis2	Rd_2	|	13	7	0	6	7/13(53.85)	|	6	5	0	1	0	5/97(5.15)	5/6(83.33)
+GI_0503_mis2	Both	|	130	83	17	30	83/113(73.45)	|	28	25	0	3	0	25/97(25.77)	25/28(89.29)
+
+3_GI_subsample_100_1336	Refined_4	338
+3_GI_subsample_75_988	Refined_4	338
+3_GI_subsample_25_763	Refined_4	338
+3_GI_subsample_75_1644	Refined_4	338
+3_GI_subsample_75_69	Refined_4	338
+3_GI_subsample_100_2066	Refined_4	338
+3_GI_subsample_100_3364	Refined_4	338
+3_GI_subsample_25_345	Refined_4	338
+3_GI_subsample_75_1008	Refined_4	338
+3_GI_subsample_10_173	Refined_4	338
+3_GI_subsample_25_565	Refined_4	338
+3_GI_subsample_75_2502	Refined_4	338
+3_GI_subsample_75_1159	Refined_4	306
+
+GI_0501_very_specific_clp	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+GI_0501_very_specific_clp	Rd_1	|	59	50	4	5	50/55(90.91)	|	11	9	0	1	1	9/97(9.28)	9/11(81.82)
+GI_0501_very_specific_clp	Rd_2	|	39	18	2	19	18/37(48.65)	|	13	10	1	2	0	10/97(10.31)	10/12(83.33)
+GI_0501_very_specific_clp	Both	|	98	68	6	24	68/92(73.91)	|	24	19	1	3	1	19/97(19.59)	19/23(82.61)
+
 GI_0420_bias20	Rd_1	|	54	52	2	0	52/52(100.0)	|	35	34	1	0	0	34/97(35.05)	34/34(100.0)
 GI_0420_bias20	Rd_2	|	20	19	0	1	19/20(95.0)	    |	16	15	0	1	0	15/97(15.46)	15/16(93.75)
 GI_0420_bias20	Both	|	74	71	2	1	71/72(98.61)	|	51	49	1	1	0	49/97(50.52)	49/50(98.0)
@@ -524,12 +632,23 @@ linkage_num_wrong = 0
 linkage_num_unknown = 0
 linkage_assessment_dict = {}
 for each_linkage in open(MarkerMAG_linkages):
-    if each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tStep'):
+    if ('MarkerGene\tGenomicSeq\tLinkage\tStep' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
         MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\tAssessment\n')
     else:
-        each_linkage_split = each_linkage.strip().split('\t')
-        id_16s = each_linkage_split[0]
-        id_mag = each_linkage_split[1]
+        id_16s = ''
+        id_mag = ''
+        link_num = ''
+        if linkages_from_rd1 is False:
+            each_linkage_split = each_linkage.strip().split('\t')
+            id_16s = each_linkage_split[0]
+            id_mag = each_linkage_split[1]
+            link_num = each_linkage_split[2]
+        else:
+            each_linkage_split = each_linkage.strip().split(',')
+            id_16s = each_linkage_split[0][12:]
+            id_mag = each_linkage_split[1][12:]
+            link_num = each_linkage_split[2]
+
         key_16s_mag = '%s___%s' % (id_16s, id_mag)
 
         matched_cluster_16s = {}
@@ -544,7 +663,12 @@ for each_linkage in open(MarkerMAG_linkages):
 
             if overlap_between_list(matched_cluster_mag, matched_cluster_16s) is True:
                 linkage_num_right += 1
-                MarkerMAG_linkages_assessed_handle.write('%s\tCorrect\n' % each_linkage.strip())
+
+                if linkages_from_rd1 is False:
+                    MarkerMAG_linkages_assessed_handle.write('%s\tCorrect\n' % each_linkage.strip())
+                else:
+                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tCorrect\n' % (id_16s, id_mag, link_num))
+
                 if id_mag not in linkage_assessment_dict:
                     linkage_assessment_dict[id_mag] = ['Correct']
                 else:
@@ -552,7 +676,12 @@ for each_linkage in open(MarkerMAG_linkages):
 
             else:
                 linkage_num_wrong += 1
-                MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
+
+                if linkages_from_rd1 is False:
+                    MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
+                else:
+                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tWrong\n' % (id_16s, id_mag, link_num))
+
                 if id_mag not in linkage_assessment_dict:
                     linkage_assessment_dict[id_mag] = ['Wrong']
                 else:
@@ -570,7 +699,12 @@ for each_linkage in open(MarkerMAG_linkages):
                 wrong_linkages_txt_handle.write('\n')
         else:
             linkage_num_unknown += 1
-            MarkerMAG_linkages_assessed_handle.write('%s\tUnknown\n' % each_linkage.strip())
+
+            if linkages_from_rd1 is False:
+                MarkerMAG_linkages_assessed_handle.write('%s\tUnknown\n' % each_linkage.strip())
+            else:
+                MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tUnknown\n' % (id_16s, id_mag, link_num))
+
             if id_mag not in linkage_assessment_dict:
                 linkage_assessment_dict[id_mag] = ['Unknown']
             else:
