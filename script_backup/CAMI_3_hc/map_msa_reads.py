@@ -81,6 +81,7 @@ if (len(paired_base_set) > 0) and (len(unpaired_read_set) == 0):
 if (len(paired_base_set) == 0) and (len(unpaired_read_set) > 0):
     bowtie2_cmd   = 'bowtie2 -x %s -U %s -S %s -p 6 -f --local --all --no-unal' % (ref_index, op_up, op_sam)
 if bowtie2_cmd != '':
+    os.system('module load bowtie')
     os.system(index_ref_cmd)
     os.system(bowtie2_cmd)
 else:

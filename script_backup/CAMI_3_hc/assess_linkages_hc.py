@@ -85,45 +85,72 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/CAMI_hc_0503_mis2_identified_linkages_genome_level.txt'             % wd
+MarkerMAG_linkages          = '%s/hc_0505_mis2_75_45_keep_short_M_identified_linkages_genome_level.txt'             % wd
 linkages_from_rd1           = False
 
 
 '''
+# cami_hc_S3_49165521.1
+
+cami_hc_S5_42397362.1	{'cami_hc_SILVA138_id99_50_subsample_50_1792'}
+cami_hc_S5_42397362.1	345	cami_hc_SILVA138_id99_75_subsample_75_2741	1	11	24S13=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:144	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:13G62	YT:Z:UP
+cami_hc_S5_42397362.1	345	cami_hc_SILVA138_id99_50_subsample_10_876	1	11	24S13=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:144	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:13G62	YT:Z:UP
+cami_hc_S5_42397362.1	89	cami_hc_SILVA138_id99_50_subsample_50_1792	1	11	16S21=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:160	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:21G62	YT:Z:UP
 
 correct
-cami_hc_SILVA138_id99_75_subsample_75_924	cami_hc_100	76	S1	Correct
-cami_hc_SILVA138_id99_75_subsample_75_974	cami_hc_100	72	S1	Correct
-cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_100	64	S1	Correct
+cami_hc_SILVA138_id99_75_subsample_75_2741	cami_hc_3
+cami_hc_SILVA138_id99_50_subsample_10_876	cami_hc_3
+cami_hc_SILVA138_id99_50_subsample_50_1792  cami_hc_13
 
 wrong
-cami_hc_SILVA138_id99_50_subsample_50_3187	cami_hc_100	98	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_50_3088	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_75_subsample_75_4393	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_75_subsample_75_3140	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_75_subsample_75_4214	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_50_2994	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_75_subsample_75_2124	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_50_3281	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_25_1418	cami_hc_100	79	S1	Wrong
-cami_hc_SILVA138_id99_75_subsample_75_924   cami_hc_100 66  
-cami_hc_SILVA138_id99_75_subsample_75_974   cami_hc_100 50  
-cami_hc_SILVA138_id99_50_subsample_50_710   cami_hc_100 57  
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_3,534
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_3,294
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_3,294
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_13,72
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_13,43
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_13,38
 
-cami_hc_SILVA138_id99_50_subsample_50_3187
-cami_hc_SILVA138_id99_50_subsample_50_3088
-cami_hc_SILVA138_id99_75_subsample_75_4393
-cami_hc_SILVA138_id99_75_subsample_75_3140
-cami_hc_SILVA138_id99_75_subsample_75_4214
-cami_hc_SILVA138_id99_50_subsample_50_2994
-cami_hc_SILVA138_id99_75_subsample_75_2124
-cami_hc_SILVA138_id99_50_subsample_50_3281
-cami_hc_SILVA138_id99_50_subsample_25_1418
-cami_hc_SILVA138_id99_75_subsample_75_924
-cami_hc_SILVA138_id99_75_subsample_75_974
-cami_hc_SILVA138_id99_50_subsample_50_710
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0505_mis2_75_45_keep_short_M_MarkerMAG_wd/hc_0505_mis2_75_45_keep_short_M_step_1_wd
+grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_1.sam
+grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_2.sam
+grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_3.sam
+cat sub_1.sam sub_2.sam sub_3.sam > sub.sam
+
+grep cami_hc_SILVA138_id99_75_subsample_75_3138 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_4.sam
+cat sub_1.sam sub_2.sam sub_3.sam sub_4.sam > sub.sam
 
 
+
+
+grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_1.sam
+grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_2.sam
+grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_3.sam
+cat sub_1.sam sub_2.sam sub_3.sam > sub.sam
+
+
+grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_1all.sam
+grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_2all.sam
+grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_3all.sam
+cat sub_1all.sam sub_2all.sam sub_3all.sam > sub_all.sam
+
+
+wrong
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_780_length_68394_cov_3.028655	115	0	0	S1
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_208_length_155603_cov_3.027781	136	0	0	S1
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_701_length_72282_cov_3.046022	185	0	0	S1
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_1353_length_46895_cov_3.028037	98	0	0	S1
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_3,534
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_3,294
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_3,294
+
+
+hc_0505_mis2_75_45_drop_short_M	Rd_1	|	56	49	2	5	49/54(90.74)	|	40	35	2	3	0	35/97(36.08)	35/38(92.11)
+hc_0505_mis2_75_45_drop_short_M	Rd_2	|	5	4	0	1	4/5(80.0)	    |	5	4	0	1	0	4/97(4.12)	    4/5(80.0)
+hc_0505_mis2_75_45_drop_short_M	Both	|	61	53	2	6	53/59(89.83)	|	45	39	2	4	0	39/97(40.21)	39/43(90.7)
+
+hc_0505_mis2_75_45_keep_short_M	Rd_1	|	53	46	2	5	46/51(90.2)	    |	40	35	2	3	0	35/97(36.08)	35/38(92.11)
+hc_0505_mis2_75_45_keep_short_M	Rd_2	|	8	4	2	2	4/6(66.67)	    |	6	3	1	2	0	3/97(3.09)	    3/5(60.0)
+hc_0505_mis2_75_45_keep_short_M	Both	|	61	50	4	7	50/57(87.72)	|	46	38	3	5	0	38/97(39.18)	38/43(88.37)
 
 hc_0505_mis2_75_45	    Rd_1	|	60	41	2	17	41/58(70.69)	|	37	30	2	5	0	30/97(30.93)	30/35(85.71)
 hc_0505_mis2_75_45	    Rd_2	|	12	9	2	1	9/10(90.0)	    |	8	6	1	1	0	6/97(6.19)	    6/7(85.71)
