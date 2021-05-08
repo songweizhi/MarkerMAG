@@ -3,110 +3,43 @@ import argparse
 from Bio import SeqIO
 
 
+def sep_path_basename_ext(file_in):
 
-def mapping_worker(argument_list):
+    # separate path and file name
+    file_path, file_name = os.path.split(file_in)
+    if file_path == '':
+        file_path = '.'
 
-    vis_folder          = argument_list[0]
-    each_marker_to_ctg  = argument_list[1]
-    concatenated        = argument_list[2]
+    # separate file basename and extension
+    file_basename, file_extension = os.path.splitext(file_name)
 
-    pwd_seq_file_cbd        = '%s/%s/%s_cbd.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s        = '%s/%s/%s_16s.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg        = '%s/%s/%s_ctg.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads      = '%s/%s/%s_reads.fasta'    % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_r1   = '%s/%s/%s_reads_R1.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_r2   = '%s/%s/%s_reads_R2.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_up   = '%s/%s/%s_reads_UP.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_index  = '%s/%s/%s_cbd'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_index  = '%s/%s/%s_16s'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_index  = '%s/%s/%s_ctg'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_sam    = '%s/%s/%s_cbd.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_sam    = '%s/%s/%s_16s.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_sam    = '%s/%s/%s_ctg.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-
-    # sep R1, R2 and unpaired reads
-    read_id_set = set()
-    read_base_set = set()
-    read_seq_dict = {}
-    for each_read in SeqIO.parse(pwd_seq_file_reads, 'fasta'):
-        read_id = each_read.id
-        read_base = '.'.join(read_id.split('.')[:-1])
-        read_id_set.add(read_id)
-        read_base_set.add(read_base)
-        read_seq_dict[read_id] = str(each_read.seq)
-
-    paired_base_set = set()
-    unpaired_read_set = set()
-    for each_base in read_base_set:
-        base_r1 = '%s.1' % each_base
-        base_r2 = '%s.2' % each_base
-        if (base_r1 in read_id_set) and (base_r2 in read_id_set):
-            paired_base_set.add(each_base)
-        elif (base_r1 in read_id_set) and (base_r2 not in read_id_set):
-            unpaired_read_set.add(base_r1)
-        elif (base_r1 not in read_id_set) and (base_r2 in read_id_set):
-            unpaired_read_set.add(base_r2)
-
-    if len(paired_base_set) > 0:
-        op_r1_handle = open(pwd_seq_file_reads_r1, 'w')
-        op_r2_handle = open(pwd_seq_file_reads_r2, 'w')
-        for each_paired_base in paired_base_set:
-            paired_base_r1 = '%s.1' % each_paired_base
-            paired_base_r2 = '%s.2' % each_paired_base
-            paired_base_r1_seq = read_seq_dict[paired_base_r1]
-            paired_base_r2_seq = read_seq_dict[paired_base_r2]
-            op_r1_handle.write('>%s\n' % paired_base_r1)
-            op_r1_handle.write('%s\n'  % paired_base_r1_seq)
-            op_r2_handle.write('>%s\n' % paired_base_r2)
-            op_r2_handle.write('%s\n'  % paired_base_r2_seq)
-        op_r1_handle.close()
-        op_r2_handle.close()
-
-    if len(unpaired_read_set) > 0:
-        op_up_handle = open(pwd_seq_file_reads_up, 'w')
-        for each_unpaired_read in unpaired_read_set:
-            op_up_handle.write('>%s\n' % each_unpaired_read)
-            op_up_handle.write('%s\n'  % read_seq_dict[each_unpaired_read])
-        op_up_handle.close()
+    return file_path, file_basename, file_extension
 
 
-    if concatenated is True:
-        index_ref_cmd = 'bowtie2-build --quiet -f %s %s' % (pwd_seq_file_cbd, pwd_seq_file_cbd_index)
-        bowtie2_cmd = ''
-        if (len(paired_base_set) > 0) and (len(unpaired_read_set) > 0):
-            bowtie2_cmd   = 'bowtie2 -x %s -1 %s -2 %s -U %s -S %s -p 1 -f --local --all --no-unal' % (pwd_seq_file_cbd_index, pwd_seq_file_reads_r1, pwd_seq_file_reads_r2, pwd_seq_file_reads_up, pwd_seq_file_cbd_sam)
-        if (len(paired_base_set) > 0) and (len(unpaired_read_set) == 0):
-            bowtie2_cmd   = 'bowtie2 -x %s -1 %s -2 %s -S %s -p 1 -f --local --all --no-unal'       % (pwd_seq_file_cbd_index, pwd_seq_file_reads_r1, pwd_seq_file_reads_r2, pwd_seq_file_cbd_sam)
-        if (len(paired_base_set) == 0) and (len(unpaired_read_set) > 0):
-            bowtie2_cmd   = 'bowtie2 -x %s -U %s -S %s -p 1 -f --local --all --no-unal'             % (pwd_seq_file_cbd_index, pwd_seq_file_reads_up, pwd_seq_file_cbd_sam)
-        if bowtie2_cmd != '':
-            os.system(index_ref_cmd)
-            os.system(bowtie2_cmd)
-    else:
-        index_ref_cmd_16s = 'bowtie2-build --quiet -f %s %s' % (pwd_seq_file_16s, pwd_seq_file_16s_index)
-        index_ref_cmd_ctg = 'bowtie2-build --quiet -f %s %s' % (pwd_seq_file_ctg, pwd_seq_file_ctg_index)
-        os.system(index_ref_cmd_16s)
-        os.system(index_ref_cmd_ctg)
+def polish_16s(file_in, file_out_ffn):
 
-        bowtie2_cmd_16s = ''
-        bowtie2_cmd_ctg = ''
-        if (len(paired_base_set) > 0) and (len(unpaired_read_set) > 0):
-            bowtie2_cmd_16s = 'bowtie2 -x %s -1 %s -2 %s -U %s -S %s -p 6 -f --local --all --no-unal' % (pwd_seq_file_16s_index, pwd_seq_file_reads_r1, pwd_seq_file_reads_r2, pwd_seq_file_reads_up, pwd_seq_file_16s_sam)
-            bowtie2_cmd_ctg = 'bowtie2 -x %s -1 %s -2 %s -U %s -S %s -p 6 -f --local --all --no-unal' % (pwd_seq_file_ctg_index, pwd_seq_file_reads_r1, pwd_seq_file_reads_r2, pwd_seq_file_reads_up, pwd_seq_file_ctg_sam)
+    file_out_path, file_out_base, file_out_ext = sep_path_basename_ext(file_out_ffn)
 
-        if (len(paired_base_set) > 0) and (len(unpaired_read_set) == 0):
-            bowtie2_cmd_16s = 'bowtie2 -x %s -1 %s -2 %s -S %s -p 6 -f --local --all --no-unal'       % (pwd_seq_file_16s_index, pwd_seq_file_reads_r1, pwd_seq_file_reads_r2, pwd_seq_file_16s_sam)
-            bowtie2_cmd_ctg = 'bowtie2 -x %s -1 %s -2 %s -S %s -p 6 -f --local --all --no-unal'       % (pwd_seq_file_ctg_index, pwd_seq_file_reads_r1, pwd_seq_file_reads_r2, pwd_seq_file_ctg_sam)
+    file_out_gff     = '%s/%s.gff'    % (file_out_path, file_out_base)
+    file_out_ffn_tmp = '%s/%s_tmp.%s' % (file_out_path, file_out_base, file_out_ext)
 
-        if (len(paired_base_set) == 0) and (len(unpaired_read_set) > 0):
-            bowtie2_cmd_16s = 'bowtie2 -x %s -U %s -S %s -p 6 -f --local --all --no-unal'             % (pwd_seq_file_16s_index, pwd_seq_file_reads_up, pwd_seq_file_16s_sam)
-            bowtie2_cmd_ctg = 'bowtie2 -x %s -U %s -S %s -p 6 -f --local --all --no-unal'             % (pwd_seq_file_ctg_index, pwd_seq_file_reads_up, pwd_seq_file_ctg_sam)
+    barrnap_cmd = 'barrnap --quiet -o %s %s > %s' % (file_out_ffn_tmp, file_in, file_out_gff)
+    os.system(barrnap_cmd)
+
+    file_out_ffn_handle = open(file_out_ffn, 'w')
+    for each_16s in SeqIO.parse(file_out_ffn_tmp, 'fasta'):
+        seq_id = each_16s.id
+        if seq_id.startswith('16S_rRNA::'):
+            seq_id_polished = seq_id[10:].split(':')[0]
+            file_out_ffn_handle.write('>%s\n' % seq_id_polished)
+            file_out_ffn_handle.write('%s\n' % str(each_16s.seq))
+    file_out_ffn_handle.close()
+
+    os.system('rm %s' % file_out_ffn_tmp)
+    os.system('rm %s.fai' % file_in)
 
 
-        if bowtie2_cmd_16s != '':
-            os.system(bowtie2_cmd_16s)
-        if bowtie2_cmd_ctg != '':
-            os.system(bowtie2_cmd_ctg)
 
-    # remove tmp files
-
+file_in = 'trim_16s.fasta'
+file_out_ffn = 'trimed_16s.fasta'
+polish_16s(file_in, file_out_ffn)

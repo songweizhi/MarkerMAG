@@ -92,8 +92,8 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0508_mis2_45_45_stats_combined_filtered.txt'             % wd
-linkages_from_rd1           = True
+MarkerMAG_linkages          = '%s/GI_0508_mis2_45_45_identified_linkages_genome_level.txt'             % wd
+linkages_from_rd1           = False
 
 
 
@@ -119,12 +119,13 @@ grep -E '@|S4_602526.' /srv/scratch/z5039045/MarkerMAG_wd/CAMI2_HMP/GI_0507_mis2
 grep -E '@|S4_602526.' GI_0507_mis2_45_45_clipping_parts_best_match.sam > sub.sam
 
 
-
+GI_0508_mis2_45_45	Rd_1	|	98	91	6	1	91/92(98.91)	|	31	30	0	0	1	30/97(30.93)	30/31(96.77)
+GI_0508_mis2_45_45	Rd_2	|	18	17	1	0	17/17(100.0)	|	9	8	1	0	0	8/97(8.25)	    8/8(100.0)
+GI_0508_mis2_45_45	Both	|	116	108	7	1	108/109(99.08)	|	40	38	1	0	1	38/97(39.18)	38/39(97.44)
 
 GI_0508_mis2_45_45	Rd_1	|	98	91	6	1	91/92(98.91)	|	31	30	0	0	1	30/97(30.93)	30/31(96.77)
 GI_0508_mis2_45_45	Rd_2	|	18	17	1	0	17/17(100.0)	|	9	9	0	0	0	9/97(9.28)	    9/9(100.0)
 GI_0508_mis2_45_45	Both	|	116	108	7	1	108/109(99.08)	|	40	39	0	0	1	39/97(40.21)	39/40(97.5)
-
 
 GI_0507_mis2_45_45	Rd_1	|	103	90	6	7	90/97(92.78)	|	32	30	0	1	1	30/97(30.93)	30/32(93.75)
 GI_0507_mis2_45_45	Rd_2	|	16	16	0	0	16/16(100.0)	|	9	9	0	0	0	9/97(9.28)	    9/9(100.0)

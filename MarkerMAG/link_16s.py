@@ -1738,6 +1738,28 @@ def mapping_worker(argument_list):
     pwd_seq_file_ctg_sam_log = '%s/%s/%s_ctg.log'       % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
 
 
+def polish_16s(file_in, file_out_ffn):
+
+    file_out_path, file_out_base, file_out_ext = sep_path_basename_ext(file_out_ffn)
+
+    file_out_gff     = '%s/%s.gff'    % (file_out_path, file_out_base)
+    file_out_ffn_tmp = '%s/%s_tmp%s' % (file_out_path, file_out_base, file_out_ext)
+
+    barrnap_cmd = 'barrnap --quiet -o %s %s > %s' % (file_out_ffn_tmp, file_in, file_out_gff)
+    os.system(barrnap_cmd)
+
+    file_out_ffn_handle = open(file_out_ffn, 'w')
+    for each_16s in SeqIO.parse(file_out_ffn_tmp, 'fasta'):
+        seq_id = each_16s.id
+        if seq_id.startswith('16S_rRNA::'):
+            seq_id_polished = seq_id[10:].split(':')[0]
+            file_out_ffn_handle.write('>%s\n' % seq_id_polished)
+            file_out_ffn_handle.write('%s\n' % str(each_16s.seq))
+    file_out_ffn_handle.close()
+
+    os.system('rm %s' % file_out_ffn_tmp)
+    os.system('rm %s.fai' % file_in)
+
 
 def link_16s(args):
 
@@ -2128,12 +2150,20 @@ def link_16s(args):
     os.mkdir(bowtie_index_dir)
     os.system('cp %s %s/' % (marker_gene_seqs, bowtie_index_dir))
 
+    marker_path, marker_base, marker_ext = sep_path_basename_ext(marker_gene_seqs)
+    marker_gene_seqs_in_wd    = '%s/%s%s'          % (bowtie_index_dir, marker_base, marker_ext)
+    marker_gene_seqs_polished = '%s/%s.polished%s' % (bowtie_index_dir, marker_base, marker_ext)
+    marker_gene_seqs_polished_no_ext = '%s/%s.polished' % (bowtie_index_dir, marker_base)
+
+    polish_16s(marker_gene_seqs_in_wd, marker_gene_seqs_polished)
+    marker_gene_seqs = marker_gene_seqs_polished
+
     mean_depth_dict_16s = {}
     if min_16s_gnm_multiple > 0:
 
-        report_and_log(('Round 1: calculating depth for %s' % marker_gene_seqs), pwd_log_file, keep_quiet)
+        report_and_log(('Round 1: calculating depth for %s' % marker_gene_seqs_polished), pwd_log_file, keep_quiet)
 
-        marker_gene_seqs_path, marker_gene_seqs_basename, marker_gene_seqs_extension = sep_path_basename_ext(marker_gene_seqs)
+        marker_gene_seqs_path, marker_gene_seqs_basename, marker_gene_seqs_extension = sep_path_basename_ext(marker_gene_seqs_polished)
         pwd_16s = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_basename, marker_gene_seqs_extension)
 
         sortmerna_exe = 'sortmerna'
@@ -2166,19 +2196,16 @@ def link_16s(args):
 
     ######################################## map reads to marker gene sequences ########################################
 
-    marker_gene_seqs_in_wd        = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
-    marker_gene_seqs_in_wd_no_ext = '%s/%s'   % (bowtie_index_dir, marker_gene_seqs_file_basename)
-
     report_and_log(('Round 1: Mapping input reads to marker genes'), pwd_log_file, keep_quiet)
     #bbmap_index_and_mapping_cmd = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, marker_gene_seqs_in_wd, reads_file_r1, reads_file_r2, input_reads_to_16s_sam, bbmap_parameter, input_reads_to_16s_sam_bbmap_stderr)
     #report_and_log((bbmap_index_and_mapping_cmd), pwd_log_file, True)
     #os.system(bbmap_index_and_mapping_cmd)
 
-    bowtie_build_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, marker_gene_seqs_in_wd, marker_gene_seqs_in_wd_no_ext)
+    bowtie_build_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, marker_gene_seqs_polished, marker_gene_seqs_polished_no_ext)
     os.system(bowtie_build_cmd)
 
     if filtered_sam is None:
-        bowtie_read_to_16s_cmd = 'bowtie2 -x %s -1 %s -2 %s -S %s -p %s -f --local --all --no-unal 2> %s' % (marker_gene_seqs_in_wd_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, input_reads_to_16s_sam_bowtie, num_threads, input_reads_to_16s_sam_bowtie_log)
+        bowtie_read_to_16s_cmd = 'bowtie2 -x %s -1 %s -2 %s -S %s -p %s -f --local --all --no-unal 2> %s' % (marker_gene_seqs_polished_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, input_reads_to_16s_sam_bowtie, num_threads, input_reads_to_16s_sam_bowtie_log)
         os.system(bowtie_read_to_16s_cmd)
 
         report_and_log(('Round 1: removing both ends clipping alignments'), pwd_log_file, keep_quiet)
@@ -2537,7 +2564,7 @@ def link_16s(args):
     clipping_part_seq_handle.close()
 
     # map unmapped mates to 16s
-    bowtie_cmd_unmapped_to_16s = 'bowtie2 -x %s -U %s -S %s -p %s -f --local --all --no-unal -N 1 2> %s' % (marker_gene_seqs_in_wd_no_ext, unmapped_mates_seq_file, unmapped_to_16s_sam_bowtie, num_threads, unmapped_to_16s_sam_bowtie_log)
+    bowtie_cmd_unmapped_to_16s = 'bowtie2 -x %s -U %s -S %s -p %s -f --local --all --no-unal -N 1 2> %s' % (marker_gene_seqs_polished_no_ext, unmapped_mates_seq_file, unmapped_to_16s_sam_bowtie, num_threads, unmapped_to_16s_sam_bowtie_log)
     os.system(bowtie_cmd_unmapped_to_16s)
     bbmap_reformat_cmd_unmapped_to_16s  = 'reformat.sh in=%s out=%s sam=1.4 2> %s'                                    % (unmapped_to_16s_sam_bowtie, unmapped_to_16s_sam_reformat, unmapped_to_16s_sam_reformat_log)
     os.system(bbmap_reformat_cmd_unmapped_to_16s)

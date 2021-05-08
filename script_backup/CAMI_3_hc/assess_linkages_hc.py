@@ -85,11 +85,16 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/hc_0505_mis2_75_45_keep_short_M_identified_linkages_genome_level.txt'             % wd
-linkages_from_rd1           = False
+MarkerMAG_linkages          = '%s/hc_0507_mis2_85_45_stats_combined_filtered.txt'             % wd
+linkages_from_rd1           = True
 
 
 '''
+hc_0507_mis2_75_45_stats_combined_filtered.txt	Rd_1	|	39	33	1	5	33/38(86.84)	|	24	22	1	1	0	22/97(22.68)	22/23(95.65)
+hc_0507_mis2_80_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
+hc_0507_mis2_85_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
+
+
 # cami_hc_S3_49165521.1
 
 cami_hc_S5_42397362.1	{'cami_hc_SILVA138_id99_50_subsample_50_1792'}
