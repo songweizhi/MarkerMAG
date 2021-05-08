@@ -31,7 +31,7 @@ mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'             
 # Kelp_0406_specific_identified_linkages_genome_level.txt
 # Kelp_0406_very_specific_identified_linkages_genome_level.txt
 # Kelp_0406_super_specific_identified_linkages_genome_level.txt
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0501_specific_identified_linkages_genome_level.txt'
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0508_mis2_45_45_identified_linkages_genome_level.txt'
 
 '''
 Linkage accuracy: Kelp_0413_very_sensitive_identified_linkages_genome_level
@@ -336,6 +336,8 @@ for each_linkage in open(linkage_file):
 
 if total_linkage > 0:
 
+    print(total_linkage)
+    print()
     print('=============================')
     accuracy_p = float("{0:.2f}".format((correct_linkage_p + linkage_with_unknown_p) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))
     accuracy_c = float("{0:.2f}".format((correct_linkage_c + linkage_with_unknown_c) * 100 / (total_linkage - unknown_mag_or_16s_taxon)))

@@ -99,6 +99,13 @@ linkages_from_rd1           = False
 
 
 '''
+GI_0508_mis2_45_45	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
+GI_0508_mis2_45_45	Rd_1	|	98	91	6	1	91/92(98.91)	|	31	30	0	0	1	30/97(30.93)	30/31(96.77)
+GI_0508_mis2_45_45	Rd_2	|	18	17	1	0	17/17(100.0)	|	9	9	0	0	0	9/97(9.28)	    9/9(100.0)
+GI_0508_mis2_45_45	Both	|	116	108	7	1	108/109(99.08)	|	40	39	0	0	1	39/97(40.21)	39/40(97.5)
+
+
+
 3_GI_subsample_5_85 Refined_59  161
 3_GI_subsample_5_85 Refined_52  160
 
@@ -108,16 +115,12 @@ S11_9543565.2   2/39  should be ignored!
 can S11_9543565.2 mapped to 3_GI_subsample_5_85 with very sensitive mode?
 
 
-
 cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI2_HMP/GI_0508_mis2_45_45_MarkerMAG_wd/GI_0508_mis2_45_45_step_1_wd
 grep -E '@|S11_9543565.' GI_0508_mis2_45_45_input_reads_to_16S_best_match.sam > input_reads_to_16S_best_match.sam
 grep -E '@|S11_9543565.' GI_0508_mis2_45_45_unmapped_mates_to_16s_reformat.sam > unmapped_mates_to_16S.sam
 
-
 grep -E '@|S4_602526.' /srv/scratch/z5039045/MarkerMAG_wd/CAMI2_HMP/GI_0507_mis2_45_45_MarkerMAG_wd.1/GI_0507_mis2_45_45_step_1_wd/GI_0507_mis2_45_45_input_reads_to_16S_best_match.sam > sub.sam
-
 grep -E '@|S4_602526.' GI_0507_mis2_45_45_clipping_parts_best_match.sam > sub.sam
-
 
 GI_0508_mis2_45_45	Rd_1	|	98	91	6	1	91/92(98.91)	|	31	30	0	0	1	30/97(30.93)	30/31(96.77)
 GI_0508_mis2_45_45	Rd_2	|	18	17	1	0	17/17(100.0)	|	9	8	1	0	0	8/97(8.25)	    8/8(100.0)

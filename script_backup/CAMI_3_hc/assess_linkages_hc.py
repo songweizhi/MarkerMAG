@@ -74,7 +74,7 @@ min_match_length            = 102400  # 100Kbp:102400, 500Kbp:524288,
 
 ########## 16S to reference ##########
 
-perform_blastn_16s_vs_refs  = False  # True or False
+perform_blastn_16s_vs_refs  = True  # True or False
 combined_GI_ref_16S         = '%s/file_in/combined_hc_ref_16S.ffn'                                  % wd
 matam_16s_seqs              = '%s/file_in/cami_hc_SILVA138_id99_assembled_16S_uclust_0.999.fasta'   % wd
 matam_16s_blastn            = '%s/file_in/matam_16S_uclust_0.999_vs_ref.tab'                        % wd
@@ -85,9 +85,28 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/hc_0507_mis2_85_45_stats_combined_filtered.txt'             % wd
+matam_16s_seqs              = '%s/file_in/cami_hc_SILVA138_uclust_0.999.polished.fa'  % wd
+MarkerMAG_linkages          = '%s/hc_0508_stats_combined_filtered.txt'                  % wd
 linkages_from_rd1           = True
 
+
+'''
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_4266  GenomicSeq__cami_hc_100     52  wrong!
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_4669  GenomicSeq__cami_hc_100     50  wrong!
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_924   GenomicSeq__cami_hc_100     48  correct!
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_710   GenomicSeq__cami_hc_100     48  correct!
+
+cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_SILVA138_id99_75_subsample_75_924	99.680	1561	1	4	1	1561	1	1557	0.0	2852
+cami_hc_SILVA138_id99_75_subsample_75_4266	cami_hc_SILVA138_id99_75_subsample_75_4669	99.525	631	3	0	106	736	1	631	0.0	1149
+cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_SILVA138_id99_75_subsample_75_4266	88.108	740	77	11	107	841	3	736	0.0	869
+cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_SILVA138_id99_75_subsample_75_4669	91.558	616	45	7	231	843	22	633	0.0	843
+cami_hc_SILVA138_id99_75_subsample_75_4266	cami_hc_SILVA138_id99_75_subsample_75_924	88.363	739	76	10	3	736	107	840	0.0	880
+cami_hc_SILVA138_id99_75_subsample_75_4266	cami_hc_SILVA138_id99_50_subsample_50_710	88.108	740	77	11	3	736	107	841	0.0	869
+
+
+
+
+'''
 
 '''
 hc_0507_mis2_75_45_stats_combined_filtered.txt	Rd_1	|	39	33	1	5	33/38(86.84)	|	24	22	1	1	0	22/97(22.68)	22/23(95.65)

@@ -1614,23 +1614,34 @@ def mapping_worker(argument_list):
     vis_folder          = argument_list[0]
     each_marker_to_ctg  = argument_list[1]
     concatenated        = argument_list[2]
+    concatenated_ref_id = argument_list[3]
+    vis_folder_local    = argument_list[4]
 
-    pwd_seq_file_cbd        = '%s/%s/%s_cbd.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s        = '%s/%s/%s_16s.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg        = '%s/%s/%s_ctg.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads      = '%s/%s/%s_reads.fasta'    % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_r1   = '%s/%s/%s_reads_R1.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_r2   = '%s/%s/%s_reads_R2.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_up   = '%s/%s/%s_reads_UP.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_index  = '%s/%s/%s_cbd'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_index  = '%s/%s/%s_16s'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_index  = '%s/%s/%s_ctg'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_sam    = '%s/%s/%s_cbd.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_sam    = '%s/%s/%s_16s.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_sam    = '%s/%s/%s_ctg.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_sam_log = '%s/%s/%s_cbd.log'       % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_sam_log = '%s/%s/%s_16s.log'       % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_sam_log = '%s/%s/%s_ctg.log'       % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_cbd            = '%s/%s/%s_cbd.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_16s            = '%s/%s/%s_16s.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_ctg            = '%s/%s/%s_ctg.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_cbd_local      = '%s/%s/%s_cbd.fasta'      % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_16s_local      = '%s/%s/%s_16s.fasta'      % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_ctg_local      = '%s/%s/%s_ctg.fasta'      % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_reads          = '%s/%s/%s_reads.fasta'    % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_reads_r1       = '%s/%s/%s_reads_R1.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_reads_r2       = '%s/%s/%s_reads_R2.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_reads_up       = '%s/%s/%s_reads_UP.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_cbd_index      = '%s/%s/%s_cbd'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_16s_index      = '%s/%s/%s_16s'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_ctg_index      = '%s/%s/%s_ctg'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_cbd_sam        = '%s/%s/%s_cbd.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_16s_sam        = '%s/%s/%s_16s.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_ctg_sam        = '%s/%s/%s_ctg.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_cbd_sam_local  = '%s/%s/%s_cbd.sam'        % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_16s_sam_local  = '%s/%s/%s_16s.sam'        % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_ctg_sam_local  = '%s/%s/%s_ctg.sam'        % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_cbd_sam_log    = '%s/%s/%s_cbd.log'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_16s_sam_log    = '%s/%s/%s_16s.log'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_ctg_sam_log    = '%s/%s/%s_ctg.log'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_cbd_Tablet_xml = '%s/%s/%s_cbd.tablet'     % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_16s_Tablet_xml = '%s/%s/%s_16s.tablet'     % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
+    pwd_seq_file_ctg_Tablet_xml = '%s/%s/%s_ctg.tablet'     % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
 
     # sep R1, R2 and unpaired reads
     read_id_set = set()
@@ -1677,7 +1688,6 @@ def mapping_worker(argument_list):
             op_up_handle.write('%s\n'  % read_seq_dict[each_unpaired_read])
         op_up_handle.close()
 
-
     if concatenated is True:
         index_ref_cmd = 'bowtie2-build --quiet -f %s %s' % (pwd_seq_file_cbd, pwd_seq_file_cbd_index)
         bowtie2_cmd = ''
@@ -1690,6 +1700,15 @@ def mapping_worker(argument_list):
         if bowtie2_cmd != '':
             os.system(index_ref_cmd)
             os.system(bowtie2_cmd)
+
+        # write out Tablet xml file
+        pwd_seq_file_cbd_Tablet_xml_handle = open(pwd_seq_file_cbd_Tablet_xml, 'w')
+        pwd_seq_file_cbd_Tablet_xml_handle.write('<tablet>\n')
+        pwd_seq_file_cbd_Tablet_xml_handle.write('        <assembly>%s</assembly>\n' % pwd_seq_file_cbd_sam_local)
+        pwd_seq_file_cbd_Tablet_xml_handle.write('        <reference>%s</reference>\n' % pwd_seq_file_cbd_local)
+        pwd_seq_file_cbd_Tablet_xml_handle.write('        <contig>%s</contig>\n' % concatenated_ref_id)
+        pwd_seq_file_cbd_Tablet_xml_handle.write('</tablet>\n')
+        pwd_seq_file_cbd_Tablet_xml_handle.close()
     else:
         index_ref_cmd_16s = 'bowtie2-build --quiet -f %s %s' % (pwd_seq_file_16s, pwd_seq_file_16s_index)
         index_ref_cmd_ctg = 'bowtie2-build --quiet -f %s %s' % (pwd_seq_file_ctg, pwd_seq_file_ctg_index)
@@ -1710,42 +1729,42 @@ def mapping_worker(argument_list):
             bowtie2_cmd_16s = 'bowtie2 -x %s -U %s -S %s -p 6 -f --local --all --no-unal 2> %s'             % (pwd_seq_file_16s_index, pwd_seq_file_reads_up, pwd_seq_file_16s_sam, pwd_seq_file_16s_sam_log)
             bowtie2_cmd_ctg = 'bowtie2 -x %s -U %s -S %s -p 6 -f --local --all --no-unal 2> %s'             % (pwd_seq_file_ctg_index, pwd_seq_file_reads_up, pwd_seq_file_ctg_sam, pwd_seq_file_ctg_sam_log)
 
-
         if bowtie2_cmd_16s != '':
             os.system(bowtie2_cmd_16s)
         if bowtie2_cmd_ctg != '':
             os.system(bowtie2_cmd_ctg)
 
+        # write out Tablet xml file
+        pwd_seq_file_16s_Tablet_xml_handle = open(pwd_seq_file_16s_Tablet_xml, 'w')
+        pwd_seq_file_16s_Tablet_xml_handle.write('<tablet>\n')
+        pwd_seq_file_16s_Tablet_xml_handle.write('        <assembly>%s</assembly>\n' % pwd_seq_file_16s_sam_local)
+        pwd_seq_file_16s_Tablet_xml_handle.write('        <reference>%s</reference>\n' % pwd_seq_file_16s_local)
+        pwd_seq_file_16s_Tablet_xml_handle.write('        <contig>Marker</contig>\n')
+        pwd_seq_file_16s_Tablet_xml_handle.write('</tablet>\n')
+        pwd_seq_file_16s_Tablet_xml_handle.close()
+
+        pwd_seq_file_ctg_Tablet_xml_handle = open(pwd_seq_file_ctg_Tablet_xml, 'w')
+        pwd_seq_file_ctg_Tablet_xml_handle.write('<tablet>\n')
+        pwd_seq_file_ctg_Tablet_xml_handle.write('        <assembly>%s</assembly>\n' % pwd_seq_file_ctg_sam_local)
+        pwd_seq_file_ctg_Tablet_xml_handle.write('        <reference>%s</reference>\n' % pwd_seq_file_ctg_local)
+        pwd_seq_file_ctg_Tablet_xml_handle.write('        <contig>Contig</contig>\n')
+        pwd_seq_file_ctg_Tablet_xml_handle.write('</tablet>\n')
+        pwd_seq_file_ctg_Tablet_xml_handle.close()
+
     # remove tmp files
     os.system('rm %s/%s/%s*.bt2' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg))
     os.system('rm %s' % pwd_seq_file_reads)
-
-    pwd_seq_file_cbd        = '%s/%s/%s_cbd.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s        = '%s/%s/%s_16s.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg        = '%s/%s/%s_ctg.fasta'      % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads      = '%s/%s/%s_reads.fasta'    % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_r1   = '%s/%s/%s_reads_R1.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_r2   = '%s/%s/%s_reads_R2.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_reads_up   = '%s/%s/%s_reads_UP.fasta' % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_index  = '%s/%s/%s_cbd'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_index  = '%s/%s/%s_16s'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_index  = '%s/%s/%s_ctg'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_sam    = '%s/%s/%s_cbd.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_sam    = '%s/%s/%s_16s.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_sam    = '%s/%s/%s_ctg.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_sam_log = '%s/%s/%s_cbd.log'       % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_sam_log = '%s/%s/%s_16s.log'       % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_sam_log = '%s/%s/%s_ctg.log'       % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
 
 
 def polish_16s(file_in, file_out_ffn):
 
     file_out_path, file_out_base, file_out_ext = sep_path_basename_ext(file_out_ffn)
 
+    barrnap_stdout   = '%s/%s.log'    % (file_out_path, file_out_base)
     file_out_gff     = '%s/%s.gff'    % (file_out_path, file_out_base)
     file_out_ffn_tmp = '%s/%s_tmp%s' % (file_out_path, file_out_base, file_out_ext)
 
-    barrnap_cmd = 'barrnap --quiet -o %s %s > %s' % (file_out_ffn_tmp, file_in, file_out_gff)
+    barrnap_cmd = 'barrnap --quiet -o %s %s 2> %s > %s' % (file_out_ffn_tmp, file_in, barrnap_stdout, file_out_gff)
     os.system(barrnap_cmd)
 
     file_out_ffn_handle = open(file_out_ffn, 'w')
@@ -1797,6 +1816,7 @@ def link_16s(args):
     mira_tmp_dir                        = args['mira_tmp']
     clp_read_for_assembly               = args['assemble_clp']
     max_mini_assembly_link_num_diff_between_ctg_16s = args['link_bias_rd2']
+    mafft_seq_folder_local              = args['local_sam']
 
     pwd_makeblastdb_exe                 = 'makeblastdb'
     pwd_blastn_exe                      = 'blastn'
@@ -2150,13 +2170,16 @@ def link_16s(args):
     os.mkdir(bowtie_index_dir)
     os.system('cp %s %s/' % (marker_gene_seqs, bowtie_index_dir))
 
+    report_and_log(('Round 1: polishing input 16S rRNA genes'), pwd_log_file, keep_quiet)
     marker_path, marker_base, marker_ext = sep_path_basename_ext(marker_gene_seqs)
     marker_gene_seqs_in_wd    = '%s/%s%s'          % (bowtie_index_dir, marker_base, marker_ext)
     marker_gene_seqs_polished = '%s/%s.polished%s' % (bowtie_index_dir, marker_base, marker_ext)
+    marker_gene_seqs_polished_gff = '%s/%s.polished.gff' % (bowtie_index_dir, marker_base)
     marker_gene_seqs_polished_no_ext = '%s/%s.polished' % (bowtie_index_dir, marker_base)
 
     polish_16s(marker_gene_seqs_in_wd, marker_gene_seqs_polished)
-    marker_gene_seqs = marker_gene_seqs_polished
+    os.system('cp %s %s/' % (marker_gene_seqs_polished, working_directory))
+    os.system('cp %s %s/' % (marker_gene_seqs_polished_gff, working_directory))
 
     mean_depth_dict_16s = {}
     if min_16s_gnm_multiple > 0:
@@ -2802,11 +2825,10 @@ def link_16s(args):
     report_and_log(('Round 1: Get pairwise 16S rRNA gene identities'), pwd_log_file, keep_quiet)
 
     # makeblastdn with marker gene sequences
-    blastdb_16s         = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension)
-    makeblastdb_16s_cmd = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, blastdb_16s)
+    makeblastdb_16s_cmd = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, marker_gene_seqs_polished)
     os.system(makeblastdb_16s_cmd)
 
-    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, blastdb_16s, blastdb_16s, blast_results_all_vs_all_16s, blast_parameters)
+    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, marker_gene_seqs_polished, marker_gene_seqs_polished, blast_results_all_vs_all_16s, blast_parameters)
     os.system(all_vs_all_16s_blastn_cmd)
 
     pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
@@ -3107,6 +3129,7 @@ def link_16s(args):
     os.mkdir(mafft_seq_folder)
 
     concatenate_dict = {}
+    concatenated_ref_id_dict = {}
     for each_link in linked_ends_dict:
         #print('%s\t%s' % (each_link, linked_ends_dict[each_link]))
 
@@ -3174,6 +3197,7 @@ def link_16s(args):
                 to_concatenate = True
 
         concatenate_dict[seq_file_name_base] = to_concatenate
+        concatenated_ref_id_dict[seq_file_name_base] = concatenated_seq_id
         os.mkdir('%s/%s' % (mafft_seq_folder, seq_file_name_base))
         pwd_seq_file_cbd = '%s/%s/%s_cbd.fasta' % (mafft_seq_folder, seq_file_name_base, seq_file_name_base)
         pwd_seq_file_16s = '%s/%s/%s_16s.fasta' % (mafft_seq_folder, seq_file_name_base, seq_file_name_base)
@@ -3228,7 +3252,7 @@ def link_16s(args):
     # prepare arguments for mapping_worker
     list_for_mapping_worker = []
     for each_marker_to_ctg in concatenate_dict:
-        list_for_mapping_worker.append([mafft_seq_folder, each_marker_to_ctg, concatenate_dict[each_marker_to_ctg]])
+        list_for_mapping_worker.append([mafft_seq_folder, each_marker_to_ctg, concatenate_dict[each_marker_to_ctg], concatenated_ref_id_dict[each_marker_to_ctg], mafft_seq_folder_local])
 
     # run mapping_worker with multiprocessing
     pool = mp.Pool(processes=num_threads)
@@ -4244,6 +4268,7 @@ if __name__ == '__main__':
     # link_16s_parser_preset.add_argument('-very_specific',   required=False, action="store_true",                            help='for greater specificity, shortcut for  "min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10"')
 
     # program settings
+    link_16s_parser_others.add_argument('-local_sam',       required=False, metavar='', default='',                         help='local folder for sam files')
     link_16s_parser_others.add_argument('-bbmap_mem',       required=False, metavar='', type=int,   default=10,             help='bbmap memory allocation (in gigabyte), (default: %(default)s)')
     link_16s_parser_others.add_argument('-t',               required=False, metavar='', type=int,   default=1,              help='number of threads, (default: %(default)s)')
     link_16s_parser_others.add_argument('-tmp',             required=False, action="store_true",                            help='keep temporary files')
@@ -4260,6 +4285,7 @@ if __name__ == '__main__':
     args = vars(link_16s_parser.parse_args())
     link_16s(args)
 
+
 '''
 1. the depth of 16S sequences always not lower than the genome they come from
 2. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
@@ -4267,4 +4293,5 @@ if __name__ == '__main__':
 4. add "16S_reads" to SortMeRNA's output prefix
 5. for clipping mapped reads, the mismatch of clipping part must be 0
 6. insert size is important
+7. check duplicate sequences in input files
 '''
