@@ -74,9 +74,10 @@ min_match_length            = 102400  # 100Kbp:102400, 500Kbp:524288,
 
 ########## 16S to reference ##########
 
-perform_blastn_16s_vs_refs  = True  # True or False
+perform_blastn_16s_vs_refs  = False  # True or False
 combined_GI_ref_16S         = '%s/file_in/combined_hc_ref_16S.ffn'                                  % wd
-matam_16s_seqs              = '%s/file_in/cami_hc_SILVA138_id99_assembled_16S_uclust_0.999.fasta'   % wd
+#matam_16s_seqs              = '%s/file_in/cami_hc_SILVA138_id99_assembled_16S_uclust_0.999.fasta'   % wd
+matam_16s_seqs              = '%s/file_in/cami_hc_SILVA138_uclust_0.999_polished.fa'                % wd
 matam_16s_blastn            = '%s/file_in/matam_16S_uclust_0.999_vs_ref.tab'                        % wd
 iden_cutoff_16s             = 99.5  # 99.3 (best), 99.5
 aln_len_cutoff_16s          = 500
@@ -85,35 +86,37 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-matam_16s_seqs              = '%s/file_in/cami_hc_SILVA138_uclust_0.999.polished.fa'  % wd
-MarkerMAG_linkages          = '%s/hc_0508_stats_combined_filtered.txt'                  % wd
+MarkerMAG_linkages          = '%s/hc_0511_stats_combined_filtered.txt'                  % wd
 linkages_from_rd1           = True
 
 
 '''
-MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_4266  GenomicSeq__cami_hc_100     52  wrong!
-MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_4669  GenomicSeq__cami_hc_100     50  wrong!
-MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_924   GenomicSeq__cami_hc_100     48  correct!
-MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_710   GenomicSeq__cami_hc_100     48  correct!
+cami_hc_S4_52228456.2       middle clip on      cami_hc_SILVA138_id99_75_subsample_75_3121      why?  A: not mapped, need to try very sensitive parameters
+ 
 
-cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_SILVA138_id99_75_subsample_75_924	99.680	1561	1	4	1	1561	1	1557	0.0	2852
-cami_hc_SILVA138_id99_75_subsample_75_4266	cami_hc_SILVA138_id99_75_subsample_75_4669	99.525	631	3	0	106	736	1	631	0.0	1149
-cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_SILVA138_id99_75_subsample_75_4266	88.108	740	77	11	107	841	3	736	0.0	869
-cami_hc_SILVA138_id99_50_subsample_50_710	cami_hc_SILVA138_id99_75_subsample_75_4669	91.558	616	45	7	231	843	22	633	0.0	843
-cami_hc_SILVA138_id99_75_subsample_75_4266	cami_hc_SILVA138_id99_75_subsample_75_924	88.363	739	76	10	3	736	107	840	0.0	880
-cami_hc_SILVA138_id99_75_subsample_75_4266	cami_hc_SILVA138_id99_50_subsample_50_710	88.108	740	77	11	3	736	107	841	0.0	869
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_05010_MarkerMAG_wd/hc_05010_step_1_wd/000
+bowtie2-build --quiet --threads 12 -f cami_hc_SILVA138_id99_75_subsample_75_3121.fa cami_hc_SILVA138_id99_75_subsample_75_3121
+bowtie2 -x cami_hc_SILVA138_id99_75_subsample_75_3121 -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S cami_hc_S4_52228456.sam -p 12 -f --local --all --no-unal
 
 
 
 
-'''
+cami_hc_S3_15878346.2
 
-'''
+
+
+
+hc_05010_stats_combined_filtered.txt	Rd_1	|	84	80	0	4	80/84(95.24)	|	40	36	0	4	0	36/97(37.11)	36/40(90.0)
+hc_05010_stats_combined_filtered.txt	Rd_2	|	0	0	0	0	0/0(0)	        |	0	0	0	0	0	0/97(0.0)	    0/0(0)
+hc_05010_stats_combined_filtered.txt	Both	|	84	80	0	4	80/84(95.24)	|	40	36	0	4	0	36/97(37.11)	36/40(90.0)
+
 hc_0507_mis2_75_45_stats_combined_filtered.txt	Rd_1	|	39	33	1	5	33/38(86.84)	|	24	22	1	1	0	22/97(22.68)	22/23(95.65)
 hc_0507_mis2_80_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
 hc_0507_mis2_85_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
 
+'''
 
+'''
 # cami_hc_S3_49165521.1
 
 cami_hc_S5_42397362.1	{'cami_hc_SILVA138_id99_50_subsample_50_1792'}
@@ -142,9 +145,6 @@ cat sub_1.sam sub_2.sam sub_3.sam > sub.sam
 
 grep cami_hc_SILVA138_id99_75_subsample_75_3138 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_4.sam
 cat sub_1.sam sub_2.sam sub_3.sam sub_4.sam > sub.sam
-
-
-
 
 grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_1.sam
 grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_2.sam
