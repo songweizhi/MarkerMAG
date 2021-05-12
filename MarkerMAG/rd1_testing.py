@@ -277,51 +277,29 @@ grep -E '@|cami_hc_14___C___NODE_13073_length_6967_cov_0.639487' rd1_extracted_t
 '''
 # do not remove both ends clip alignments, important !!!!!!
 
-wd                                  = '/Users/songweizhi/Desktop/consider_all'
-input_reads_to_16s_sam_best_match   = '%s/input_reads_to_16S_subset.sam' % wd
-min_M_len_16s                       = 45
-min_M_len_ctg                       = 45
-min_M_pct                           = 35
-mismatch_cutoff                     = 2
-read_to_marker_connector            = '___r___'
-marker_to_ctg_gnm_Key_connector     = '___M___'
-gnm_to_ctg_connector = '___C___'
-num_threads = 12
-combined_input_gnms_no_ext = 'cami_hc_refined_bins_combined'
-input_r1_fasta      = 'cami_hc_combined_R1.fasta'
-input_r2_fasta      = 'cami_hc_combined_R2.fasta'
-marker_gene_seqs    = '%s/cami_hc_SILVA138_uclust_0.999_polished.fa'    % wd
-combined_input_gnms = '%s/cami_hc_refined_bins_combined.fa'             % wd
+wd                                              = '/Users/songweizhi/Desktop/consider_all'
+input_reads_to_16s_sam_best_match               = '%s/input_reads_to_16S_subset.sam'            % wd
+rd1_extracted_to_gnm_sam_reformatted_best_match = '%s/rd1_extracted_to_gnm_subset.sam'          % wd
 
-rd1_r1_to_extract                               = '%s/rd1_r1_to_extract.txt'                            % wd
-rd1_r2_to_extract                               = '%s/rd1_r2_to_extract.txt'                            % wd
-rd1_extracted_all_r1                            = '%s/rd1_extracted_all_r1.fasta'                       % wd
-rd1_extracted_all_r2                            = '%s/rd1_extracted_all_r2.fasta'                       % wd
-rd1_extracted_p_r1                              = '%s/rd1_extracted_R1.fasta'                           % wd
-rd1_extracted_p_r2                              = '%s/rd1_extracted_R2.fasta'                           % wd
-rd1_extracted_up                                = '%s/rd1_extracted_UP.fasta'                           % wd
-rd1_extracted_to_gnm_sam                        = '%s/extracted_to_gnm_subset.sam'                         % wd
-rd1_extracted_to_gnm_sam_log                    = '%s/rd1_extracted_to_gnm.sam.log'                     % wd
-rd1_extracted_to_gnm_sam_reformatted            = '%s/rd1_extracted_to_gnm_reformatted.sam'             % wd
-rd1_extracted_to_gnm_sam_reformat_log           = '%s/rd1_extracted_to_gnm_reformat.log'                % wd
-rd1_extracted_to_gnm_sam_reformatted_best_match = '%s/rd1_extracted_to_gnm_subset.sam'  % wd
+min_M_len_16s                                   = 45
+min_M_len_ctg                                   = 45
+min_M_pct                                       = 35
+mismatch_cutoff                                 = 2
+read_to_marker_connector                        = '___r___'
+marker_to_ctg_gnm_Key_connector                 = '___M___'
+gnm_to_ctg_connector                            = '___C___'
+report_interval                                 = 10000
+
+link_stats_combined                             = '%s/hc_0509_stats_combined.txt'               % wd
+rd1_clp_pct_diff_txt                            = '%s/rd1_clp_pct_diff.txt'                     % wd
+rd1_clp_pct_diff_txt_to_ignore                  = '%s/rd1_clp_pct_diff_to_ignore.txt'           % wd
 
 
-link_stats_combined             = '%s/hc_0509_stats_combined.txt'       % wd
-linking_reads_tab               = '%s/linking_reads.txt'                % wd
-linking_reads_r1_txt            = '%s/rd1_linking_reads_R1.txt'         % wd
-linking_reads_r2_txt            = '%s/rd1_linking_reads_R2.txt'         % wd
-linking_reads_r1_fasta          = '%s/rd1_linking_reads_R1.fasta'       % wd
-linking_reads_r2_fasta          = '%s/rd1_linking_reads_R2.fasta'       % wd
-linked_ends_rd1_txt             = '%s/linked_ends_rd1.txt'              % wd
-linked_contigs_txt              = '%s/linked_contigs_rd1.txt'           % wd
-linked_contigs_fasta            = '%s/linked_contigs_rd1.fasta'         % wd
-rd1_clp_pct_diff_txt            = '%s/rd1_clp_pct_diff.txt'             % wd
-
-
-mafft_seq_folder                = '%s/mafft_seq_folder' % wd
-end_ctg_len_for_mafft           = 1000
-gap_N_num                       = 50
+# on katana
+# input_reads_to_16s_sam_best_match               = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd/hc_0511_very_sensitive_input_reads_to_16S_reformatted.sam'
+# rd1_extracted_to_gnm_sam_reformatted_best_match = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_tmp_MarkerMAG_wd_up/hc_0512_tmp_step_1_wd/rd1_extracted_to_gnm_reformatted.sam'
+# link_stats_combined                             = 'linkage_stats_combined.txt'
+# rd1_clp_pct_diff_txt                            = 'rd1_clp_pct_diff.txt'
 
 
 ########################################################################################################################
@@ -368,7 +346,6 @@ for each_read in open(input_reads_to_16s_sam_best_match):
 ##################################################### parse MappingRecord_dict ####################################################
 
 processed_num = 0
-n = 0
 to_extract_read_base = set()
 for each_mp in MappingRecord_dict:
 
@@ -537,10 +514,10 @@ for each_mp in MappingRecord_dict:
             to_extract_read_base.add(each_mp)
 
     processed_num += 1
-    if (processed_num % 10000 == 0):
-        print('Processed %sk ' % int(processed_num/1000))
-
-# print('n: %s' % n)
+    if (processed_num % report_interval == 0):
+        processed_pct = processed_num*100/len(MappingRecord_dict)
+        processed_pct = float("{0:.2f}".format(processed_pct))
+        print('Processed %sk (%s%s)' % (int(processed_num/1000), processed_pct, '%'))
 
 
 # remove unqualified mapping record from dict
@@ -591,7 +568,7 @@ for each_read in open(rd1_extracted_to_gnm_sam_reformatted_best_match):
 
 ##################################################### parse MappingRecord_dict ####################################################
 
-m = 0
+processed_num = 0
 for each_mp in MappingRecord_dict:
 
     # print('%s\tr1_ctg_ref_dict\t%s'       % (each_mp, current_mp_record.r1_ctg_ref_dict))
@@ -714,6 +691,12 @@ for each_mp in MappingRecord_dict:
             MappingRecord_dict[each_mp].matched_to_ctg = True
             MappingRecord_dict[each_mp].shared_ctg_refs_no_ignored = shared_ctg_ref_set
 
+    processed_num += 1
+    if (processed_num % report_interval == 0):
+        processed_pct = processed_num*100/len(MappingRecord_dict)
+        processed_pct = float("{0:.2f}".format(processed_pct))
+        print('Processed %sk (%s%s)' % (int(processed_num/1000), processed_pct, '%'))
+
 
 ##################################################### get linkages from MappingRecord_dict #####################################################
 
@@ -731,22 +714,15 @@ for qualified_read in MappingRecord_dict:
     r2_ctg_refs     = read_mr.r2_ctg_refs_no_ignored
     shared_ctg_refs = read_mr.shared_ctg_refs_no_ignored
 
+    # combine dict
     combined_16s_refs_dict = {**r1_16s_refs, **r2_16s_refs, **shared_16s_refs}
     combined_ctg_refs_dict = {**r1_ctg_refs, **r2_ctg_refs, **shared_ctg_refs}
 
     if (len(combined_16s_refs_dict) > 0) and (len(combined_ctg_refs_dict) > 0):
-
-        #print('\n--------------------\n')
-        #print('combined_16s_refs_dict: %s:' % combined_16s_refs_dict)
-        #print('combined_ctg_refs_dict: %s:' % combined_ctg_refs_dict)
-
-        # print('%s.2\tr2_ctg_refs_no_ignored\t%s'       % (qualified_read, MappingRecord_dict[qualified_read].r2_ctg_ref_dict))
-
         for each_16s_ref in combined_16s_refs_dict:
             current_cigar_list_16s_side = combined_16s_refs_dict[each_16s_ref]
             for each_ctg_ref in combined_ctg_refs_dict:
                 current_cigar_list_ctg_side = combined_ctg_refs_dict[each_ctg_ref]
-
                 marker_to_ctg_key = '%s%s%s' % (each_16s_ref, marker_to_ctg_gnm_Key_connector, each_ctg_ref)
 
                 if marker_to_ctg_key not in marker_to_ctg_linkage_num_dict:
@@ -754,7 +730,6 @@ for qualified_read in MappingRecord_dict:
                     marker_to_ctg_linking_reads_dict[marker_to_ctg_key] = {qualified_read}
                     marker_to_ctg_linkage_cigar_dict_16s_side[marker_to_ctg_key] = current_cigar_list_16s_side
                     marker_to_ctg_linkage_cigar_dict_ctg_side[marker_to_ctg_key] = current_cigar_list_ctg_side
-
                 else:
                     marker_to_ctg_linkage_num_dict[marker_to_ctg_key] += 1
                     marker_to_ctg_linking_reads_dict[marker_to_ctg_key].add(qualified_read)
@@ -762,24 +737,72 @@ for qualified_read in MappingRecord_dict:
                     marker_to_ctg_linkage_cigar_dict_ctg_side[marker_to_ctg_key] += current_cigar_list_ctg_side
 
 
-# remove linkages less than 3
-marker_to_ctg_linkage_num_min3_dict = {}
-for each_key in marker_to_ctg_linkage_num_dict:
-    if marker_to_ctg_linkage_num_dict[each_key] >= 3:
-        marker_to_ctg_linkage_num_min3_dict[each_key] = marker_to_ctg_linkage_num_dict[each_key]
+# calculate clp_pct_ratio
+rd1_clp_pct_diff_txt_handle = open(rd1_clp_pct_diff_txt, 'w')
+rd1_clp_pct_diff_txt_to_ignore_handle = open(rd1_clp_pct_diff_txt_to_ignore, 'w')
+rd1_clp_pct_diff_txt_handle.write('Marker\tGenome\tContig\tclp_pct_ctg\tclp_pct_16s\tRatio\n')
+rd1_clp_pct_diff_txt_to_ignore_handle.write('Marker\tGenome\tContig\tclp_pct_ctg\tclp_pct_16s\tRatio\n')
+linkages_to_ignore = set()
+for each_link in marker_to_ctg_linkage_num_dict:
+    if marker_to_ctg_linkage_num_dict[each_link] >= 3:
+        each_link_split = each_link.split(marker_to_ctg_gnm_Key_connector)
+        marker_id = each_link_split[0]
+        gnm_id = each_link_split[1].split(gnm_to_ctg_connector)[0]
+        ctg_id = each_link_split[1].split(gnm_to_ctg_connector)[1]
+
+        linkage_cigar_16s_side_all = marker_to_ctg_linkage_cigar_dict_16s_side[each_link]
+        linkage_cigar_ctg_side_all = marker_to_ctg_linkage_cigar_dict_ctg_side[each_link]
+        linkage_cigar_16s_side_clp = [i for i in linkage_cigar_16s_side_all if (('S' in i) or ('s' in i))]
+        linkage_cigar_ctg_side_clp = [i for i in linkage_cigar_ctg_side_all if (('S' in i) or ('s' in i))]
+
+        clp_pct_16s_side = 'na'
+        if len(linkage_cigar_16s_side_all) > 0:
+            clp_pct_16s_side = len(linkage_cigar_16s_side_clp) * 100 / len(linkage_cigar_16s_side_all)
+            clp_pct_16s_side = float("{0:.2f}".format(clp_pct_16s_side))
+
+        clp_pct_ctg_side = 'na'
+        if len(linkage_cigar_ctg_side_all) > 0:
+            clp_pct_ctg_side = len(linkage_cigar_ctg_side_clp) * 100 / len(linkage_cigar_ctg_side_all)
+            clp_pct_ctg_side = float("{0:.2f}".format(clp_pct_ctg_side))
+
+        clp_pct_ratio = 'na'
+        if (clp_pct_16s_side != 'na') and (clp_pct_ctg_side != 'na'):
+            if clp_pct_16s_side > 0:
+                clp_pct_ratio = float("{0:.2f}".format(clp_pct_ctg_side / clp_pct_16s_side))
+
+        to_ignore = False
+        if clp_pct_ratio != 'na':
+            if (clp_pct_ctg_side >= 65) and (clp_pct_ratio >= 5):
+                to_ignore = True
+
+        if to_ignore is True:
+            linkages_to_ignore.add(each_link)
+            rd1_clp_pct_diff_txt_to_ignore_handle.write('%s\t%s\t%s\t%s(%s/%s)\t%s(%s/%s)\t%s\n' % (marker_id, gnm_id, ctg_id, clp_pct_ctg_side, len(linkage_cigar_ctg_side_clp), len(linkage_cigar_ctg_side_all), clp_pct_16s_side, len(linkage_cigar_16s_side_clp), len(linkage_cigar_16s_side_all), clp_pct_ratio))
+        else:
+            rd1_clp_pct_diff_txt_handle.write('%s\t%s\t%s\t%s(%s/%s)\t%s(%s/%s)\t%s\n' % (marker_id, gnm_id, ctg_id, clp_pct_ctg_side, len(linkage_cigar_ctg_side_clp), len(linkage_cigar_ctg_side_all), clp_pct_16s_side, len(linkage_cigar_16s_side_clp), len(linkage_cigar_16s_side_all), clp_pct_ratio))
+rd1_clp_pct_diff_txt_handle.close()
+rd1_clp_pct_diff_txt_to_ignore_handle.close()
+
+# ignore linkages if did not pass the clp pct ratio test
+marker_to_ctg_linkage_num_dict_min3_passed_ratio_check = {}
+for each_link in marker_to_ctg_linkage_num_dict:
+    if marker_to_ctg_linkage_num_dict[each_link] >= 3:
+        if each_link not in linkages_to_ignore:
+            marker_to_ctg_linkage_num_dict_min3_passed_ratio_check[each_link] = marker_to_ctg_linkage_num_dict[each_link]
 
 # get number of linkages at genome level
 marker_to_gnm_link_num = {}
-for each_marker_to_ctg_key in marker_to_ctg_linkage_num_min3_dict:
+for each_marker_to_ctg_key in marker_to_ctg_linkage_num_dict_min3_passed_ratio_check:
     marker_id = each_marker_to_ctg_key.split(marker_to_ctg_gnm_Key_connector)[0]
     ctg_id = each_marker_to_ctg_key.split(marker_to_ctg_gnm_Key_connector)[1]
     gnm_id = ctg_id.split(gnm_to_ctg_connector)[0]
     marker_to_gnm_key = '%s%s%s' % (marker_id, marker_to_ctg_gnm_Key_connector, gnm_id)
     if marker_to_gnm_key not in marker_to_gnm_link_num:
-        marker_to_gnm_link_num[marker_to_gnm_key] = marker_to_ctg_linkage_num_min3_dict[each_marker_to_ctg_key]
+        marker_to_gnm_link_num[marker_to_gnm_key] = marker_to_ctg_linkage_num_dict_min3_passed_ratio_check[each_marker_to_ctg_key]
     else:
-        marker_to_gnm_link_num[marker_to_gnm_key] += marker_to_ctg_linkage_num_min3_dict[each_marker_to_ctg_key]
+        marker_to_gnm_link_num[marker_to_gnm_key] += marker_to_ctg_linkage_num_dict_min3_passed_ratio_check[each_marker_to_ctg_key]
 
+# write out linkages at genome level
 sankey_file_in_handle = open(link_stats_combined, 'w')
 sankey_file_in_handle.write('MarkerGene,GenomicSeq,Number\n')
 for each_linkage in marker_to_gnm_link_num:
@@ -788,35 +811,8 @@ for each_linkage in marker_to_gnm_link_num:
     marker_to_gnm_link_num[each_linkage]))
 sankey_file_in_handle.close()
 
-print('\n------------------------------------------------------------\n')
-print('marker_to_ctg_linkage_num_min3_dict: %s' % marker_to_ctg_linkage_num_min3_dict)
-print('marker_to_gnm_link_num: %s' % marker_to_gnm_link_num)
 
-# print('marker_to_ctg_linkage_cigar_dict_16s_side: %s' % len(marker_to_ctg_linkage_cigar_dict_16s_side['cami_hc_SILVA138_id99_50_subsample_100_3569___M___cami_hc_14___C___NODE_13073_length_6967_cov_0.639487']))
-# print('marker_to_ctg_linkage_cigar_dict_ctg_side: %s' % len(marker_to_ctg_linkage_cigar_dict_ctg_side['cami_hc_SILVA138_id99_50_subsample_100_3569___M___cami_hc_14___C___NODE_13073_length_6967_cov_0.639487']))
 
-rd1_clp_pct_diff_txt_handle = open(rd1_clp_pct_diff_txt, 'w')
-rd1_clp_pct_diff_txt_handle.write('Marker\tGenome\tContig\tclp_pct_ctg\tclp_pct_16s\tRatio\n')
-rd1_clp_pct_diff_dict = dict()
-for each_link in marker_to_ctg_linkage_num_min3_dict:
 
-    each_link_split = each_link.split(marker_to_ctg_gnm_Key_connector)
-    marker_id = each_link_split[0]
-    gnm_id = each_link_split[1].split(gnm_to_ctg_connector)[0]
-    ctg_id = each_link_split[1].split(gnm_to_ctg_connector)[1]
 
-    linkage_cigar_16s_side_all = marker_to_ctg_linkage_cigar_dict_16s_side[each_link]
-    linkage_cigar_ctg_side_all = marker_to_ctg_linkage_cigar_dict_ctg_side[each_link]
-    linkage_cigar_16s_side_clp = [i for i in linkage_cigar_16s_side_all if (('S' in i) or ('s' in i))]
-    linkage_cigar_ctg_side_clp = [i for i in linkage_cigar_ctg_side_all if (('S' in i) or ('s' in i))]
 
-    clp_pct_16s_side = len(linkage_cigar_16s_side_clp)*100/len(linkage_cigar_16s_side_all)
-    clp_pct_ctg_side = len(linkage_cigar_ctg_side_clp)*100/len(linkage_cigar_ctg_side_all)
-    clp_pct_16s_side = float("{0:.2f}".format(clp_pct_16s_side))
-    clp_pct_ctg_side = float("{0:.2f}".format(clp_pct_ctg_side))
-    clp_pct_ratio     = float("{0:.2f}".format(clp_pct_ctg_side/clp_pct_16s_side))
-
-    rd1_clp_pct_diff_dict[each_link] = clp_pct_ratio
-    rd1_clp_pct_diff_txt_handle.write('%s\t%s\t%s\t%s(%s/%s)\t%s(%s/%s)\t%s\n' % (marker_id, gnm_id, ctg_id, clp_pct_ctg_side, len(linkage_cigar_ctg_side_clp), len(linkage_cigar_ctg_side_all), clp_pct_16s_side, len(linkage_cigar_16s_side_clp), len(linkage_cigar_16s_side_all), clp_pct_ratio))
-
-rd1_clp_pct_diff_txt_handle.close()
