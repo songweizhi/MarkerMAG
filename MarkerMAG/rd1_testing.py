@@ -293,7 +293,7 @@ report_interval                                 = 10000
 link_stats_combined                             = '%s/hc_0509_stats_combined.txt'               % wd
 rd1_clp_pct_diff_txt                            = '%s/rd1_clp_pct_diff.txt'                     % wd
 rd1_clp_pct_diff_txt_to_ignore                  = '%s/rd1_clp_pct_diff_to_ignore.txt'           % wd
-
+linking_reads_rd1                               = '%s/linking_reads_rd1.txt'                 % wd
 
 # on katana
 # input_reads_to_16s_sam_best_match               = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd/hc_0511_very_sensitive_input_reads_to_16S_reformatted.sam'
@@ -811,8 +811,14 @@ for each_linkage in marker_to_gnm_link_num:
     marker_to_gnm_link_num[each_linkage]))
 sankey_file_in_handle.close()
 
-
-
-
+# write out linking reads
+linking_reads_rd1_handle = open(linking_reads_rd1, 'w')
+for each_link in marker_to_ctg_linkage_num_dict:
+    marker_id = each_link.split(marker_to_ctg_gnm_Key_connector)[0]
+    ctg_id = each_link.split(marker_to_ctg_gnm_Key_connector)[1]
+    gnm_id = ctg_id.split(gnm_to_ctg_connector)[0]
+    current_linking_reads = marker_to_ctg_linking_reads_dict[each_link]
+    linking_reads_rd1_handle.write('%s\t%s\n' % (each_link, ','.join(current_linking_reads)))
+linking_reads_rd1_handle.close()
 
 

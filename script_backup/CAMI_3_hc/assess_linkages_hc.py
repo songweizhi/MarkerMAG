@@ -86,7 +86,7 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/hc_0512_stats_combined_filtered.txt'                  % wd
+MarkerMAG_linkages          = '%s/hc_0514_stats_combined_filtered.txt'                  % wd
 linkages_from_rd1           = True
 
 
