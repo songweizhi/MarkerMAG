@@ -235,6 +235,10 @@ cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	29                  why m
 
 
 
+hc_0514_stats_combined_filtered.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+hc_0514_stats_combined_filtered.txt	Rd_1	|	93	87	0	6	87/93(93.55)	|	42	38	0	4	0	38/97(39.18)	38/42(90.48)
+hc_0514_stats_combined_filtered.txt	Rd_2	|	0	0	0	0	0/0(0)	|	0	0	0	0	0	0/97(0.0)	0/0(0)
+hc_0514_stats_combined_filtered.txt	Both	|	93	87	0	6	87/93(93.55)	|	42	38	0	4	0	38/97(39.18)	38/42(90.48)
 
 
 hc_05010_stats_combined_filtered.txt	Rd_1	|	84	80	0	4	80/84(95.24)	|	40	36	0	4	0	36/97(37.11)	36/40(90.0)
@@ -347,8 +351,6 @@ CAMI_hc_0428_very_specific_stats_combined_filtered.txt	Rd_1	|	42	34	3	5	34/39(87
 4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_1328339	NA
 4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_520453	NA
 4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	MAG	C277_0	tax_1287182	NA
-
-
 
 '''
 

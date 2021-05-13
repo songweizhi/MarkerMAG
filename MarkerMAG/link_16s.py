@@ -175,7 +175,7 @@ def sep_paired_and_singleton_reads(fasta_in, fasta_out_r1, fasta_out_r2, fasta_o
     fasta_out_singleton_handle.close()
 
 
-def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_r2, reads_unpaired, num_threads):
+def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_r2, reads_unpaired, subsample_rate, num_threads):
 
     ref_seq_file_path, ref_seq_file_basename, ref_seq_file_extension = sep_path_basename_ext(ref_seq)
 
@@ -190,9 +190,9 @@ def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_
 
     # mapping
     if reads_unpaired == '':
-        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
+        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
     else:
-        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -U %s -S %s -p %s -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, reads_unpaired, sam_file, num_threads)
+        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -U %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, reads_unpaired, sam_file, num_threads)
     os.system(cmd_bowtie2_mapping)
 
     # sort mapping
@@ -215,7 +215,7 @@ def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_
             ctg_depth_split = each_ctg_depth.strip().split('\t')
             ctg_id = ctg_depth_split[0]
             ctg_len = int(ctg_depth_split[2])
-            ctg_depth = float(ctg_depth_split[6])
+            ctg_depth = float(ctg_depth_split[6]) * (1 / subsample_rate)
             mean_depth_dict_ctg[ctg_id] = ctg_depth
             ctg_len_dict[ctg_id] = ctg_len
 
@@ -482,30 +482,56 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
                     current_min_linkage = min_linkages
 
             if linkage_num >= current_min_linkage:
-
                 if MarkerGene not in MarkerGene_with_assignment:
 
+                    # consider depth
+                    if min_16s_gnm_multiple > 0:
 
-                    if GenomicSeq not in GenomicSeq_best_marker_dict:
-                        GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
-                        gnm_max_link_num_dict[GenomicSeq] = linkage_num
-                        file_out_handle.write(each_match)
-                        MarkerGene_with_assignment.add(MarkerGene)
-                    else:
-                        # get identity with best marker
-                        current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
-                        key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
-                        iden_with_best_marker = pairwise_16s_iden_dict.get(key_str, 0)
+                        # get marker and genome depth
+                        MarkerGene_depth = marker_gene_depth_dict.get(MarkerGene, 'na')
+                        GenomicSeq_depth = genomic_seq_depth_dict.get(GenomicSeq, 'na')
+                        marker_genome_depth_ratio = 'na'
+                        if (MarkerGene_depth != 'na') and (GenomicSeq_depth != 'na'):
+                            if GenomicSeq_depth > 0:
+                                marker_genome_depth_ratio = MarkerGene_depth / GenomicSeq_depth
 
-                        if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
-
-                            gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
-                            if (linkage_num*100/gnm_max_link_num) >= within_gnm_linkage_num_diff:
+                        if marker_genome_depth_ratio >= min_16s_gnm_multiple:
+                            if GenomicSeq not in GenomicSeq_best_marker_dict:
+                                GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
+                                gnm_max_link_num_dict[GenomicSeq] = linkage_num
                                 file_out_handle.write(each_match)
                                 MarkerGene_with_assignment.add(MarkerGene)
                             else:
-                                MarkerGene_with_assignment.add(MarkerGene)
-
+                                # get identity with best marker
+                                current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                                key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+                                iden_with_best_marker = pairwise_16s_iden_dict.get(key_str, 0)
+                                if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                                    gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
+                                    if (linkage_num * 100 / gnm_max_link_num) >= within_gnm_linkage_num_diff:
+                                        file_out_handle.write(each_match)
+                                        MarkerGene_with_assignment.add(MarkerGene)
+                                    else:
+                                        MarkerGene_with_assignment.add(MarkerGene)
+                    # ignore depth
+                    else:
+                        if GenomicSeq not in GenomicSeq_best_marker_dict:
+                            GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
+                            gnm_max_link_num_dict[GenomicSeq] = linkage_num
+                            file_out_handle.write(each_match)
+                            MarkerGene_with_assignment.add(MarkerGene)
+                        else:
+                            # get identity with best marker
+                            current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                            key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+                            iden_with_best_marker = pairwise_16s_iden_dict.get(key_str, 0)
+                            if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                                gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
+                                if (linkage_num*100/gnm_max_link_num) >= within_gnm_linkage_num_diff:
+                                    file_out_handle.write(each_match)
+                                    MarkerGene_with_assignment.add(MarkerGene)
+                                else:
+                                    MarkerGene_with_assignment.add(MarkerGene)
     file_out_handle.close()
 
 
@@ -820,6 +846,12 @@ class MappingRecord:
 
     def __init__(self):
 
+        #################### overall ####################
+
+        self.qualified_reads = False
+
+        #################### round 1 16s ####################
+
         self.r1_16s_ref_dict = dict()
         self.r2_16s_ref_dict = dict()
 
@@ -829,6 +861,10 @@ class MappingRecord:
         self.r1_16s_refs_no_ignored = dict()
         self.r2_16s_refs_no_ignored = dict()
         self.shared_16s_refs_no_ignored = dict()
+
+        self.both_mapped_to_16s = False
+
+        #################### round 1 ctg ####################
 
         self.r1_ctg_ref_dict = dict()
         self.r2_ctg_ref_dict = dict()
@@ -840,14 +876,24 @@ class MappingRecord:
         self.r2_ctg_refs_no_ignored = dict()
         self.shared_ctg_refs_no_ignored = dict()
 
+        self.matched_to_ctg = False
+
+        #################### round 2 ####################
+
+        self.r1_ctg_ref_dict_rd2 = dict()
+        self.r2_ctg_ref_dict_rd2 = dict()
+
+        self.r1_ctg_refs_lowest_mismatch_rd2 = None
+        self.r2_ctg_refs_lowest_mismatch_rd2 = None
+
+        #################################################
+
+
         self.r1_longest_clp_cigar = ''
         self.r1_longest_clp_falg = ''
         self.r2_longest_clp_cigar = ''
         self.r2_longest_clp_falg = ''
 
-        self.qualified_reads = False
-        self.matched_to_ctg = False
-        self.both_mapped_to_16s = False
         self.consider_r1_unmapped_mate = False
         self.consider_r1_clipping_part = False
         self.consider_r2_unmapped_mate = False
@@ -1640,15 +1686,11 @@ def mapping_worker(argument_list):
     concatenated        = argument_list[2]
     concatenated_ref_id = argument_list[3]
     concatenated_pos    = argument_list[4]
-    vis_folder_local    = argument_list[5]
-    bowtie_parameter    = argument_list[6]
+    bowtie_parameter    = argument_list[5]
 
     pwd_seq_file_cbd            = '%s/%s/%s_cbd.fa'         % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_16s            = '%s/%s/%s_16s.fa'         % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_ctg            = '%s/%s/%s_ctg.fa'         % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_local      = '%s/%s/%s_cbd.fa'         % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_local      = '%s/%s/%s_16s.fa'         % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_local      = '%s/%s/%s_ctg.fa'         % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_reads_r1       = '%s/%s/%s_R1.fa'          % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_reads_r2       = '%s/%s/%s_R2.fa'          % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_cbd_index      = '%s/%s/%s_cbd'            % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
@@ -1657,9 +1699,6 @@ def mapping_worker(argument_list):
     pwd_seq_file_cbd_sam        = '%s/%s/%s_cbd.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_16s_sam        = '%s/%s/%s_16s.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_ctg_sam        = '%s/%s/%s_ctg.sam'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_cbd_sam_local  = '%s/%s/%s_cbd.sam'        % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_16s_sam_local  = '%s/%s/%s_16s.sam'        % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
-    pwd_seq_file_ctg_sam_local  = '%s/%s/%s_ctg.sam'        % (vis_folder_local, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_cbd_sam_log    = '%s/%s/%s_cbd.log'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_16s_sam_log    = '%s/%s/%s_16s.log'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
     pwd_seq_file_ctg_sam_log    = '%s/%s/%s_ctg.log'        % (vis_folder, each_marker_to_ctg, each_marker_to_ctg)
@@ -1676,10 +1715,10 @@ def mapping_worker(argument_list):
         # write out Tablet xml file
         pwd_seq_file_cbd_Tablet_xml_handle = open(pwd_seq_file_cbd_Tablet_xml, 'w')
         pwd_seq_file_cbd_Tablet_xml_handle.write('<tablet>\n')
-        pwd_seq_file_cbd_Tablet_xml_handle.write('        <assembly>%s</assembly>\n'    % pwd_seq_file_cbd_sam_local)
-        pwd_seq_file_cbd_Tablet_xml_handle.write('        <reference>%s</reference>\n'  % pwd_seq_file_cbd_local)
-        pwd_seq_file_cbd_Tablet_xml_handle.write('        <contig>%s</contig>\n'        % concatenated_ref_id)
-        pwd_seq_file_cbd_Tablet_xml_handle.write('        <position>%s</position>\n'    % concatenated_pos)
+        pwd_seq_file_cbd_Tablet_xml_handle.write('        <assembly>%s_cbd.sam</assembly>\n'    % each_marker_to_ctg)
+        pwd_seq_file_cbd_Tablet_xml_handle.write('        <reference>%s_cbd.fa</reference>\n'   % each_marker_to_ctg)
+        pwd_seq_file_cbd_Tablet_xml_handle.write('        <contig>%s</contig>\n'                % concatenated_ref_id)
+        pwd_seq_file_cbd_Tablet_xml_handle.write('        <position>%s</position>\n'            % concatenated_pos)
         pwd_seq_file_cbd_Tablet_xml_handle.write('</tablet>\n')
         pwd_seq_file_cbd_Tablet_xml_handle.close()
     else:
@@ -1695,16 +1734,16 @@ def mapping_worker(argument_list):
         # write out Tablet xml file
         pwd_seq_file_16s_Tablet_xml_handle = open(pwd_seq_file_16s_Tablet_xml, 'w')
         pwd_seq_file_16s_Tablet_xml_handle.write('<tablet>\n')
-        pwd_seq_file_16s_Tablet_xml_handle.write('        <assembly>%s</assembly>\n' % pwd_seq_file_16s_sam_local)
-        pwd_seq_file_16s_Tablet_xml_handle.write('        <reference>%s</reference>\n' % pwd_seq_file_16s_local)
+        pwd_seq_file_16s_Tablet_xml_handle.write('        <assembly>%s_16s.sam</assembly>\n'  % each_marker_to_ctg)
+        pwd_seq_file_16s_Tablet_xml_handle.write('        <reference>%s_16s.fa</reference>\n' % each_marker_to_ctg)
         pwd_seq_file_16s_Tablet_xml_handle.write('        <contig>Marker</contig>\n')
         pwd_seq_file_16s_Tablet_xml_handle.write('</tablet>\n')
         pwd_seq_file_16s_Tablet_xml_handle.close()
 
         pwd_seq_file_ctg_Tablet_xml_handle = open(pwd_seq_file_ctg_Tablet_xml, 'w')
         pwd_seq_file_ctg_Tablet_xml_handle.write('<tablet>\n')
-        pwd_seq_file_ctg_Tablet_xml_handle.write('        <assembly>%s</assembly>\n' % pwd_seq_file_ctg_sam_local)
-        pwd_seq_file_ctg_Tablet_xml_handle.write('        <reference>%s</reference>\n' % pwd_seq_file_ctg_local)
+        pwd_seq_file_ctg_Tablet_xml_handle.write('        <assembly>%s_ctg.sam</assembly>\n'  % each_marker_to_ctg)
+        pwd_seq_file_ctg_Tablet_xml_handle.write('        <reference>%s_ctg.fa</reference>\n' % each_marker_to_ctg)
         pwd_seq_file_ctg_Tablet_xml_handle.write('        <contig>Contig</contig>\n')
         pwd_seq_file_ctg_Tablet_xml_handle.write('</tablet>\n')
         pwd_seq_file_ctg_Tablet_xml_handle.close()
@@ -1780,12 +1819,9 @@ def link_16s(args):
     output_prefix                       = args['p']
     reads_file_r1                       = args['r1']
     reads_file_r2                       = args['r2']
-    reads_file_16s                      = args['r16s']
-    #genomic_assemblies                  = args['g']
     mag_folder                          = args['mag']
     mag_file_extension                  = args['x']
     marker_gene_seqs                    = args['marker']
-    min_16s_gnm_multiple                = args['depth']
     min_iden_16s                        = args['min_iden_16s']
     min_cov_16s                         = args['min_cov_16s']
     min_aln_16s                         = args['min_aln_16s']
@@ -1804,12 +1840,17 @@ def link_16s(args):
     filtered_sam                        = args['filtered_sam']
     no_polish                           = args['no_polish']
 
+    # depth related
+    reads_file_16s                      = args['r16s']
+    min_16s_gnm_multiple                = args['depth_ratio']
+    depth_file_16s                      = args['depth_16s']
+    depth_file_mag                      = args['depth_mag']
+
     # by assembly
     round_2_spades                      = args['spades']
     mira_tmp_dir                        = args['mira_tmp']
     clp_read_for_assembly               = args['assemble_clp']
     max_mini_assembly_link_num_diff_between_ctg_16s = args['link_bias_rd2']
-    mafft_seq_folder_local              = args['local_sam']
 
     pwd_makeblastdb_exe                 = 'makeblastdb'
     pwd_blastn_exe                      = 'blastn'
@@ -1821,6 +1862,7 @@ def link_16s(args):
     seqtk_exe                           = 'seqtk'
     mafft_exe                           = 'mafft'
     mview_exe                           = 'mview'
+    sortmerna_exe                       = 'sortmerna'
 
     marker_to_ctg_gnm_Key_connector                 = '___M___'
     gnm_to_ctg_connector                            = '___C___'
@@ -1829,13 +1871,14 @@ def link_16s(args):
     end_seq_len                                     = 500
     ctg_level_min_link                              = 3
     end_ctg_len_for_mafft                           = 1000
-    vis_linkages                                    = False
     keep_short_M                                    = True
     gap_N_num                                       = 50
     report_interval                                 = 50000
-
+    clp_pct_ctg_side_max_num                        = 65
+    clp_pct_ratio_cutoff                            = 3.5
     # mismatch cutoff for filtering matches between unmapped mates and clipping reads against contig end
     mismatch_ctg_ends = 1
+    subsample_rate_for_depth_estimation = 0.1  # between 0 and 1
 
     ################################################ check dependencies ################################################
 
@@ -1854,6 +1897,13 @@ def link_16s(args):
 
     if os.path.isfile(marker_gene_seqs) is False:
         print('%s not found, program exited!' % os.path.basename(marker_gene_seqs))
+        exit()
+
+    # get input mag file list
+    mag_file_re = '%s/*%s' % (mag_folder, mag_file_extension)
+    mag_file_list = [os.path.basename(file_name) for file_name in glob.glob(mag_file_re)]
+    if len(mag_file_list) == 0:
+        print('No MAG detected, program exited!')
         exit()
 
     ############################################# create working directory #############################################
@@ -1922,49 +1972,24 @@ def link_16s(args):
 
     ######################## check genomic sequence type and prepare files for making blast db #########################
 
-    combined_input_gnms = ''
-    # genomic_seq_type    = ''  # ctg or mag
-    renamed_mag_folder  = ''
+    input_mag_folder_no_path        = mag_folder.split('/')[-1]
+    mag_folder_in_wd                = '%s/input_MAGs'               % step_1_wd
+    prefixed_mag_folder             = '%s/%s_prefixed'              % (mag_folder_in_wd, input_mag_folder_no_path)
 
-    # # check the type of input genomic sequences
-    # if (genomic_assemblies is not None) and (mag_folder is None):
-    #     genomic_seq_type = 'ctg'
-    #     metagenomic_assemblies_file_path, metagenomic_assemblies_file_basename, metagenomic_assemblies_file_extension = sep_path_basename_ext(genomic_assemblies)
-    #     blast_db_dir = '%s/%s_%s_db' % (step_1_wd, output_prefix, metagenomic_assemblies_file_basename)
-    #     combined_input_gnms     = '%s/%s%s'     % (blast_db_dir, metagenomic_assemblies_file_basename, metagenomic_assemblies_file_extension)
-    #
-    #     os.mkdir(blast_db_dir)
-    #     os.system('cp %s %s/' % (genomic_assemblies, blast_db_dir))
-    # elif (genomic_assemblies is None) and (mag_folder is not None):
-    if mag_folder is not None:
+    # create folder
+    os.mkdir(mag_folder_in_wd)
+    os.mkdir(prefixed_mag_folder)
 
-        # get input mag file list
-        mag_file_re = '%s/*%s' % (mag_folder, mag_file_extension)
-        mag_file_list = [os.path.basename(file_name) for file_name in glob.glob(mag_file_re)]
-        if len(mag_file_list) == 0:
-            print('No MAG detected, program exited!')
-            exit()
+    # add mag id to its sequences
+    for mag_in in mag_file_list:
+        pwd_mag_in      = '%s/%s' % (mag_folder, mag_in)
+        pwd_mag_renamed = '%s/%s' % (prefixed_mag_folder, mag_in)
+        mag_basename    = '.'.join(mag_in.split('.')[:-1])
+        rename_seq(pwd_mag_in, pwd_mag_renamed, mag_basename, gnm_to_ctg_connector)
 
-        # genomic_seq_type    = 'mag'
-        mag_folder_name     = mag_folder.split('/')[-1]
-        blast_db_dir        = '%s/%s_db'            % (step_1_wd, mag_folder_name)
-        renamed_mag_folder  = '%s/%s_db/%s_renamed' % (step_1_wd, mag_folder_name, mag_folder_name)
-        os.mkdir(blast_db_dir)
-        os.mkdir(renamed_mag_folder)
-
-        # add mag id to its sequences
-        for mag_in in mag_file_list:
-            pwd_mag_in      = '%s/%s' % (mag_folder, mag_in)
-            pwd_mag_renamed = '%s/%s' % (renamed_mag_folder, mag_in)
-            mag_basename    = '.'.join(mag_in.split('.')[:-1])
-            rename_seq(pwd_mag_in, pwd_mag_renamed, mag_basename, gnm_to_ctg_connector)
-
-        # combine renamed MAGs
-        combined_input_gnms = '%s/%s_combined.fa' % (blast_db_dir, mag_folder_name)
-        os.system('cat %s/*%s > %s' % (renamed_mag_folder, mag_file_extension, combined_input_gnms))
-    else:
-        print('MAGs (-mag) not provided')
-        exit()
+    # combine prefixed MAGs
+    combined_input_gnms = '%s/%s_combined.fa' % (mag_folder_in_wd, input_mag_folder_no_path)
+    os.system('cat %s/*%s > %s' % (prefixed_mag_folder, mag_file_extension, combined_input_gnms))
 
 
     ########################################### define folder and file name ############################################
@@ -1972,34 +1997,11 @@ def link_16s(args):
     marker_gene_seqs_file_path, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension = sep_path_basename_ext(marker_gene_seqs)
 
     pwd_log_file                                = '%s/%s.log'                                              % (working_directory, output_prefix)
-    bowtie_index_dir                            = '%s/%s_index'                                            % (step_1_wd, marker_gene_seqs_file_basename)
+    input_16s_folder_in_wd                      = '%s/input_16S'                                           % step_1_wd
     input_reads_to_16s_sam_bowtie               = '%s/%s_input_reads_to_16S_bowtie.sam'                    % (step_1_wd, output_prefix)
     input_reads_to_16s_sam_bowtie_log           = '%s/%s_input_reads_to_16S_bowtie.log'                    % (step_1_wd, output_prefix)
     input_reads_to_16s_sam                      = '%s/%s_input_reads_to_16S_reformatted.sam'               % (step_1_wd, output_prefix)
     input_reads_to_16s_sam_reformat_log         = '%s/%s_input_reads_to_16S_reformat.log'                  % (step_1_wd, output_prefix)
-    input_reads_to_16s_sam_bbmap_stderr         = '%s/%s_input_reads_to_16S_bbmap_stderr.txt'              % (step_1_wd, output_prefix)
-    sam_best_match_unmapped_mates_seq_file      = '%s/%s_input_reads_to_16S_best_match_unmapped_mates.fa'  % (step_1_wd, output_prefix)
-    unmapped_mates_seq_file                     = '%s/%s_unmapped_mates.fa'                                % (step_1_wd, output_prefix)
-    unmapped_mates_seq_file_filtered            = '%s/%s_unmapped_mates_filtered.fa'                       % (step_1_wd, output_prefix)
-    clipping_parts_seq_file                     = '%s/%s_clipping_parts.fa'                                % (step_1_wd, output_prefix)
-    unmapped_to_16s_sam_bowtie                  = '%s/%s_unmapped_mates_to_16s.sam'                        % (step_1_wd, output_prefix)
-    unmapped_to_16s_sam_bowtie_log              = '%s/%s_unmapped_mates_to_16s.log'                        % (step_1_wd, output_prefix)
-    unmapped_to_16s_sam_reformat                = '%s/%s_unmapped_mates_to_16s_reformat.sam'               % (step_1_wd, output_prefix)
-    unmapped_to_16s_sam_reformat_log            = '%s/%s_unmapped_mates_to_16s_reformat.log'               % (step_1_wd, output_prefix)
-    unmapped_to_gnm_sam_bowtie                  = '%s/%s_unmapped_mates_bowtie.sam'                        % (step_1_wd, output_prefix)
-    unmapped_to_gnm_sam_bowtie_log              = '%s/%s_unmapped_mates_bowtie.log'                        % (step_1_wd, output_prefix)
-    unmapped_to_gnm_sam_bowtie_single_clp       = '%s/%s_unmapped_mates_bowtie_single_clp.sam'             % (step_1_wd, output_prefix)
-    unmapped_to_gnm_sam                         = '%s/%s_unmapped_mates.sam'                               % (step_1_wd, output_prefix)
-    unmapped_to_gnm_sam_reformat_log            = '%s/%s_unmapped_mates_reformat.log'                      % (step_1_wd, output_prefix)
-    unmapped_to_gnm_sam_best_match              = '%s/%s_unmapped_mates_best_match.sam'                    % (step_1_wd, output_prefix)
-    clipping_to_gnm_sam_bowtie                  = '%s/%s_clipping_parts_bowtie.sam'                        % (step_1_wd, output_prefix)
-    clipping_to_gnm_sam_bowtie_log              = '%s/%s_clipping_parts_bowtie.log'                        % (step_1_wd, output_prefix)
-    clipping_to_gnm_sam_bowtie_single_clp       = '%s/%s_clipping_parts_bowtie_single_clp.sam'             % (step_1_wd, output_prefix)
-    clipping_to_gnm_sam                         = '%s/%s_clipping_parts.sam'                               % (step_1_wd, output_prefix)
-    clipping_to_gnm_sam_reformat_log            = '%s/%s_clipping_parts_reformat.log'                      % (step_1_wd, output_prefix)
-    clipping_to_gnm_sam_best_match              = '%s/%s_clipping_parts_best_match.sam'                    % (step_1_wd, output_prefix)
-    unmapped_to_gnm_bbmap_stderr                = '%s/%s_unmapped_mates_bbmap_stderr.txt'                  % (step_1_wd, output_prefix)
-    clipping_to_gnm_bbmap_stderr                = '%s/%s_clipping_parts_bbmap_stderr.txt'                  % (step_1_wd, output_prefix)
     blast_results_all_vs_all_16s                = '%s/%s_16S_all_vs_all_blastn.tab'                        % (step_1_wd, output_prefix)
     pairwise_marker_similarity                  = '%s/%s_pairwise_marker_similarity.txt'                   % (step_1_wd, output_prefix)
     depth_file_ctg                              = '%s/%s_mean_depth_ctg.txt'                               % (step_1_wd, output_prefix)
@@ -2007,234 +2009,188 @@ def link_16s(args):
     depth_file_16s                              = '%s/%s_mean_depth_16s.txt'                               % (step_1_wd, output_prefix)
     link_stats_combined                         = '%s/%s_stats_combined.txt'                               % (step_1_wd, output_prefix)
     link_stats_combined_filtered_s1             = '%s/%s_stats_combined_filtered.txt'                      % (step_1_wd, output_prefix)
-    linking_reads_rd1                           = '%s/%s_linking_reads_rd1.txt'                      % (step_1_wd, output_prefix)
-    linking_reads_pair                          = '%s/%s_linking_read_rd1_paired.txt'                      % (step_1_wd, output_prefix)
-    linking_reads_clip                          = '%s/%s_linking_read_rd1_clipping.txt'                    % (step_1_wd, output_prefix)
-    linked_ends_rd1_txt                         = '%s/%s_linked_ends_rd1.txt'                              % (step_1_wd, output_prefix)
-    linked_contigs_txt                          = '%s/%s_linked_contigs.txt'                               % (step_1_wd, output_prefix)
-    linked_contigs_fasta                        = '%s/%s_linked_contigs.fasta'                             % (step_1_wd, output_prefix)
+    linking_reads_rd1                           = '%s/%s_linking_reads_rd1.txt'                            % (step_1_wd, output_prefix)
     mafft_seq_folder                            = '%s/%s_mafft_seq_folder'                                 % (step_1_wd, output_prefix)
-    rd1_r1_to_extract                               = '%s/rd1_r1_to_extract.txt'                            % step_1_wd
-    rd1_r2_to_extract                               = '%s/rd1_r2_to_extract.txt'                            % step_1_wd
-    rd1_extracted_all_r1                            = '%s/rd1_extracted_all_r1.fasta'                       % step_1_wd
-    rd1_extracted_all_r2                            = '%s/rd1_extracted_all_r2.fasta'                       % step_1_wd
-    rd1_extracted_p_r1                              = '%s/rd1_extracted_R1.fasta'                           % step_1_wd
-    rd1_extracted_p_r2                              = '%s/rd1_extracted_R2.fasta'                           % step_1_wd
-    rd1_extracted_up                                = '%s/rd1_extracted_UP.fasta'                           % step_1_wd
-    rd1_extracted_to_gnm_sam                        = '%s/rd1_extracted_to_gnm.sam'                         % step_1_wd
-    rd1_extracted_to_gnm_sam_log                    = '%s/rd1_extracted_to_gnm.sam.log'                     % step_1_wd
-    rd1_extracted_to_gnm_sam_reformatted            = '%s/rd1_extracted_to_gnm_reformatted.sam'             % step_1_wd
-    rd1_extracted_to_gnm_sam_reformat_log           = '%s/rd1_extracted_to_gnm_reformat.log'                % step_1_wd
-    linking_reads_tab                               = '%s/linking_reads.txt'                                % step_1_wd
-    linking_reads_r1_txt                            = '%s/rd1_linking_reads_R1.txt'                         % step_1_wd
-    linking_reads_r2_txt                            = '%s/rd1_linking_reads_R2.txt'                         % step_1_wd
-    linking_reads_r1_fasta                          = '%s/rd1_linking_reads_R1.fasta'                       % step_1_wd
-    linking_reads_r2_fasta                          = '%s/rd1_linking_reads_R2.fasta'                       % step_1_wd
-    linked_contigs_txt                              = '%s/linked_contigs_rd1.txt'                           % step_1_wd
-    linked_contigs_fasta                            = '%s/linked_contigs_rd1.fasta'                         % step_1_wd
-    rd1_clp_pct_diff_txt                            = '%s/rd1_clp_pct_diff.txt'                             % step_1_wd
-    rd1_clp_pct_diff_txt_to_ignore                  = '%s/rd1_clp_pct_diff_to_ignore.txt'                   % step_1_wd
+    rd1_r1_to_extract                           = '%s/rd1_r1_to_extract.txt'                               % step_1_wd
+    rd1_r2_to_extract                           = '%s/rd1_r2_to_extract.txt'                               % step_1_wd
+    rd1_extracted_all_r1                        = '%s/rd1_extracted_all_r1.fasta'                          % step_1_wd
+    rd1_extracted_all_r2                        = '%s/rd1_extracted_all_r2.fasta'                          % step_1_wd
+    rd1_extracted_p_r1                          = '%s/rd1_extracted_R1.fasta'                              % step_1_wd
+    rd1_extracted_p_r2                          = '%s/rd1_extracted_R2.fasta'                              % step_1_wd
+    rd1_extracted_up                            = '%s/rd1_extracted_UP.fasta'                              % step_1_wd
+    rd1_extracted_to_gnm_sam                    = '%s/rd1_extracted_to_gnm.sam'                            % step_1_wd
+    rd1_extracted_to_gnm_sam_log                = '%s/rd1_extracted_to_gnm.sam.log'                        % step_1_wd
+    rd1_extracted_to_gnm_sam_reformatted        = '%s/rd1_extracted_to_gnm_reformatted.sam'                % step_1_wd
+    rd1_extracted_to_gnm_sam_reformat_log       = '%s/rd1_extracted_to_gnm_reformat.log'                   % step_1_wd
+    linking_reads_tab                           = '%s/linking_reads.txt'                                   % step_1_wd
+    linking_reads_r1_txt                        = '%s/rd1_linking_reads_R1.txt'                            % step_1_wd
+    linking_reads_r2_txt                        = '%s/rd1_linking_reads_R2.txt'                            % step_1_wd
+    linking_reads_r1_fasta                      = '%s/rd1_linking_reads_R1.fasta'                          % step_1_wd
+    linking_reads_r2_fasta                      = '%s/rd1_linking_reads_R2.fasta'                          % step_1_wd
+    linked_contigs_txt                          = '%s/linked_contigs_rd1.txt'                              % step_1_wd
+    linked_contigs_fasta                        = '%s/linked_contigs_rd1.fasta'                            % step_1_wd
+    rd1_clp_pct_diff_txt                        = '%s/rd1_clp_pct_diff.txt'                                % step_1_wd
+    rd1_clp_pct_diff_txt_to_ignore              = '%s/rd1_clp_pct_diff_to_ignore.txt'                      % step_1_wd
 
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
     bbmap_parameter  = 'local=t nodisk=t ambiguous=all keepnames=t saa=f trd=t silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
-
     # --very-sensitive-local    -D 20 -R 3 -N 0 -L 20 -i S,1,0.50
     bowtie_parameter = '--local --all --no-unal -N 1 -L 30'
     #bowtie_parameter = '--local --all --no-unal --very-sensitive-local'
     #bowtie_parameter = '--local --all --no-unal -D 30 -R 5 -N 0 -L 20 -i S,1,0.50'
 
-    ################################################# step 2 #################################################
 
-    free_living_16s_R1                                              = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
-    free_living_16s_R2                                              = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
-    free_living_16s_UP                              = '%s/round2_free_living_16s_UP.fa'                 % step_2_wd
+    ####################################################################################################################
+    ################################################### depth related ##################################################
+    ####################################################################################################################
 
-    marker_gene_seqs_1st_round_unlinked                             = '%s/round_1_unlinked_16s.fa'                              % step_2_wd
-    combined_1st_round_unlinked_mags                                = '%s/round_1_unlinked_gnm.fa'                              % step_2_wd
-    combined_1st_round_unlinked_mag_end_seq                         = '%s/round_1_unlinked_gnm_end_%sbp.fa'                     % (step_2_wd, end_seq_len)
-    rd1_unlinked_mag_end_seq_no_ext                                 = '%s/round_1_unlinked_gnm_end_%sbp'                        % (step_2_wd, end_seq_len)
-    combined_1st_round_unlinked_mags_sam                            = '%s/round_1_unlinked_gnm.sam'                             % step_2_wd
-    rd1_unlinked_mags_sam_bowtie_log                                = '%s/round_1_unlinked_gnm_bowtie.log'                      % step_2_wd
-    rd1_unlinked_mags_sam_bowtie                                    = '%s/round_1_unlinked_gnm_bowtie.sam'                      % step_2_wd
-    rd1_unlinked_mags_sam_bowtie_single_clp                         = '%s/round_1_unlinked_gnm_bowtie_single_clp.sam'           % step_2_wd
-    rd1_unlinked_mags_sam_bowtie_single_clp_reformat                = '%s/round_1_unlinked_gnm_bowtie_single_clp_reformat.sam'  % step_2_wd
-    rd1_unlinked_mags_sam_bowtie_single_clp_reformat_log            = '%s/round_1_unlinked_gnm_bowtie_single_clp_reformat.log'  % step_2_wd
-    combined_1st_round_unlinked_mags_sam_best_match                 = '%s/round_1_unlinked_gnm_best_match.sam'                  % step_2_wd
-    combined_1st_round_unlinked_mags_sam_best_match_unmapped_mates  = '%s/round_1_unlinked_gnm_best_match_unmapped_mates.fa'    % step_2_wd
-
-    combined_1st_round_unlinked_ctgs                = '%s/round_1_unlinked_ctg.fa'                      % step_2_wd
-    stats_GapFilling_file                           = '%s/stats_GapFilling_gnm.txt'                     % step_2_wd
-    stats_GapFilling_file_filtered                  = '%s/stats_GapFilling_gnm_filtered.txt'            % step_2_wd
-    free_living_ctg_R1                              = '%s/round2_free_living_ctg_R1.fa'                 % step_2_wd
-    free_living_ctg_R2                              = '%s/round2_free_living_ctg_R2.fa'                 % step_2_wd
-    free_living_ctg_UP                              = '%s/round2_free_living_ctg_UP.fa'                 % step_2_wd
-    free_living_16s                                 = '%s/round2_free_living_16s.fa'                    % step_2_wd
-    free_living_ctg                                 = '%s/round2_free_living_ctg.fa'                    % step_2_wd
-    free_living_16s_ref_file                        = '%s/round2_free_living_16s_refs.txt'              % step_2_wd
-    free_living_ctg_ref_file                        = '%s/round2_free_living_ctg_refs.txt'              % step_2_wd
-    free_living_blast_result                        = '%s/free_living_reads_blastn.tab'                 % step_2_wd
-    free_living_all                                 = '%s/round2_free_living_all.fa'                    % step_2_wd
-    free_living_all_fq_r1                           = '%s/round2_free_living_all_R1.fastq'              % step_2_wd
-    free_living_all_fq_r2                           = '%s/round2_free_living_all_R2.fastq'              % step_2_wd
-    free_living_all_fq                              = '%s/round2_free_living_all.fastq'                 % step_2_wd
-    free_living_R1                                  = '%s/round2_free_living_R1.fa'                     % step_2_wd
-    free_living_R2                                  = '%s/round2_free_living_R2.fa'                     % step_2_wd
-    free_living_UP                                  = '%s/round2_free_living_UP.fa'                     % step_2_wd
-    spades_wd                                       = '%s/mini_assembly_SPAdes_wd'                      % step_2_wd
-    spades_log                                      = '%s/SPAdes_stdout.txt'                            % step_2_wd
-    mira_manifest                                   = '%s/mira_manifest.txt'                            % step_2_wd
-    mira_stdout                                     = '%s/mira_stdout.txt'                              % step_2_wd
-    sam_file_mini_assembly_16s_P                    = '%s/scaffolds_16s_P.sam'                          % step_2_wd
-    sam_file_mini_assembly_16s_UP                   = '%s/scaffolds_16s_UP.sam'                         % step_2_wd
-    sam_file_mini_assembly_ctg_P                    = '%s/scaffolds_ctg_P.sam'                          % step_2_wd
-    sam_file_mini_assembly_ctg_UP                   = '%s/scaffolds_ctg_UP.sam'                         % step_2_wd
-    sam_file_mini_assembly_16s_P_stderr             = '%s/scaffolds_16s_P_bbmap_stderr.txt'             % step_2_wd
-    sam_file_mini_assembly_16s_UP_stderr            = '%s/scaffolds_16s_UP_bbmap_stderr.txt'            % step_2_wd
-    sam_file_mini_assembly_ctg_P_stderr             = '%s/scaffolds_ctg_P_bbmap_stderr.txt'             % step_2_wd
-    sam_file_mini_assembly_ctg_UP_stderr            = '%s/scaffolds_ctg_UP_bbmap_stderr.txt'            % step_2_wd
-    sam_file_mini_assembly_16s_P_best_match         = '%s/scaffolds_16s_P_best_match.sam'               % step_2_wd
-    sam_file_mini_assembly_16s_UP_best_match        = '%s/scaffolds_16s_UP_best_match.sam'              % step_2_wd
-    sam_file_mini_assembly_ctg_P_best_match         = '%s/scaffolds_ctg_P_best_match.sam'               % step_2_wd
-    sam_file_mini_assembly_ctg_UP_best_match        = '%s/scaffolds_ctg_UP_best_match.sam'              % step_2_wd
-    sam_file_mini_assembly_P                        = '%s/scaffolds_P.sam'                              % step_2_wd
-    sam_file_mini_assembly_UP                       = '%s/scaffolds_UP.sam'                             % step_2_wd
-    sam_file_mini_assembly_stderr_P                 = '%s/scaffolds_bbmap_stderr_P.txt'                 % step_2_wd
-    sam_file_mini_assembly_stderr_UP                = '%s/scaffolds_bbmap_stderr_UP.txt'                % step_2_wd
-    sam_file_mini_assembly_combined                 = '%s/scaffolds_combined.sam'                       % step_2_wd
-    sam_file_mini_assembly_16s_bowtie_log           = '%s/scaffolds_16s_bowtie.log'                     % step_2_wd
-    sam_file_mini_assembly_16s                      = '%s/scaffolds_16s_bowtie.sam'                     % step_2_wd
-    sam_file_mini_assembly_16s_single_clp           = '%s/scaffolds_16s_bowtie_single_clp.sam'          % step_2_wd
-    sam_file_mini_assembly_16s_single_clp_fmt       = '%s/scaffolds_16s_bowtie_single_clp_reformat.sam' % step_2_wd
-    sam_file_mini_assembly_16s_single_clp_fmt_log   = '%s/scaffolds_16s_bowtie_single_clp_reformat.log' % step_2_wd
-    sam_file_mini_assembly_ctg_bowtie_log           = '%s/scaffolds_ctg_bowtie.log'                     % step_2_wd
-    sam_file_mini_assembly_ctg                      = '%s/scaffolds_ctg_bowtie.sam'                     % step_2_wd
-    sam_file_mini_assembly_ctg_single_clp           = '%s/scaffolds_ctg_bowtie_single_clp.sam'          % step_2_wd
-    sam_file_mini_assembly_ctg_single_clp_fmt       = '%s/scaffolds_ctg_bowtie_single_clp_reformat.sam' % step_2_wd
-    sam_file_mini_assembly_ctg_single_clp_fmt_log   = '%s/scaffolds_ctg_bowtie_single_clp_reformat.log' % step_2_wd
-    sam_file_mini_assembly_16s_stderr               = '%s/scaffolds_16s_stderr.txt'                     % step_2_wd
-    sam_file_mini_assembly_ctg_stderr               = '%s/scaffolds_ctg_stderr.txt'                     % step_2_wd
-    sam_file_mini_assembly_16s_best_match           = '%s/scaffolds_16s_best_match.sam'                 % step_2_wd
-    sam_file_mini_assembly_ctg_best_match           = '%s/scaffolds_ctg_best_match.sam'                 % step_2_wd
-    sam_file_mini_assembly_both_best_match          = '%s/scaffolds_both_best_match.sam'                % step_2_wd
-    sam_file_mini_assembly_both_best_match_fa       = '%s/scaffolds_both_best_match.fa'                 % step_2_wd
-    mini_assembly_to_16s_reads                      = '%s/mini_assembly_to_16s_reads.txt'               % step_2_wd
-    mini_assembly_to_ctg_reads                      = '%s/mini_assembly_to_ctg_reads.txt'               % step_2_wd
-    stats_GapFilling_ctg                            = '%s/stats_GapFilling_ctg.txt'                     % step_2_wd
+    ###################################### check input file for depth calculation ######################################
 
 
-    ################################################# combine linkages from two steps #################################################
-
-    combined_linkage_file_tmp                       = '%s/combined_linkages_tmp.txt'                    % step_2_wd
-    combined_linkage_file                           = '%s/%s_identified_linkages_genome_level.txt'      % (working_directory, output_prefix)
-    combined_linkage_file_ctg_level                 = '%s/%s_identified_linkages_contig_level.txt'      % (working_directory, output_prefix)
-    linkage_plot_rd1_html                           = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
-    linkage_plot_rd2_html                           = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
-
-    parameter_str = '\n'.join(parameter_list)
-    report_and_log(('Specified parameters:\n%s'      % parameter_str), pwd_log_file, keep_quiet)
-    report_and_log(('Number of paired reads: %s'     % paired_reads_num), pwd_log_file, keep_quiet)
-    report_and_log(('Read length median: %s'         % read_len_median), pwd_log_file, keep_quiet)
-    report_and_log(('Read length max: %s'            % read_len_max), pwd_log_file, keep_quiet)
-    report_and_log(('Estimated total length: %s Gbp' % estimated_total_read_len_gbp), pwd_log_file, keep_quiet)
 
 
     #################################### calculate mean depth for genome/assemblies ####################################
 
-    # mean_depth_dict_ctg = {}
     mean_depth_dict_gnm = {}
     if min_16s_gnm_multiple > 0:
-        # if genomic_seq_type == 'ctg':
-        #     report_and_log(('Round 1: calculating depth for %s' % genomic_assemblies), pwd_log_file, keep_quiet)
-        # if genomic_seq_type == 'mag':
-        report_and_log(('Round 1: calculating depth for genomes in %s' % mag_folder), pwd_log_file, keep_quiet)
 
-        # get mean depth for contig
-        mean_depth_dict_ctg, ctg_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, combined_input_gnms, reads_file_r1, reads_file_r2, '', num_threads)
+        if depth_file_mag is None:
 
-        # write out ctg depth
-        depth_file_ctg_handle = open(depth_file_ctg, 'w')
-        for ctg in mean_depth_dict_ctg:
-            depth_file_ctg_handle.write('%s\t%s\n' % (ctg, mean_depth_dict_ctg[ctg]))
-        depth_file_ctg_handle.close()
+            report_and_log(('Round 1: depth info will be considered (but not provided!) for linking MAGs and 16S rRNA genes'), pwd_log_file, keep_quiet)
+            report_and_log(('Round 1: depth estimation is time consuming, if you already have them, exit the program now and provide them with -depth_16s and -depth_mag'), pwd_log_file, keep_quiet)
+            report_and_log(('Round 1: calculating MAG depth now, be patient!'), pwd_log_file, keep_quiet)
 
-        # get mean_depth_dict_gnm
-        # if genomic_seq_type == 'mag':
-        gnm_len_total_depth_dict = {}
-        for ctg in mean_depth_dict_ctg:
-            ctg_genome = ctg.split(gnm_to_ctg_connector)[0]
-            ctg_len = ctg_len_dict[ctg]
-            ctg_depth = mean_depth_dict_ctg[ctg]
-            ctg_total_depth = ctg_depth * ctg_len
-            if ctg_genome not in gnm_len_total_depth_dict:
-                gnm_len_total_depth_dict[ctg_genome] = [ctg_len, ctg_total_depth]
-            else:
-                gnm_len_total_depth_dict[ctg_genome][0] += ctg_len
-                gnm_len_total_depth_dict[ctg_genome][1] += ctg_total_depth
+            # get the number of paired reads
+            input_r1_line_num_file = '%s/R1_line_num.txt' % (mag_folder_in_wd)
+            input_r2_line_num_file = '%s/R2_line_num.txt' % (mag_folder_in_wd)
+            os.system('wc -l %s > %s' % (reads_file_r1, input_r1_line_num_file))
+            os.system('wc -l %s > %s' % (reads_file_r2, input_r2_line_num_file))
+            paired_r1_num = int(int(open(input_r1_line_num_file).readline().strip().split(' ')[0]) / 2)
+            paired_r2_num = int(int(open(input_r2_line_num_file).readline().strip().split(' ')[0]) / 2)
+            if reads_file_r1[-1] in ['Q', 'q']:
+                paired_r1_num = int(int(open(input_r1_line_num_file).readline().strip().split(' ')[0]) / 2)
+                paired_r2_num = int(int(open(input_r2_line_num_file).readline().strip().split(' ')[0]) / 2)
 
-        for each_gnm in gnm_len_total_depth_dict:
-            gnm_len = gnm_len_total_depth_dict[each_gnm][0]
-            gnm_total_depth = gnm_len_total_depth_dict[each_gnm][1]
-            gnm_mean_depth = float("{0:.6f}".format(gnm_total_depth / gnm_len))
-            mean_depth_dict_gnm[each_gnm] = gnm_mean_depth
+            if paired_r1_num != paired_r2_num:
+                print('Inconsistent number of reads found in r1 and r2, program exited!')
+                exit()
 
-        # write out gnm depth
-        depth_file_gnm_handle = open(depth_file_gnm, 'w')
-        for gnm in mean_depth_dict_gnm:
-            depth_file_gnm_handle.write('%s\t%s\n' % (gnm, mean_depth_dict_gnm[gnm]))
-        depth_file_gnm_handle.close()
+            # get the number of reads paired to subset
+            to_extract_reads_num = round(paired_r1_num * subsample_rate_for_depth_estimation)
+
+            # remember to use the same random seed to keep pairing
+            reads_file_r1_subset = '%s/input_R1_subset.fa' % mag_folder_in_wd
+            reads_file_r2_subset = '%s/input_R2_subset.fa' % mag_folder_in_wd
+            subsample_r1_cmd = 'seqtk sample -s100 %s %s > %s' % (reads_file_r1, to_extract_reads_num, reads_file_r1_subset)
+            subsample_r2_cmd = 'seqtk sample -s100 %s %s > %s' % (reads_file_r2, to_extract_reads_num, reads_file_r2_subset)
+
+            # subsample with multiprocessing
+            pool = mp.Pool(processes=2)
+            pool.map(os.system, [subsample_r1_cmd, subsample_r2_cmd])
+            pool.close()
+            pool.join()
+
+            # get mean depth for contig
+            mean_depth_dict_ctg, ctg_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, combined_input_gnms, reads_file_r1_subset, reads_file_r2_subset, '', subsample_rate_for_depth_estimation, num_threads)
+            os.system('rm %s' % reads_file_r1_subset)
+            os.system('rm %s' % reads_file_r2_subset)
+
+            # write out ctg depth
+            depth_file_ctg_handle = open(depth_file_ctg, 'w')
+            for ctg in mean_depth_dict_ctg:
+                depth_file_ctg_handle.write('%s\t%s\n' % (ctg, mean_depth_dict_ctg[ctg]))
+            depth_file_ctg_handle.close()
+
+            # get mean_depth_dict_gnm
+            gnm_len_total_depth_dict = {}
+            for ctg in mean_depth_dict_ctg:
+                ctg_genome = ctg.split(gnm_to_ctg_connector)[0]
+                ctg_len = ctg_len_dict[ctg]
+                ctg_depth = mean_depth_dict_ctg[ctg]
+                ctg_total_depth = ctg_depth * ctg_len
+                if ctg_genome not in gnm_len_total_depth_dict:
+                    gnm_len_total_depth_dict[ctg_genome] = [ctg_len, ctg_total_depth]
+                else:
+                    gnm_len_total_depth_dict[ctg_genome][0] += ctg_len
+                    gnm_len_total_depth_dict[ctg_genome][1] += ctg_total_depth
+
+            for each_gnm in gnm_len_total_depth_dict:
+                gnm_len = gnm_len_total_depth_dict[each_gnm][0]
+                gnm_total_depth = gnm_len_total_depth_dict[each_gnm][1]
+                gnm_mean_depth = float("{0:.6f}".format(gnm_total_depth / gnm_len))
+                mean_depth_dict_gnm[each_gnm] = gnm_mean_depth
+
+            # write out gnm depth
+            depth_file_gnm_handle = open(depth_file_gnm, 'w')
+            for gnm in mean_depth_dict_gnm:
+                depth_file_gnm_handle.write('%s\t%s\n' % (gnm, mean_depth_dict_gnm[gnm]))
+            depth_file_gnm_handle.close()
+        else:
+            report_and_log(('Round 1: read in MAG depth in %s' % depth_file_mag), pwd_log_file, keep_quiet)
+
+            # read in depth and store in mean_depth_dict_gnm here
+
 
 
     ###################################### calculate mean depth for 16S sequences ######################################
 
-    os.mkdir(bowtie_index_dir)
-    os.system('cp %s %s/' % (marker_gene_seqs, bowtie_index_dir))
+    # copy input 16S into wd
+    os.mkdir(input_16s_folder_in_wd)
+    os.system('cp %s %s/' % (marker_gene_seqs, input_16s_folder_in_wd))
 
+    # polish input 16S by default
     marker_path, marker_base, marker_ext = sep_path_basename_ext(marker_gene_seqs)
-    marker_gene_seqs_in_wd              = '%s/%s%s'             % (bowtie_index_dir, marker_base, marker_ext)
-    marker_gene_seqs_in_wd_no_ext       = '%s/%s'               % (bowtie_index_dir, marker_base)
-    marker_gene_seqs_polished           = '%s/%s.polished%s'    % (bowtie_index_dir, marker_base, marker_ext)
-    marker_gene_seqs_polished_gff       = '%s/%s.polished.gff'  % (bowtie_index_dir, marker_base)
-    marker_gene_seqs_polished_no_ext    = '%s/%s.polished'      % (bowtie_index_dir, marker_base)
+    input_16s_in_wd              = '%s/%s%s'             % (input_16s_folder_in_wd, marker_base, marker_ext)
+    input_16s_in_wd_no_ext       = '%s/%s'               % (input_16s_folder_in_wd, marker_base)
+    input_16s_polished           = '%s/%s.polished%s'    % (input_16s_folder_in_wd, marker_base, marker_ext)
+    input_16s_polished_gff       = '%s/%s.polished.gff'  % (input_16s_folder_in_wd, marker_base)
+    input_16s_polished_no_ext    = '%s/%s.polished'      % (input_16s_folder_in_wd, marker_base)
 
     if no_polish is False:
         report_and_log(('Round 1: polishing input 16S rRNA genes'), pwd_log_file, keep_quiet)
-        polish_16s(marker_gene_seqs_in_wd, marker_gene_seqs_polished)
-        os.system('cp %s %s/' % (marker_gene_seqs_polished, working_directory))
-        os.system('cp %s %s/' % (marker_gene_seqs_polished_gff, working_directory))
+        polish_16s(input_16s_in_wd, input_16s_polished)
+        os.system('cp %s %s/' % (input_16s_polished, working_directory))
+        os.system('cp %s %s/' % (input_16s_polished_gff, working_directory))
     else:
-        marker_gene_seqs_polished        = marker_gene_seqs_in_wd
-        marker_gene_seqs_polished_no_ext = marker_gene_seqs_in_wd_no_ext
+        input_16s_polished        = input_16s_in_wd
+        input_16s_polished_no_ext = input_16s_in_wd_no_ext
 
+    # calculate depth for input 16S
     mean_depth_dict_16s = {}
     if min_16s_gnm_multiple > 0:
 
-        report_and_log(('Round 1: calculating depth for %s' % marker_gene_seqs_polished), pwd_log_file, keep_quiet)
+        report_and_log(('Round 1: calculating depth for %s' % input_16s_polished), pwd_log_file, keep_quiet)
 
-        marker_gene_seqs_path, marker_gene_seqs_basename, marker_gene_seqs_extension = sep_path_basename_ext(marker_gene_seqs_polished)
-        pwd_16s = '%s/%s%s' % (bowtie_index_dir, marker_gene_seqs_basename, marker_gene_seqs_extension)
-
-        sortmerna_exe = 'sortmerna'
         if reads_file_16s is None:
-            print('Run SortMeRNA, be patient')
-            sortmerna_cmd = '%s --ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered.fasta,/srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered --reads MBARC26_R1_R2.fasta --aligned MBARC26_Matam16S_wd/MBARC26 --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a 16 -v > MBARC26_Matam16S_wd/MBARC26.SortMeRNA_stdout.txt' % (sortmerna_exe)
+            print('16S rRNA reads not provided, program exited!')
+            exit()
+            # print('Run SortMeRNA, be patient')
+            # sortmerna_cmd = '%s --ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered.fasta,/srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered --reads MBARC26_R1_R2.fasta --aligned MBARC26_Matam16S_wd/MBARC26 --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a 16 -v > MBARC26_Matam16S_wd/MBARC26.SortMeRNA_stdout.txt' % (sortmerna_exe)
+            # print(sortmerna_cmd)
             # os.system(sortmerna_cmd)
-            print(sortmerna_cmd)
 
         # separate paired and singleton reads
         reads_file_16s_path, reads_file_16s_basename, reads_file_16s_extension = sep_path_basename_ext(reads_file_16s)
-        reads_file_16s_r1           = '%s/%s_r1.fasta'          % (working_directory, reads_file_16s_basename)
-        reads_file_16s_r2           = '%s/%s_r2.fasta'          % (working_directory, reads_file_16s_basename)
-        reads_file_16s_singleton    = '%s/%s_singleton.fasta'   % (working_directory, reads_file_16s_basename)
+        reads_file_16s_r1        = '%s/%s_16S_R1.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
+        reads_file_16s_r2        = '%s/%s_16S_R2.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
+        reads_file_16s_singleton = '%s/%s_16S_UP.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
         sep_paired_and_singleton_reads(reads_file_16s, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton)
 
         # get mean depth for 16S sequences
-        mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, pwd_16s, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton, num_threads)
+        mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, input_16s_polished, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton, 1, num_threads)
 
         # write out 16s depth
         depth_file_16s_handle = open(depth_file_16s, 'w')
         for s16 in mean_depth_dict_16s:
             depth_file_16s_handle.write('%s\t%s\n' % (s16, mean_depth_dict_16s[s16]))
         depth_file_16s_handle.close()
+
+    ####################################################################################################################
+
+    # made 16s depth and genome depth comparable
+
+
+
 
 
     ####################################################################################################################
@@ -2244,17 +2200,17 @@ def link_16s(args):
     ######################################## map reads to marker gene sequences ########################################
 
     report_and_log(('Round 1: Mapping input reads to marker genes'), pwd_log_file, keep_quiet)
-    #bbmap_index_and_mapping_cmd = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, marker_gene_seqs_in_wd, reads_file_r1, reads_file_r2, input_reads_to_16s_sam, bbmap_parameter, input_reads_to_16s_sam_bbmap_stderr)
+    #bbmap_index_and_mapping_cmd = '%s ref=%s in=%s in2=%s outm=%s %s 2> %s' % (pwd_bbmap_exe, input_16s_in_wd, reads_file_r1, reads_file_r2, input_reads_to_16s_sam, bbmap_parameter, input_reads_to_16s_sam_bbmap_stderr)
     #report_and_log((bbmap_index_and_mapping_cmd), pwd_log_file, True)
     #os.system(bbmap_index_and_mapping_cmd)
 
-    bowtie_build_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, marker_gene_seqs_polished, marker_gene_seqs_polished_no_ext)
+    bowtie_build_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, input_16s_polished, input_16s_polished_no_ext)
     os.system(bowtie_build_cmd)
     report_and_log((bowtie_build_cmd), pwd_log_file, True)
 
     if filtered_sam is None:
 
-        bowtie_read_to_16s_cmd = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s' % (marker_gene_seqs_polished_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, input_reads_to_16s_sam_bowtie, num_threads, bowtie_parameter, input_reads_to_16s_sam_bowtie_log)
+        bowtie_read_to_16s_cmd = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s' % (input_16s_polished_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, input_reads_to_16s_sam_bowtie, num_threads, bowtie_parameter, input_reads_to_16s_sam_bowtie_log)
         report_and_log((bowtie_read_to_16s_cmd), pwd_log_file, True)
         os.system(bowtie_read_to_16s_cmd)
 
@@ -2800,11 +2756,11 @@ def link_16s(args):
 
             to_ignore = False
             if clp_pct_ratio != 'na':
-                if (clp_pct_ctg_side >= 65) and (clp_pct_ratio >= 5):
+                if (clp_pct_ctg_side >= clp_pct_ctg_side_max_num) and (clp_pct_ratio >= clp_pct_ratio_cutoff):
                     to_ignore = True
             else:
                 if (clp_pct_ctg_side != 'na') and (clp_pct_16s_side != 'na'):
-                    if clp_pct_ctg_side >= 65:
+                    if clp_pct_ctg_side >= clp_pct_ctg_side_max_num:
                         to_ignore = True
 
             if to_ignore is True:
@@ -2865,10 +2821,10 @@ def link_16s(args):
     report_and_log(('Round 1: Get pairwise 16S rRNA gene identities'), pwd_log_file, keep_quiet)
 
     # makeblastdn with marker gene sequences
-    makeblastdb_16s_cmd = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, marker_gene_seqs_polished)
+    makeblastdb_16s_cmd = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, input_16s_polished)
     os.system(makeblastdb_16s_cmd)
 
-    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, marker_gene_seqs_polished, marker_gene_seqs_polished, blast_results_all_vs_all_16s, blast_parameters)
+    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, input_16s_polished, input_16s_polished, blast_results_all_vs_all_16s, blast_parameters)
     os.system(all_vs_all_16s_blastn_cmd)
 
     pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
@@ -3089,7 +3045,7 @@ def link_16s(args):
     # prepare arguments for mapping_worker
     list_for_mapping_worker = []
     for each_marker_to_ctg in concatenate_dict:
-        list_for_mapping_worker.append([mafft_seq_folder, each_marker_to_ctg, concatenate_dict[each_marker_to_ctg], concatenated_ref_id_dict[each_marker_to_ctg], concatenate_pos_dict.get(each_marker_to_ctg, 0), mafft_seq_folder_local, bowtie_parameter])
+        list_for_mapping_worker.append([mafft_seq_folder, each_marker_to_ctg, concatenate_dict[each_marker_to_ctg], concatenated_ref_id_dict[each_marker_to_ctg], concatenate_pos_dict.get(each_marker_to_ctg, 0), bowtie_parameter])
 
     # run mapping_worker with multiprocessing
     pool = mp.Pool(processes=num_threads)
@@ -3101,6 +3057,96 @@ def link_16s(args):
     ####################################################################################################################
     ############################################### second round linking ###############################################
     ####################################################################################################################
+
+    ################################################# step 2 #################################################
+
+    free_living_16s_R1                              = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
+    free_living_16s_R2                              = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
+    free_living_16s_UP                              = '%s/round2_free_living_16s_UP.fa'                 % step_2_wd
+    marker_gene_seqs_1st_round_unlinked             = '%s/round_1_unlinked_16s.fa'                      % step_2_wd
+    combined_1st_round_unlinked_mags                = '%s/round_1_unlinked_gnm.fa'                      % step_2_wd
+    combined_1st_round_unlinked_mag_end_seq         = '%s/round_1_unlinked_gnm_end_%sbp.fa'             % (step_2_wd, end_seq_len)
+    rd1_unlinked_mag_end_seq_no_ext                 = '%s/round_1_unlinked_gnm_end_%sbp'                % (step_2_wd, end_seq_len)
+    combined_1st_round_unlinked_mags_sam            = '%s/round_1_unlinked_gnm.sam'                     % step_2_wd
+    rd1_unlinked_mags_sam_bowtie_log                = '%s/round_1_unlinked_gnm_bowtie.log'              % step_2_wd
+    rd1_unlinked_mags_sam_bowtie                    = '%s/round_1_unlinked_gnm_bowtie.sam'              % step_2_wd
+    rd1_unlinked_mags_sam_bowtie_reformat           = '%s/round_1_unlinked_gnm_bowtie_reformatted.sam'  % step_2_wd
+    rd1_unlinked_mags_sam_bowtie_reformat_log       = '%s/round_1_unlinked_gnm_bowtie_reformat.log'     % step_2_wd
+    combined_1st_round_unlinked_ctgs                = '%s/round_1_unlinked_ctg.fa'                      % step_2_wd
+    stats_GapFilling_file                           = '%s/stats_GapFilling_gnm.txt'                     % step_2_wd
+    stats_GapFilling_file_filtered                  = '%s/stats_GapFilling_gnm_filtered.txt'            % step_2_wd
+    free_living_ctg_R1                              = '%s/round2_free_living_ctg_R1.fa'                 % step_2_wd
+    free_living_ctg_R2                              = '%s/round2_free_living_ctg_R2.fa'                 % step_2_wd
+    free_living_ctg_UP                              = '%s/round2_free_living_ctg_UP.fa'                 % step_2_wd
+    free_living_16s                                 = '%s/round2_free_living_16s.fa'                    % step_2_wd
+    free_living_ctg                                 = '%s/round2_free_living_ctg.fa'                    % step_2_wd
+    free_living_16s_ref_file                        = '%s/round2_free_living_16s_refs.txt'              % step_2_wd
+    free_living_ctg_ref_file                        = '%s/round2_free_living_ctg_refs.txt'              % step_2_wd
+    free_living_blast_result                        = '%s/free_living_reads_blastn.tab'                 % step_2_wd
+    free_living_all                                 = '%s/round2_free_living_all.fa'                    % step_2_wd
+    free_living_all_fq_r1                           = '%s/round2_free_living_all_R1.fastq'              % step_2_wd
+    free_living_all_fq_r2                           = '%s/round2_free_living_all_R2.fastq'              % step_2_wd
+    free_living_all_fq                              = '%s/round2_free_living_all.fastq'                 % step_2_wd
+    free_living_R1                                  = '%s/round2_free_living_R1.fa'                     % step_2_wd
+    free_living_R2                                  = '%s/round2_free_living_R2.fa'                     % step_2_wd
+    free_living_UP                                  = '%s/round2_free_living_UP.fa'                     % step_2_wd
+    spades_wd                                       = '%s/mini_assembly_SPAdes_wd'                      % step_2_wd
+    spades_log                                      = '%s/SPAdes_stdout.txt'                            % step_2_wd
+    mira_manifest                                   = '%s/mira_manifest.txt'                            % step_2_wd
+    mira_stdout                                     = '%s/mira_stdout.txt'                              % step_2_wd
+    sam_file_mini_assembly_16s_P                    = '%s/scaffolds_16s_P.sam'                          % step_2_wd
+    sam_file_mini_assembly_16s_UP                   = '%s/scaffolds_16s_UP.sam'                         % step_2_wd
+    sam_file_mini_assembly_ctg_P                    = '%s/scaffolds_ctg_P.sam'                          % step_2_wd
+    sam_file_mini_assembly_ctg_UP                   = '%s/scaffolds_ctg_UP.sam'                         % step_2_wd
+    sam_file_mini_assembly_16s_P_stderr             = '%s/scaffolds_16s_P_bbmap_stderr.txt'             % step_2_wd
+    sam_file_mini_assembly_16s_UP_stderr            = '%s/scaffolds_16s_UP_bbmap_stderr.txt'            % step_2_wd
+    sam_file_mini_assembly_ctg_P_stderr             = '%s/scaffolds_ctg_P_bbmap_stderr.txt'             % step_2_wd
+    sam_file_mini_assembly_ctg_UP_stderr            = '%s/scaffolds_ctg_UP_bbmap_stderr.txt'            % step_2_wd
+    sam_file_mini_assembly_16s_P_best_match         = '%s/scaffolds_16s_P_best_match.sam'               % step_2_wd
+    sam_file_mini_assembly_16s_UP_best_match        = '%s/scaffolds_16s_UP_best_match.sam'              % step_2_wd
+    sam_file_mini_assembly_ctg_P_best_match         = '%s/scaffolds_ctg_P_best_match.sam'               % step_2_wd
+    sam_file_mini_assembly_ctg_UP_best_match        = '%s/scaffolds_ctg_UP_best_match.sam'              % step_2_wd
+    sam_file_mini_assembly_P                        = '%s/scaffolds_P.sam'                              % step_2_wd
+    sam_file_mini_assembly_UP                       = '%s/scaffolds_UP.sam'                             % step_2_wd
+    sam_file_mini_assembly_stderr_P                 = '%s/scaffolds_bbmap_stderr_P.txt'                 % step_2_wd
+    sam_file_mini_assembly_stderr_UP                = '%s/scaffolds_bbmap_stderr_UP.txt'                % step_2_wd
+    sam_file_mini_assembly_combined                 = '%s/scaffolds_combined.sam'                       % step_2_wd
+    sam_file_mini_assembly_16s_bowtie_log           = '%s/scaffolds_16s_bowtie.log'                     % step_2_wd
+    sam_file_mini_assembly_16s                      = '%s/scaffolds_16s_bowtie.sam'                     % step_2_wd
+    sam_file_mini_assembly_16s_single_clp           = '%s/scaffolds_16s_bowtie_single_clp.sam'          % step_2_wd
+    sam_file_mini_assembly_16s_single_clp_fmt       = '%s/scaffolds_16s_bowtie_single_clp_reformat.sam' % step_2_wd
+    sam_file_mini_assembly_16s_single_clp_fmt_log   = '%s/scaffolds_16s_bowtie_single_clp_reformat.log' % step_2_wd
+    sam_file_mini_assembly_ctg_bowtie_log           = '%s/scaffolds_ctg_bowtie.log'                     % step_2_wd
+    sam_file_mini_assembly_ctg                      = '%s/scaffolds_ctg_bowtie.sam'                     % step_2_wd
+    sam_file_mini_assembly_ctg_single_clp           = '%s/scaffolds_ctg_bowtie_single_clp.sam'          % step_2_wd
+    sam_file_mini_assembly_ctg_single_clp_fmt       = '%s/scaffolds_ctg_bowtie_single_clp_reformat.sam' % step_2_wd
+    sam_file_mini_assembly_ctg_single_clp_fmt_log   = '%s/scaffolds_ctg_bowtie_single_clp_reformat.log' % step_2_wd
+    sam_file_mini_assembly_16s_stderr               = '%s/scaffolds_16s_stderr.txt'                     % step_2_wd
+    sam_file_mini_assembly_ctg_stderr               = '%s/scaffolds_ctg_stderr.txt'                     % step_2_wd
+    sam_file_mini_assembly_16s_best_match           = '%s/scaffolds_16s_best_match.sam'                 % step_2_wd
+    sam_file_mini_assembly_ctg_best_match           = '%s/scaffolds_ctg_best_match.sam'                 % step_2_wd
+    sam_file_mini_assembly_both_best_match          = '%s/scaffolds_both_best_match.sam'                % step_2_wd
+    sam_file_mini_assembly_both_best_match_fa       = '%s/scaffolds_both_best_match.fa'                 % step_2_wd
+    mini_assembly_to_16s_reads                      = '%s/mini_assembly_to_16s_reads.txt'               % step_2_wd
+    mini_assembly_to_ctg_reads                      = '%s/mini_assembly_to_ctg_reads.txt'               % step_2_wd
+    stats_GapFilling_ctg                            = '%s/stats_GapFilling_ctg.txt'                     % step_2_wd
+
+
+    ################################################# combine linkages from two steps #################################################
+
+    combined_linkage_file_tmp                       = '%s/combined_linkages_tmp.txt'                    % step_2_wd
+    combined_linkage_file                           = '%s/%s_identified_linkages_genome_level.txt'      % (working_directory, output_prefix)
+    combined_linkage_file_ctg_level                 = '%s/%s_identified_linkages_contig_level.txt'      % (working_directory, output_prefix)
+    linkage_plot_rd1_html                           = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
+    linkage_plot_rd2_html                           = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
+
+    parameter_str = '\n'.join(parameter_list)
+    report_and_log(('Specified parameters:\n%s'      % parameter_str), pwd_log_file, keep_quiet)
+    report_and_log(('Number of paired reads: %s'     % paired_reads_num), pwd_log_file, keep_quiet)
+    report_and_log(('Read length median: %s'         % read_len_median), pwd_log_file, keep_quiet)
+    report_and_log(('Read length max: %s'            % read_len_max), pwd_log_file, keep_quiet)
+    report_and_log(('Estimated total length: %s Gbp' % estimated_total_read_len_gbp), pwd_log_file, keep_quiet)
+
 
     #################### get the sequences of 1st round unlinked marker genes and genomic sequences ####################
 
@@ -3121,7 +3167,7 @@ def link_16s(args):
             linked_16s_to_gnm_set.add('%s%s%s' % (id_16s, marker_to_ctg_gnm_Key_connector, id_gnm))
 
     # get the sequence of unlinked genomic seqs
-    renamed_gnm_re = '%s/*.%s' % (renamed_mag_folder, mag_file_extension)
+    renamed_gnm_re = '%s/*.%s' % (prefixed_mag_folder, mag_file_extension)
     renamed_gnm_list = [os.path.basename(file_name) for file_name in glob.glob(renamed_gnm_re)]
     renamed_gnm_list_no_ext = ['.'.join(i.split('.')[:-1]) for i in renamed_gnm_list]
 
@@ -3129,7 +3175,7 @@ def link_16s(args):
     unlinked_mag_list_with_pwd = []
     for renamed_mag in renamed_gnm_list_no_ext:
         if renamed_mag not in linked_genomic_seq_set:
-            pwd_renamed_mag = '%s/%s.%s' % (renamed_mag_folder, renamed_mag, mag_file_extension)
+            pwd_renamed_mag = '%s/%s.%s' % (prefixed_mag_folder, renamed_mag, mag_file_extension)
             unlinked_mag_list_with_pwd.append(pwd_renamed_mag)
 
     # combine unlinked mags
@@ -3137,7 +3183,7 @@ def link_16s(args):
     os.system(cat_cmd)
 
 
-    ######################################## extract reads flanking unlinked 16S ends #######################################
+    ######################################## extract reads matched to unlinked 16S #######################################
 
     # get all rd1 linking reads
     all_linking_reads_rd1 = set()
@@ -3185,29 +3231,18 @@ def link_16s(args):
     bowtie_cmd_unlinked_ctg = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s' % (rd1_unlinked_mag_end_seq_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, rd1_unlinked_mags_sam_bowtie, num_threads, bowtie_parameter, rd1_unlinked_mags_sam_bowtie_log)
     os.system(bowtie_cmd_unlinked_ctg)
 
-    # remove both_ends_clp
-    remove_both_ends_clp(rd1_unlinked_mags_sam_bowtie, rd1_unlinked_mags_sam_bowtie_single_clp)
-    bbmap_reformat_rd1_unlinked_mags_sam  = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (rd1_unlinked_mags_sam_bowtie_single_clp, rd1_unlinked_mags_sam_bowtie_single_clp_reformat, rd1_unlinked_mags_sam_bowtie_single_clp_reformat_log)
+    # convert cigar format
+    bbmap_reformat_rd1_unlinked_mags_sam  = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (rd1_unlinked_mags_sam_bowtie, rd1_unlinked_mags_sam_bowtie_reformat, rd1_unlinked_mags_sam_bowtie_reformat_log)
     os.system(bbmap_reformat_rd1_unlinked_mags_sam)
-    #keep_best_matches_in_sam(rd1_unlinked_mags_sam_bowtie_single_clp_reformat, combined_1st_round_unlinked_mags_sam_best_match)
-    if keep_short_M is True:
-        keep_best_matches_in_sam_keep_short_M(rd1_unlinked_mags_sam_bowtie_single_clp_reformat, min_M_len_ctg, combined_1st_round_unlinked_mags_sam_best_match)
-    else:
-        keep_best_matches_in_sam_drop_short_M(rd1_unlinked_mags_sam_bowtie_single_clp_reformat, min_M_len_ctg, combined_1st_round_unlinked_mags_sam_best_match)
 
-    get_unmapped_mates_seq(combined_1st_round_unlinked_mags_sam_best_match, reads_file_r1_fasta, reads_file_r2_fasta, combined_1st_round_unlinked_mags_sam_best_match_unmapped_mates)
 
-    # rm tmp files
-    os.system('rm %s' % rd1_unlinked_mags_sam_bowtie)
-    os.system('rm %s' % rd1_unlinked_mags_sam_bowtie_single_clp )
-    os.system('rm %s' % rd1_unlinked_mags_sam_bowtie_single_clp_reformat)
+    ##################################################### read in sam file ####################################################
 
-    report_and_log(('Round 2: Analysing mapping results'), pwd_log_file, keep_quiet)
+    report_and_log(('Round 2: read in sam file'), pwd_log_file, keep_quiet)
 
-    # parse sam file
     round_2_ctg_end_seq_len_dict = {}
     round_2_MappingRecord_dict = {}
-    for each_line in open(combined_1st_round_unlinked_mags_sam_best_match):
+    for each_line in open(rd1_unlinked_mags_sam_bowtie_reformat):
         each_line_split = each_line.strip().split('\t')
         if each_line.startswith('@'):
             rd2_ref_id = ''
@@ -3219,369 +3254,66 @@ def link_16s(args):
                     rd2_ref_len = int(each_element[3:])
             round_2_ctg_end_seq_len_dict[rd2_ref_id] = rd2_ref_len
         else:
-            store_read_seq = False
-            read_id = each_line_split[0]
-            read_id_base = '.'.join(read_id.split('.')[:-1])
-            read_strand = read_id.split('.')[-1]
-            read_flag = int(each_line_split[1])
             cigar = each_line_split[5]
-            read_seq = each_line_split[9]
             if cigar != '*':
+                read_id = each_line_split[0]
+                read_id_base = '.'.join(read_id.split('.')[:-1])
+                read_strand = read_id.split('.')[-1]
                 ref_id = each_line_split[2]
                 ref_pos = int(each_line_split[3])
-                ref_id_with_pos = '%s_pos_%s' % (ref_id, ref_pos)
-                cigar_splitted = cigar_splitter(cigar)
-                aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-                if (mismatch_pct <= mismatch_cutoff) and (aligned_len >= min_M_len_ctg):
-
-                    # check if clp in the middle
-                    clip_in_middle = False
-                    if ('S' in cigar) or ('s' in cigar):
-                        clip_in_middle = True
-                        if (cigar_splitted[0][-1] in ['S', 's']) and (ref_pos == 1):
-                            clip_in_middle = False
-                        if (cigar_splitted[-1][-1] in ['S', 's']):
-                            if (ref_pos + aligned_len - 1) == round_2_ctg_end_seq_len_dict[ref_id]:
-                                clip_in_middle = False
-
-                    # if not clp in the middle
-                    if clip_in_middle is False:
-                        if read_id_base not in round_2_MappingRecord_dict:
-                            round_2_MappingRecord_dict[read_id_base] = MappingRecord()
-
-                        if read_strand == '1':
-                            round_2_MappingRecord_dict[read_id_base].r1_refs[ref_id_with_pos] = cigar
-                            round_2_MappingRecord_dict[read_id_base].r1_cigar_to_flag[cigar] = read_flag
-                            round_2_MappingRecord_dict[read_id_base].r1_filtered_refs.add(ref_id)
-
-                        if read_strand == '2':
-                            round_2_MappingRecord_dict[read_id_base].r2_refs[ref_id_with_pos] = cigar
-                            round_2_MappingRecord_dict[read_id_base].r2_cigar_to_flag[cigar] = read_flag
-                            round_2_MappingRecord_dict[read_id_base].r2_filtered_refs.add(ref_id)
-
-                        if clipping_len >= min_M_len_ctg:
-                            store_read_seq = True
-                else:
-                    store_read_seq = True
-            else:
-                store_read_seq = True
-
-            # store_read_seq into dict
-            if store_read_seq is True:
-
-                # turn back if read reverse complemented
-                read_rc = sam_flag_to_rc(read_flag)
-                read_seq_to_store = read_seq
-                if read_rc is True:
-                    read_seq_to_store = get_rc(read_seq)
 
                 if read_id_base not in round_2_MappingRecord_dict:
                     round_2_MappingRecord_dict[read_id_base] = MappingRecord()
+
                 if read_strand == '1':
-                    if round_2_MappingRecord_dict[read_id_base].r1_seq == '':
-                        round_2_MappingRecord_dict[read_id_base].r1_seq = read_seq_to_store
+                    if ref_id not in round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2:
+                        round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2[ref_id] = {ref_pos: cigar}
+                    else:
+                        round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2[ref_id][ref_pos] = cigar
+
                 if read_strand == '2':
-                    if round_2_MappingRecord_dict[read_id_base].r2_seq == '':
-                        round_2_MappingRecord_dict[read_id_base].r2_seq = read_seq_to_store
+                    if ref_id not in round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2:
+                        round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2[ref_id] = {ref_pos: cigar}
+                    else:
+                        round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2[ref_id][ref_pos] = cigar
 
-    # add sequences of unmapped mates to mp dict
-    for each_read in SeqIO.parse(combined_1st_round_unlinked_mags_sam_best_match_unmapped_mates, 'fasta'):
-        read_id = str(each_read.id)
-        read_basename = '.'.join(read_id.split('.')[:-1])
-        read_strand = read_id.split('.')[-1]
-        if read_basename in round_2_MappingRecord_dict:
-            if read_strand == '1':
-                round_2_MappingRecord_dict[read_basename].r1_seq = str(each_read.seq)
-            if read_strand == '2':
-                round_2_MappingRecord_dict[read_basename].r2_seq = str(each_read.seq)
 
-    # parse round_2_MappingRecord_dict
-    free_living_ctg_refs_file_handle = open(free_living_ctg_ref_file, 'w')
-    free_living_ctg_R1_handle = open(free_living_ctg_R1, 'w')
-    free_living_ctg_R2_handle = open(free_living_ctg_R2, 'w')
-    free_living_ctg_UP_handle = open(free_living_ctg_UP, 'w')
-    for read_basename in round_2_MappingRecord_dict.copy():
-        read_mr = round_2_MappingRecord_dict[read_basename]
-        r1_ref_cigar_list = list(read_mr.r1_refs.values())
-        r2_ref_cigar_list = list(read_mr.r2_refs.values())
-        best_cigar, max_clp, max_clp_location = get_max_clp_and_index(r1_ref_cigar_list, r2_ref_cigar_list)
+    ##################################################### parse round_2_MappingRecord_dict ####################################################
 
-        if (read_mr.r1_refs == {}) and (read_mr.r2_refs != {}):
+    report_and_log(('Round 2: analysing mappping results'), pwd_log_file, keep_quiet)
 
-            if len(read_mr.r2_refs) == 1:
+    processed_num = 0
+    to_extract_read_base = set()
+    for each_mp in round_2_MappingRecord_dict.copy():
 
-                r2_ref_cigar = r2_ref_cigar_list[0]
-                r2_ref_flag = read_mr.r2_cigar_to_flag[r2_ref_cigar]
-                r2_ref_cigar_rc = sam_flag_to_rc(r2_ref_flag)
+        ctg_mp_record = round_2_MappingRecord_dict[each_mp]
+        ctg_refs_to_ignore = set()
 
-                # consider the unmapped mate only
-                if max_clp < min_M_len_ctg:
-                    read_mr.consider_round_2 = True
-                    read_mr.consider_r2_unmapped_mate = True
+        ########## get lowest mismatch for r1/r2 ctg refs ##########
 
-                    # write out refs
-                    free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
+        # get r1_ref_cigar_set
+        r1_ref_cigar_set = set()
+        for each_pos_dict in ctg_mp_record.r1_ctg_ref_dict_rd2.values():
+            each_pos_dict_values = {each_pos_dict[i] for i in each_pos_dict}
+            r1_ref_cigar_set.update(each_pos_dict_values)
 
-                    # write out sequence
-                    free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
-                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
+        # get r2_ref_cigar_set
+        r2_ref_cigar_set = set()
+        for each_pos_dict in ctg_mp_record.r2_ctg_ref_dict_rd2.values():
+            each_pos_dict_values = {each_pos_dict[i] for i in each_pos_dict}
+            r2_ref_cigar_set.update(each_pos_dict_values)
 
-                # consider both of unmapped mate and clipping part
-                else:
-                    r2_ref_no_pos = list(read_mr.r2_refs.keys())[0].split('_pos_')[0]
-                    r2_ref_pos = int(list(read_mr.r2_refs.keys())[0].split('_pos_')[1])
+        r1_ref_min_mismatch = get_min_mismatch_from_cigar_list(r1_ref_cigar_set, min_M_len_ctg)
+        r2_ref_min_mismatch = get_min_mismatch_from_cigar_list(r2_ref_cigar_set, min_M_len_ctg)
+        MappingRecord_dict[each_mp].r1_ctg_refs_lowest_mismatch_rd2 = r1_ref_min_mismatch
+        MappingRecord_dict[each_mp].r2_ctg_refs_lowest_mismatch_rd2 = r2_ref_min_mismatch
 
-                    if (r2_ref_no_pos[-1]) == (max_clp_location[-1]) == 'l':
-                        read_mr.consider_round_2 = True
-                        read_mr.consider_r2_unmapped_mate = True
-                        if clp_read_for_assembly is True:
-                            read_mr.consider_r2_clipping_part = True
 
-                        # write out refs
-                        free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
-                        if clp_read_for_assembly is True:
-                            free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
 
-                        # if r2_ref_cigar_rc is False:
-                        #     read_mr.r2_clipping_seq = read_mr.r2_seq[:max_clp]
-                        # if r2_ref_cigar_rc is True:
-                        #     r2_seq_rc = get_rc(read_mr.r2_seq)
-                        #     r2_clipping_seq_rc = r2_seq_rc[:max_clp]
-                        #     read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
 
-                    elif (r2_ref_no_pos[-1]) == (max_clp_location[-1]) == 'r':
-                        read_mr.consider_round_2 = True
-                        read_mr.consider_r2_unmapped_mate = True
-                        if clp_read_for_assembly is True:
-                            read_mr.consider_r2_clipping_part = True
 
-                        # write out refs
-                        free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
-                        if clp_read_for_assembly is True:
-                            free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
 
-                        # if r2_ref_cigar_rc is False:
-                        #     read_mr.r2_clipping_seq = read_mr.r2_seq[-max_clp:]
-                        # if r2_ref_cigar_rc is True:
-                        #     r2_seq_rc = get_rc(read_mr.r2_seq)
-                        #     r2_clipping_seq_rc = r2_seq_rc[-max_clp:]
-                        #     read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
-
-                    else:  # mapped to unwanted end, ignore
-                        round_2_MappingRecord_dict.pop(read_basename)
-
-                    # write out sequence
-                    if read_mr.consider_round_2 is True:
-
-                        if clp_read_for_assembly is True:
-                            free_living_ctg_R1_handle.write('>%s.1\n' % read_basename)
-                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
-                            free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
-                        else:
-                            free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
-                            free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
-
-            else:  # r2 mapped to multiple refs, ignore
-                round_2_MappingRecord_dict.pop(read_basename)
-
-        elif (read_mr.r1_refs != {}) and (read_mr.r2_refs == {}):
-
-            if len(read_mr.r1_refs) == 1:
-
-                r1_ref_cigar = r1_ref_cigar_list[0]
-                r1_ref_flag = read_mr.r1_cigar_to_flag[r1_ref_cigar]
-                r1_ref_cigar_rc = sam_flag_to_rc(r1_ref_flag)
-
-                # consider the unmapped mate only
-                if max_clp < min_M_len_ctg:
-                    read_mr.consider_round_2 = True
-                    read_mr.consider_r1_unmapped_mate = True
-
-                    # write out refs
-                    free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
-
-                    # write out sequence
-                    free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                    free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
-
-                # consider both of unmapped mate and clipping part
-                else:
-                    r1_ref_no_pos = list(read_mr.r1_refs.keys())[0].split('_pos_')[0]
-                    r1_ref_pos = int(list(read_mr.r1_refs.keys())[0].split('_pos_')[1])
-
-                    if (r1_ref_no_pos[-1]) == (max_clp_location[-1]) == 'l':
-                        read_mr.consider_round_2 = True
-                        read_mr.consider_r1_unmapped_mate = True
-                        if clp_read_for_assembly is True:
-                            read_mr.consider_r1_clipping_part = True
-
-                        # write out refs
-                        if clp_read_for_assembly is True:
-                            free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
-                        free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
-
-                        # if r1_ref_cigar_rc is False:
-                        #     read_mr.r1_clipping_seq = read_mr.r1_seq[:max_clp]
-                        # if r1_ref_cigar_rc is True:
-                        #     r1_seq_rc = get_rc(read_mr.r1_seq)
-                        #     r1_clipping_seq_rc = r1_seq_rc[:max_clp]
-                        #     read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
-
-                    elif (r1_ref_no_pos[-1]) == (max_clp_location[-1]) == 'r':
-                        read_mr.consider_round_2 = True
-                        read_mr.consider_r1_unmapped_mate = True
-                        if clp_read_for_assembly is True:
-                            read_mr.consider_r1_clipping_part = True
-
-                        # write out refs
-                        if clp_read_for_assembly is True:
-                            free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
-                        free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
-
-                        # if r1_ref_cigar_rc is False:
-                        #     read_mr.r1_clipping_seq = read_mr.r1_seq[-max_clp:]
-                        # if r1_ref_cigar_rc is True:
-                        #     r1_seq_rc = get_rc(read_mr.r1_seq)
-                        #     r1_clipping_seq_rc = r1_seq_rc[-max_clp:]
-                        #     read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
-
-                    else:  # mapped to unwanted end, ignore
-                        round_2_MappingRecord_dict.pop(read_basename)
-
-                    # write out sequence
-                    if read_mr.consider_round_2 is True:
-                        # write out R1 fa
-                        if clp_read_for_assembly is True:
-                            free_living_ctg_R1_handle.write('>%s.1\n' % read_basename)
-                            free_living_ctg_R1_handle.write('%s\n' % read_mr.r1_seq)
-                            free_living_ctg_R2_handle.write('>%s.2\n' % read_basename)
-                            free_living_ctg_R2_handle.write('%s\n' % read_mr.r2_seq)
-                        else:
-                            free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                            free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
-
-            else:  # r1 mapped to multiple refs, ignore
-                round_2_MappingRecord_dict.pop(read_basename)
-
-        elif (read_mr.r1_refs != {}) and (read_mr.r2_refs != {}):
-            if max_clp >= min_M_len_ctg:
-                if clp_read_for_assembly is True:
-
-                    if (len(read_mr.r1_refs) == 1) and (len(read_mr.r2_refs) == 1):
-                        r1_ref_no_pos   = list(read_mr.r1_refs.keys())[0].split('_pos_')[0]
-                        r2_ref_no_pos   = list(read_mr.r2_refs.keys())[0].split('_pos_')[0]
-                        r1_ref_pos      = int(list(read_mr.r1_refs.keys())[0].split('_pos_')[1])
-                        r2_ref_pos      = int(list(read_mr.r2_refs.keys())[0].split('_pos_')[1])
-
-                        if r1_ref_no_pos == r2_ref_no_pos:
-                            if (r1_ref_no_pos[-1]) == (r2_ref_no_pos[-1]) == (max_clp_location[-1]):
-
-                                if (max_clp_location == 'r1_l') and (r1_ref_pos == 1):
-                                    read_mr.consider_round_2 = True
-                                    read_mr.consider_r1_clipping_part = True
-
-                                    # write out refs
-                                    free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
-
-                                    # best_cigar_flag = read_mr.r1_cigar_to_flag[best_cigar]
-                                    # best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
-
-                                    # if best_cigar_rc is False:
-                                    #     read_mr.r1_clipping_seq = read_mr.r1_seq[:max_clp]
-                                    # if best_cigar_rc is True:
-                                    #     r1_seq_rc = get_rc(read_mr.r1_seq)
-                                    #     r1_clipping_seq_rc = r1_seq_rc[:max_clp]
-                                    #     read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
-
-                                elif (max_clp_location == 'r2_l') and (r2_ref_pos == 1):
-                                    read_mr.consider_round_2 = True
-                                    read_mr.consider_r2_clipping_part = True
-
-                                    # write out refs
-                                    free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
-
-                                    # best_cigar_flag = read_mr.r2_cigar_to_flag[best_cigar]
-                                    # best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
-
-                                    # if best_cigar_rc is False:
-                                    #     read_mr.r2_clipping_seq = read_mr.r2_seq[:max_clp]
-                                    # if best_cigar_rc is True:
-                                    #     r2_seq_rc = get_rc(read_mr.r2_seq)
-                                    #     r2_clipping_seq_rc = r2_seq_rc[:max_clp]
-                                    #     read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
-
-                                elif (max_clp_location == 'r1_r') and (r1_ref_pos >= (end_seq_len / 5)):
-                                    read_mr.consider_round_2 = True
-                                    read_mr.consider_r1_clipping_part = True
-
-                                    # write out refs
-                                    free_living_ctg_refs_file_handle.write('%s.1\t%s\n' % (read_basename, ','.join(read_mr.r1_filtered_refs)))
-
-                                    # best_cigar_flag = read_mr.r1_cigar_to_flag[best_cigar]
-                                    # best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
-
-                                    # if best_cigar_rc is False:
-                                    #     read_mr.r1_clipping_seq = read_mr.r1_seq[-max_clp:]
-                                    # if best_cigar_rc is True:
-                                    #     r1_seq_rc = get_rc(read_mr.r1_seq)
-                                    #     r1_clipping_seq_rc = r1_seq_rc[-max_clp:]
-                                    #     read_mr.r1_clipping_seq = get_rc(r1_clipping_seq_rc)
-
-                                elif (max_clp_location == 'r2_r') and (r2_ref_pos >= (end_seq_len / 5)):
-                                    read_mr.consider_round_2 = True
-                                    read_mr.consider_r2_clipping_part = True
-
-                                    # write out refs
-                                    free_living_ctg_refs_file_handle.write('%s.2\t%s\n' % (read_basename, ','.join(read_mr.r2_filtered_refs)))
-
-                                    # best_cigar_flag = read_mr.r2_cigar_to_flag[best_cigar]
-                                    # best_cigar_rc = sam_flag_to_rc(best_cigar_flag)
-
-                                    # if best_cigar_rc is False:
-                                    #     read_mr.r2_clipping_seq = read_mr.r2_seq[-max_clp:]
-                                    # if best_cigar_rc is True:
-                                    #     r2_seq_rc = get_rc(read_mr.r2_seq)
-                                    #     r2_clipping_seq_rc = r2_seq_rc[-max_clp:]
-                                    #     read_mr.r2_clipping_seq = get_rc(r2_clipping_seq_rc)
-
-                                else:  # not too many of them, ignore now, maybe worth check later,
-                                    round_2_MappingRecord_dict.pop(read_basename)
-                                    # print('%s\tr1_refs:\t%s\t%s' % (read_basename, read_mr.r1_refs, read_mr.r1_seq))
-                                    # print('%s\tr2_refs:\t%s\t%s' % (read_basename, read_mr.r2_refs, read_mr.r2_seq))
-
-                                # write out sequence
-                                if read_mr.consider_round_2 is True:
-
-                                    if read_mr.consider_r1_clipping_part is True:
-                                        free_living_ctg_UP_handle.write('>%s.1\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r1_seq)
-
-                                    if read_mr.consider_r2_clipping_part is True:
-                                        free_living_ctg_UP_handle.write('>%s.2\n' % read_basename)
-                                        free_living_ctg_UP_handle.write('%s\n' % read_mr.r2_seq)
-
-                            else:  # mapped to unwanted end, ignore
-                                round_2_MappingRecord_dict.pop(read_basename)
-
-                        else:  # r1 and r2 mapped to different refs
-                            # not too many of them, ignore now
-                            round_2_MappingRecord_dict.pop(read_basename)
-
-                    else:  # r1 or r2 mapped to multiple refs
-                        # not too many of them, ignore now
-                        round_2_MappingRecord_dict.pop(read_basename)
-
-            else:  # ignore and remove element from dict
-                round_2_MappingRecord_dict.pop(read_basename)
-
-        else:  # ignore and remove element from dict
-            round_2_MappingRecord_dict.pop(read_basename)
-
-    free_living_ctg_R1_handle.close()
-    free_living_ctg_R2_handle.close()
-    free_living_ctg_UP_handle.close()
-    free_living_ctg_refs_file_handle.close()
+    ##################################################### combine reads for assembly ####################################################
 
     os.system('cat %s %s %s > %s' % (free_living_16s_R1, free_living_16s_R2, free_living_16s_UP, free_living_16s))
     os.system('cat %s %s %s > %s' % (free_living_ctg_R1, free_living_ctg_R2, free_living_ctg_UP, free_living_ctg))
@@ -3991,11 +3723,15 @@ if __name__ == '__main__':
     link_16s_parser_input_files.add_argument('-r2',         required=True,  metavar='',                                     help='paired reads r2 (fasta format)')
     link_16s_parser_input_files.add_argument('-marker',     required=True,  metavar='',                                     help='marker gene sequences')
     #link_16s_parser_input_files.add_argument('-g',          required=False, metavar='',             default=None,           help='genomic sequences')
-    link_16s_parser_input_files.add_argument('-mag',        required=False, metavar='',             default=None,           help='metagenome-assembled-genome (MAG) folder')
+    link_16s_parser_input_files.add_argument('-mag',        required=True, metavar='',                                      help='metagenome-assembled-genome (MAG) folder')
     link_16s_parser_input_files.add_argument('-x',          required=False, metavar='',             default='fasta',        help='MAG file extension, (default: %(default)s)')
-    link_16s_parser_input_files.add_argument('-depth',      required=False, metavar='', type=float, default=0,              help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, (default: %(default)s)')
-    link_16s_parser_input_files.add_argument('-r16s',       required=False, metavar='',                                     help='16S reads')
     link_16s_parser_input_files.add_argument('-no_polish',  required=False, action="store_true",                            help='skip polishing 16S before linking')
+
+    # depth related
+    link_16s_parser_input_files.add_argument('-depth_ratio',required=False, metavar='', type=float, default=0,              help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, (default: %(default)s)')
+    link_16s_parser_input_files.add_argument('-depth_16s',  required=False, metavar='',             default=None,           help='depth info for 16S rRNA genes')
+    link_16s_parser_input_files.add_argument('-depth_mag',  required=False, metavar='',             default=None,           help='depth info for MAGs')
+    link_16s_parser_input_files.add_argument('-r16s',       required=False, metavar='',                                     help='16S reads for depth calculation')
 
     # 16S rRNA gene related parameters
     link_16s_parser_16s.add_argument('-min_iden_16s',       required=False, metavar='', type=float, default=98,             help='minimum similarity for 16S sequences to be assigned to the same genome, (default: %(default)s)')
@@ -4031,7 +3767,6 @@ if __name__ == '__main__':
     # link_16s_parser_preset.add_argument('-very_specific',   required=False, action="store_true",                            help='for greater specificity, shortcut for  "min_overlap_iden 100  min_overlap_cov 75 min_overlap_len 50 min_overlap_num 10"')
 
     # program settings
-    link_16s_parser_others.add_argument('-local_sam',       required=False, metavar='', default='',                         help='local folder for sam files')
     link_16s_parser_others.add_argument('-bbmap_mem',       required=False, metavar='', type=int,   default=10,             help='bbmap memory allocation (in gigabyte), (default: %(default)s)')
     link_16s_parser_others.add_argument('-t',               required=False, metavar='', type=int,   default=1,              help='number of threads, (default: %(default)s)')
     link_16s_parser_others.add_argument('-tmp',             required=False, action="store_true",                            help='keep temporary files')
@@ -4057,4 +3792,6 @@ if __name__ == '__main__':
 5. for clipping mapped reads, the mismatch of clipping part must be 0
 6. insert size is important
 7. check duplicate sequences in input files
+8. a genome depth of 0 will triggle error !!!!!!
+
 '''

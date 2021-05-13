@@ -19,7 +19,7 @@
 import sys
 import warnings
 import argparse
-
+from MarkerMAG.MarkerMAG_config import config_dict
 
 def version(config_dict):
     version_file = open('%s/VERSION' % config_dict['config_file_path'])
@@ -34,6 +34,8 @@ def print_main_help():
     link             ->  link MAGs with marker genes
     rename_reads     ->  rename paired reads
     matam_16s        ->  reconstruct 16S from metagenome with Matam
+    get_16s_depth    ->  get 16S depth
+    get_mag_depth    ->  get MAG depth
     uclust_16s       ->  cluster 16S genes with Usearch
     barrnap_16s      ->  identify 16S genes with Barrnap
     subsample_reads  ->  subsample reads with Usearch
