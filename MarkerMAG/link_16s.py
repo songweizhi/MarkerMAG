@@ -175,13 +175,80 @@ def sep_paired_and_singleton_reads(fasta_in, fasta_out_r1, fasta_out_r2, fasta_o
     fasta_out_singleton_handle.close()
 
 
+def remove_clp_in_middle(sam_in, sam_out):
+
+    sam_out_handle = open(sam_out, 'w')
+
+    marker_len_dict = {}
+    for each_read in open(sam_in):
+        each_read_split = each_read.strip().split('\t')
+        if each_read.startswith('@'):
+            sam_out_handle.write(each_read)
+
+            marker_id = ''
+            marker_len = 0
+            for each_element in each_read_split:
+                if each_element.startswith('SN:'):
+                    marker_id = each_element[3:]
+                if each_element.startswith('LN:'):
+                    marker_len = int(each_element[3:])
+            marker_len_dict[marker_id] = marker_len
+        else:
+            cigar = each_read_split[5]
+
+            # check if clp in the middle
+            if ('S' not in cigar) and ('s' not in cigar):
+                sam_out_handle.write(each_read)
+            else:
+                ref_id = each_read_split[2]
+                ref_pos = int(each_read_split[3])
+                cigar_splitted = cigar_splitter(cigar)
+                r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(cigar_splitted)
+
+                clip_in_middle = True
+                if (cigar_splitted[0][-1] in ['S', 's']) and (ref_pos == 1):
+                    clip_in_middle = False
+                if (cigar_splitted[-1][-1] in ['S', 's']):
+                    if (ref_pos + r1_aligned_len - 1) == marker_len_dict[ref_id]:
+                        clip_in_middle = False
+
+                if clip_in_middle is False:
+                    sam_out_handle.write(each_read)
+
+    sam_out_handle.close()
+
+
+def remove_high_mismatch(sam_in, mismatch_cutoff, sam_out):
+    sam_out_handle = open(sam_out, 'w')
+    for each_read in open(sam_in):
+        each_read_split = each_read.strip().split('\t')
+        if each_read.startswith('@'):
+            sam_out_handle.write(each_read)
+        else:
+            cigar = each_read_split[5]
+            if cigar == '*':
+                sam_out_handle.write(each_read)
+            else:
+                cigar_splitted = cigar_splitter(cigar)
+                r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(cigar_splitted)
+                if r1_mismatch_pct <= mismatch_cutoff:
+                    sam_out_handle.write(each_read)
+    sam_out_handle.close()
+
+
 def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_r2, reads_unpaired, subsample_rate, num_threads):
 
     ref_seq_file_path, ref_seq_file_basename, ref_seq_file_extension = sep_path_basename_ext(ref_seq)
 
-    sam_file        = '%s/%s.sam'          % (ref_seq_file_path, ref_seq_file_basename)
-    sam_file_sorted = '%s/%s_sorted.sam'   % (ref_seq_file_path, ref_seq_file_basename)
-    coverage_file   = '%s/%s_cov.txt'      % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file                                                            = '%s/%s.sam'                                                           % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_one_end_clp                                                = '%s/%s_one_end_clp.sam'                                               % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_one_end_clp_no_middle                                      = '%s/%s_one_end_clp_no_middle.sam'                                     % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_one_end_clp_no_middle_reformatted                          = '%s/%s_one_end_clp_no_middle_reformatted.sam'                         % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_one_end_clp_no_middle_reformatted_log                      = '%s/%s_one_end_clp_no_middle_reformatted.log'                         % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_one_end_clp_no_middle_reformatted_best_match               = '%s/%s_one_end_clp_no_middle_reformatted_best_match.sam'              % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_one_end_clp_no_middle_reformatted_best_match_low_mismatch  = '%s/%s_one_end_clp_no_middle_reformatted_best_match_low_mismatch.sam' % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_sorted                                                     = '%s/%s_sorted.sam'                                                    % (ref_seq_file_path, ref_seq_file_basename)
+    coverage_file                                                       = '%s/%s_cov.txt'                                                       % (ref_seq_file_path, ref_seq_file_basename)
 
     # build reference index
     cmd_bowtie2_build   = 'bowtie2-build --quiet --threads %s -f %s %s/%s' % (num_threads, ref_seq, ref_seq_file_path, ref_seq_file_basename)
@@ -189,23 +256,38 @@ def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_
         os.system(cmd_bowtie2_build)
 
     # mapping
+    # if reads_unpaired == '':
+    #     cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
+    # else:
+    #     cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -U %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, reads_unpaired, sam_file, num_threads)
+
+    # mapping
     if reads_unpaired == '':
-        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
+        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -U %s,%s -S %s -p %s --local --all --no-unal -N 1 -L 30 -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
     else:
-        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -U %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, reads_unpaired, sam_file, num_threads)
+        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -U %s,%s,%s -S %s -p %s --local --all --no-unal -N 1 -L 30 -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, reads_unpaired, sam_file, num_threads)
+
     os.system(cmd_bowtie2_mapping)
 
+    # filter mapping
+    remove_both_ends_clp(sam_file, sam_file_one_end_clp)
+    remove_clp_in_middle(sam_file_one_end_clp, sam_file_one_end_clp_no_middle)
+    bbmap_reformat_cmd = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (sam_file_one_end_clp_no_middle, sam_file_one_end_clp_no_middle_reformatted, sam_file_one_end_clp_no_middle_reformatted_log)
+    os.system(bbmap_reformat_cmd)
+    keep_best_matches_in_sam_keep_short_M(sam_file_one_end_clp_no_middle_reformatted, 35, sam_file_one_end_clp_no_middle_reformatted_best_match)
+    remove_high_mismatch(sam_file_one_end_clp_no_middle_reformatted_best_match, 2, sam_file_one_end_clp_no_middle_reformatted_best_match_low_mismatch)
+
     # sort mapping
-    cmd_samtools_sort = 'samtools sort %s -o %s' % (sam_file, sam_file_sorted)
+    cmd_samtools_sort = 'samtools sort %s -o %s' % (sam_file_one_end_clp_no_middle_reformatted_best_match_low_mismatch, sam_file_sorted)
     os.system(cmd_samtools_sort)
 
     # get mean depth
-    cmd_samtools_coverage = 'samtools coverage %s -o %s' % (sam_file_sorted, coverage_file)
+    cmd_samtools_coverage = 'samtools coverage --ff 4 %s -o %s' % (sam_file_sorted, coverage_file)
     os.system(cmd_samtools_coverage)
 
     # remove sam files
     os.system('rm %s' % sam_file)
-    os.system('rm %s' % sam_file_sorted)
+    # os.system('rm %s' % sam_file_sorted)
 
     # store mean depth into dict
     mean_depth_dict_ctg = {}
@@ -1811,6 +1893,60 @@ def get_min_max_cigar_S(cigar_list):
     return min_cigar_S, max_cigar_S
 
 
+def get_ctg_mean_depth_by_samtools_coverage_global(index_ref, ref_seq, reads_r1, reads_r2, reads_unpaired, subsample_rate, num_threads):
+
+    ref_seq_file_path, ref_seq_file_basename, ref_seq_file_extension = sep_path_basename_ext(ref_seq)
+
+    sam_file                                      = '%s/%s.sam'                                     % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_reformatted                          = '%s/%s_reformatted.sam'                         % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_reformatted_log                      = '%s/%s_reformatted.log'                         % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_reformatted_best_match               = '%s/%s_reformatted_best_match.sam'              % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_reformatted_best_match_low_mismatch  = '%s/%s_reformatted_best_match_low_mismatch.sam' % (ref_seq_file_path, ref_seq_file_basename)
+    sam_file_sorted                               = '%s/%s_sorted.sam'                              % (ref_seq_file_path, ref_seq_file_basename)
+    coverage_file                                 = '%s/%s_cov.txt'                                 % (ref_seq_file_path, ref_seq_file_basename)
+
+    # build reference index
+    cmd_bowtie2_build   = 'bowtie2-build --quiet --threads %s -f %s %s/%s' % (num_threads, ref_seq, ref_seq_file_path, ref_seq_file_basename)
+    if index_ref is True:
+        os.system(cmd_bowtie2_build)
+
+    # mapping
+    cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -U %s,%s -S %s -p %s --all --no-unal -N 1 -L 30 -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
+    os.system(cmd_bowtie2_mapping)
+
+    # filter mapping
+    bbmap_reformat_cmd = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (sam_file, sam_file_reformatted, sam_file_reformatted_log)
+    os.system(bbmap_reformat_cmd)
+    keep_best_matches_in_sam_keep_short_M(sam_file_reformatted, 35, sam_file_reformatted_best_match)
+    remove_high_mismatch(sam_file_reformatted_best_match, 2, sam_file_reformatted_best_match_low_mismatch)
+
+    # sort mapping
+    cmd_samtools_sort = 'samtools sort %s -o %s' % (sam_file_reformatted_best_match_low_mismatch, sam_file_sorted)
+    os.system(cmd_samtools_sort)
+
+    # get mean depth
+    cmd_samtools_coverage = 'samtools coverage --ff 4 %s -o %s' % (sam_file_sorted, coverage_file)
+    os.system(cmd_samtools_coverage)
+
+    # remove sam files
+    os.system('rm %s' % sam_file)
+    # os.system('rm %s' % sam_file_sorted)
+
+    # store mean depth into dict
+    mean_depth_dict_ctg = {}
+    ctg_len_dict = {}
+    for each_ctg_depth in open(coverage_file):
+        if not each_ctg_depth.startswith('#'):
+            ctg_depth_split = each_ctg_depth.strip().split('\t')
+            ctg_id = ctg_depth_split[0]
+            ctg_len = int(ctg_depth_split[2])
+            ctg_depth = float(ctg_depth_split[6]) * (1 / subsample_rate)
+            mean_depth_dict_ctg[ctg_id] = ctg_depth
+            ctg_len_dict[ctg_id] = ctg_len
+
+    return mean_depth_dict_ctg, ctg_len_dict
+
+
 def link_16s(args):
 
     ###################################################### file in/out #####################################################
@@ -1837,17 +1973,16 @@ def link_16s(args):
     within_gnm_linkage_num_diff         = args['link_num_diff']
     min_M_len_16s                       = args['min_M_len_16s']
     min_M_len_ctg                       = args['min_M_len_ctg']
-    filtered_sam                        = args['filtered_sam']
+    reads_vs_16s_sam                    = args['sam16s']
     no_polish                           = args['no_polish']
 
     # depth related
-    reads_file_16s                      = args['r16s']
     min_16s_gnm_multiple                = args['depth_ratio']
     depth_file_16s                      = args['depth_16s']
     depth_file_mag                      = args['depth_mag']
 
     # by assembly
-    round_2_spades                      = args['spades']
+    round_2_mira                        = args['mira']
     mira_tmp_dir                        = args['mira_tmp']
     clp_read_for_assembly               = args['assemble_clp']
     max_mini_assembly_link_num_diff_between_ctg_16s = args['link_bias_rd2']
@@ -1860,9 +1995,6 @@ def link_16s(args):
     pwd_bbmap_exe                       = 'bbmap.sh'
     pwd_spades_exe                      = 'spades.py'
     seqtk_exe                           = 'seqtk'
-    mafft_exe                           = 'mafft'
-    mview_exe                           = 'mview'
-    sortmerna_exe                       = 'sortmerna'
 
     marker_to_ctg_gnm_Key_connector                 = '___M___'
     gnm_to_ctg_connector                            = '___C___'
@@ -1910,6 +2042,7 @@ def link_16s(args):
 
     # create working directory
     working_directory = '%s_MarkerMAG_wd' % output_prefix
+    pwd_log_file      = '%s/%s.log'       % (working_directory, output_prefix)
 
     if (os.path.isdir(working_directory) is True) and (force_overwrite is False):
         print('Working directory detected, program exited!')
@@ -1959,15 +2092,18 @@ def link_16s(args):
     estimated_total_read_len_gbp = (read_len_median*paired_reads_num*2)/(1024*1024*1024)
     estimated_total_read_len_gbp = float("{0:.1f}".format(estimated_total_read_len_gbp))
 
-    parameter_list = []
-    parameter_list.append('mismatch_cutoff:\t%s (%s)'   % (mismatch_cutoff, '%'))
-    parameter_list.append('min_M_len_16s:\t%s (bp)'     % min_M_len_16s)
-    parameter_list.append('min_M_len_ctg:\t%s (bp)'     % min_M_len_ctg)
-    parameter_list.append('min_M_pct:\t%s (%s)'         % (min_M_pct, '%'))
-    parameter_list.append('min_link_num:\t%s'           % min_link_num)
-    parameter_list.append('ctg_level_min_link:\t%s'     % (ctg_level_min_link))
-    parameter_list.append('end_seq_len:\t%s (bp)'       % (end_seq_len))
-    parameter_list.append('max_mini_assembly_link_num_diff_between_ctg_16s:\t%s (%s)'   % (max_mini_assembly_link_num_diff_between_ctg_16s, '%'))
+    report_and_log(('mismatch_cutoff:\t%s%s'                % (mismatch_cutoff, '%')), pwd_log_file, keep_quiet)
+    report_and_log(('min_M_len_16s:\t%sbp'                  % min_M_len_16s), pwd_log_file, keep_quiet)
+    report_and_log(('min_M_len_ctg:\t%sbp'                  % min_M_len_ctg), pwd_log_file, keep_quiet)
+    report_and_log(('min_M_pct:\t%s%s'                      % (min_M_pct, '%')), pwd_log_file, keep_quiet)
+    report_and_log(('min_link_num:\t%s'                     % min_link_num), pwd_log_file, keep_quiet)
+    report_and_log(('ctg_level_min_link:\t%s'               % (ctg_level_min_link)), pwd_log_file, keep_quiet)
+    report_and_log(('end_seq_len:\t%sbp'                    % (end_seq_len)), pwd_log_file, keep_quiet)
+    report_and_log(('max_mini_assembly_link_num_diff_between_ctg_16s:\t%s%s'   % (max_mini_assembly_link_num_diff_between_ctg_16s, '%')), pwd_log_file, keep_quiet)
+    report_and_log(('Number of paired reads: %s'            % paired_reads_num), pwd_log_file, keep_quiet)
+    report_and_log(('Read length median: %sbp'              % read_len_median), pwd_log_file, keep_quiet)
+    report_and_log(('Read length max: %sbp'                 % read_len_max), pwd_log_file, keep_quiet)
+    report_and_log(('Estimated total length: %sGbp'         % estimated_total_read_len_gbp), pwd_log_file, keep_quiet)
 
 
     ######################## check genomic sequence type and prepare files for making blast db #########################
@@ -1994,9 +2130,6 @@ def link_16s(args):
 
     ########################################### define folder and file name ############################################
 
-    marker_gene_seqs_file_path, marker_gene_seqs_file_basename, marker_gene_seqs_file_extension = sep_path_basename_ext(marker_gene_seqs)
-
-    pwd_log_file                                = '%s/%s.log'                                              % (working_directory, output_prefix)
     input_16s_folder_in_wd                      = '%s/input_16S'                                           % step_1_wd
     input_reads_to_16s_sam_bowtie               = '%s/%s_input_reads_to_16S_bowtie.sam'                    % (step_1_wd, output_prefix)
     input_reads_to_16s_sam_bowtie_log           = '%s/%s_input_reads_to_16S_bowtie.log'                    % (step_1_wd, output_prefix)
@@ -2006,7 +2139,7 @@ def link_16s(args):
     pairwise_marker_similarity                  = '%s/%s_pairwise_marker_similarity.txt'                   % (step_1_wd, output_prefix)
     depth_file_ctg                              = '%s/%s_mean_depth_ctg.txt'                               % (step_1_wd, output_prefix)
     depth_file_gnm                              = '%s/%s_mean_depth_gnm.txt'                               % (step_1_wd, output_prefix)
-    depth_file_16s                              = '%s/%s_mean_depth_16s.txt'                               % (step_1_wd, output_prefix)
+    depth_file_16s_calculated                   = '%s/%s_mean_depth_16s.txt'                               % (step_1_wd, output_prefix)
     link_stats_combined                         = '%s/%s_stats_combined.txt'                               % (step_1_wd, output_prefix)
     link_stats_combined_filtered_s1             = '%s/%s_stats_combined_filtered.txt'                      % (step_1_wd, output_prefix)
     linking_reads_rd1                           = '%s/%s_linking_reads_rd1.txt'                            % (step_1_wd, output_prefix)
@@ -2051,13 +2184,16 @@ def link_16s(args):
 
     #################################### calculate mean depth for genome/assemblies ####################################
 
+    reads_file_r1_subset = '%s/input_R1_subset.fa' % mag_folder_in_wd
+    reads_file_r2_subset = '%s/input_R2_subset.fa' % mag_folder_in_wd
+
     mean_depth_dict_gnm = {}
     if min_16s_gnm_multiple > 0:
 
         if depth_file_mag is None:
 
             report_and_log(('Round 1: depth info will be considered (but not provided!) for linking MAGs and 16S rRNA genes'), pwd_log_file, keep_quiet)
-            report_and_log(('Round 1: depth estimation is time consuming, if you already have them, exit the program now and provide them with -depth_16s and -depth_mag'), pwd_log_file, keep_quiet)
+            report_and_log(('Round 1: depth estimation is time consuming, if you already have them, specify with -depth_16s and -depth_mag'), pwd_log_file, keep_quiet)
             report_and_log(('Round 1: calculating MAG depth now, be patient!'), pwd_log_file, keep_quiet)
 
             # get the number of paired reads
@@ -2079,8 +2215,6 @@ def link_16s(args):
             to_extract_reads_num = round(paired_r1_num * subsample_rate_for_depth_estimation)
 
             # remember to use the same random seed to keep pairing
-            reads_file_r1_subset = '%s/input_R1_subset.fa' % mag_folder_in_wd
-            reads_file_r2_subset = '%s/input_R2_subset.fa' % mag_folder_in_wd
             subsample_r1_cmd = 'seqtk sample -s100 %s %s > %s' % (reads_file_r1, to_extract_reads_num, reads_file_r1_subset)
             subsample_r2_cmd = 'seqtk sample -s100 %s %s > %s' % (reads_file_r2, to_extract_reads_num, reads_file_r2_subset)
 
@@ -2091,9 +2225,9 @@ def link_16s(args):
             pool.join()
 
             # get mean depth for contig
-            mean_depth_dict_ctg, ctg_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, combined_input_gnms, reads_file_r1_subset, reads_file_r2_subset, '', subsample_rate_for_depth_estimation, num_threads)
-            os.system('rm %s' % reads_file_r1_subset)
-            os.system('rm %s' % reads_file_r2_subset)
+            mean_depth_dict_ctg, ctg_len_dict = get_ctg_mean_depth_by_samtools_coverage_global(True, combined_input_gnms, reads_file_r1_subset, reads_file_r2_subset, '', subsample_rate_for_depth_estimation, num_threads)
+            #os.system('rm %s' % reads_file_r1_subset)
+            #os.system('rm %s' % reads_file_r2_subset)
 
             # write out ctg depth
             depth_file_ctg_handle = open(depth_file_ctg, 'w')
@@ -2126,10 +2260,14 @@ def link_16s(args):
                 depth_file_gnm_handle.write('%s\t%s\n' % (gnm, mean_depth_dict_gnm[gnm]))
             depth_file_gnm_handle.close()
         else:
-            report_and_log(('Round 1: read in MAG depth in %s' % depth_file_mag), pwd_log_file, keep_quiet)
+            report_and_log(('Round 1: read in provided MAG depth'), pwd_log_file, keep_quiet)
 
             # read in depth and store in mean_depth_dict_gnm here
-
+            for each_mag_depth in open(depth_file_mag):
+                each_mag_depth_split = each_mag_depth.strip().split('\t')
+                mag_id = each_mag_depth_split[0]
+                mag_depth = float(each_mag_depth_split[1])
+                mean_depth_dict_gnm[mag_id] = mag_depth
 
 
     ###################################### calculate mean depth for 16S sequences ######################################
@@ -2159,31 +2297,44 @@ def link_16s(args):
     mean_depth_dict_16s = {}
     if min_16s_gnm_multiple > 0:
 
-        report_and_log(('Round 1: calculating depth for %s' % input_16s_polished), pwd_log_file, keep_quiet)
+        if depth_file_16s is None:
 
-        if reads_file_16s is None:
-            print('16S rRNA reads not provided, program exited!')
-            exit()
-            # print('Run SortMeRNA, be patient')
-            # sortmerna_cmd = '%s --ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered.fasta,/srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered --reads MBARC26_R1_R2.fasta --aligned MBARC26_Matam16S_wd/MBARC26 --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a 16 -v > MBARC26_Matam16S_wd/MBARC26.SortMeRNA_stdout.txt' % (sortmerna_exe)
-            # print(sortmerna_cmd)
-            # os.system(sortmerna_cmd)
+            report_and_log(('Round 1: calculating depth for 16S'), pwd_log_file, keep_quiet)
 
-        # separate paired and singleton reads
-        reads_file_16s_path, reads_file_16s_basename, reads_file_16s_extension = sep_path_basename_ext(reads_file_16s)
-        reads_file_16s_r1        = '%s/%s_16S_R1.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
-        reads_file_16s_r2        = '%s/%s_16S_R2.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
-        reads_file_16s_singleton = '%s/%s_16S_UP.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
-        sep_paired_and_singleton_reads(reads_file_16s, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton)
+            # if reads_file_16s is None:
+            #     print('16S rRNA reads not provided, program exited!')
+            #     exit()
+                # print('Run SortMeRNA, be patient')
+                # sortmerna_cmd = '%s --ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered.fasta,/srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered --reads MBARC26_R1_R2.fasta --aligned MBARC26_Matam16S_wd/MBARC26 --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a 16 -v > MBARC26_Matam16S_wd/MBARC26.SortMeRNA_stdout.txt' % (sortmerna_exe)
+                # print(sortmerna_cmd)
+                # os.system(sortmerna_cmd)
 
-        # get mean depth for 16S sequences
-        mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage(True, input_16s_polished, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton, 1, num_threads)
+            # separate paired and singleton reads
+            # reads_file_16s_path, reads_file_16s_basename, reads_file_16s_extension = sep_path_basename_ext(reads_file_16s)
+            # reads_file_16s_r1        = '%s/%s_16S_R1.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
+            # reads_file_16s_r2        = '%s/%s_16S_R2.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
+            # reads_file_16s_singleton = '%s/%s_16S_UP.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
+            # sep_paired_and_singleton_reads(reads_file_16s, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton)
 
-        # write out 16s depth
-        depth_file_16s_handle = open(depth_file_16s, 'w')
-        for s16 in mean_depth_dict_16s:
-            depth_file_16s_handle.write('%s\t%s\n' % (s16, mean_depth_dict_16s[s16]))
-        depth_file_16s_handle.close()
+            # get mean depth for 16S sequences
+            mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage_global(True, input_16s_polished, reads_file_r1_subset, reads_file_r2_subset, '', subsample_rate_for_depth_estimation, num_threads)
+            #os.system('rm %s' % reads_file_r1_subset)
+            #os.system('rm %s' % reads_file_r2_subset)
+
+            # write out 16s depth
+            depth_file_16s_handle = open(depth_file_16s_calculated, 'w')
+            for s16 in mean_depth_dict_16s:
+                depth_file_16s_handle.write('%s\t%s\n' % (s16, mean_depth_dict_16s[s16]))
+            depth_file_16s_handle.close()
+        else:
+            report_and_log(('Round 1: read in provided 16S depth'), pwd_log_file, keep_quiet)
+
+            # read in depth and store in mean_depth_dict_gnm here
+            for each_16s_depth in open(depth_file_16s):
+                each_16s_depth_split = each_16s_depth.strip().split('\t')
+                s16_id = each_16s_depth_split[0]
+                s16_depth = float(each_16s_depth_split[1])
+                mean_depth_dict_16s[s16_id] = s16_depth
 
     ####################################################################################################################
 
@@ -2208,19 +2359,18 @@ def link_16s(args):
     os.system(bowtie_build_cmd)
     report_and_log((bowtie_build_cmd), pwd_log_file, True)
 
-    if filtered_sam is None:
-
+    if reads_vs_16s_sam is None:
         bowtie_read_to_16s_cmd = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s' % (input_16s_polished_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, input_reads_to_16s_sam_bowtie, num_threads, bowtie_parameter, input_reads_to_16s_sam_bowtie_log)
         report_and_log((bowtie_read_to_16s_cmd), pwd_log_file, True)
         os.system(bowtie_read_to_16s_cmd)
-
-        report_and_log(('Round 1: transforming cigar format from 1.3 to 1.4'), pwd_log_file, keep_quiet)
-        bbmap_reformat_cmd = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (input_reads_to_16s_sam_bowtie, input_reads_to_16s_sam, input_reads_to_16s_sam_reformat_log)
-        report_and_log((bbmap_reformat_cmd), pwd_log_file, True)
-        os.system(bbmap_reformat_cmd)
-        os.system('rm %s' % input_reads_to_16s_sam_bowtie )
     else:
-        input_reads_to_16s_sam = filtered_sam
+        input_reads_to_16s_sam_bowtie = reads_vs_16s_sam
+
+    report_and_log(('Round 1: transforming cigar format from 1.3 to 1.4'), pwd_log_file, keep_quiet)
+    bbmap_reformat_cmd = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (input_reads_to_16s_sam_bowtie, input_reads_to_16s_sam, input_reads_to_16s_sam_reformat_log)
+    report_and_log((bbmap_reformat_cmd), pwd_log_file, True)
+    os.system(bbmap_reformat_cmd)
+    #os.system('rm %s' % input_reads_to_16s_sam_bowtie )
 
 
     ##################################################### read in sam file ####################################################
@@ -2268,7 +2418,7 @@ def link_16s(args):
 
     ##################################################### parse MappingRecord_dict ####################################################
 
-    report_and_log(('Round 1: analysing mappping results stored in MappingRecord dictionary'), pwd_log_file, keep_quiet)
+    report_and_log(('Round 1: analysing mappping results'), pwd_log_file, keep_quiet)
 
     processed_num = 0
     to_extract_read_base = set()
@@ -2443,12 +2593,19 @@ def link_16s(args):
         if (processed_num % report_interval == 0):
             processed_pct = processed_num * 100 / len(MappingRecord_dict)
             processed_pct = float("{0:.2f}".format(processed_pct))
-            report_and_log(('Processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%')), pwd_log_file, keep_quiet)
+            report_and_log(('Round 1: processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%')), pwd_log_file, keep_quiet)
+
+    report_and_log(('Round 1: processed %sk (100%s)' % (float("{0:.2f}".format(processed_num/1000)), '%')), pwd_log_file, keep_quiet)
 
     # remove unqualified mapping record from dict
     for each_mp in MappingRecord_dict.copy():
         if MappingRecord_dict[each_mp].qualified_reads is False:
             MappingRecord_dict.pop(each_mp)
+
+
+    ############################# map extracted reads to combined input genomes #############################
+
+    report_and_log(('Round 1: extracting sequences of reads matched to 16S'), pwd_log_file, keep_quiet)
 
     # write out id of reads to extract
     to_extract_read_base_list = sorted([i for i in to_extract_read_base])
@@ -2489,6 +2646,8 @@ def link_16s(args):
 
 
     ############################# map extracted reads to combined input genomes #############################
+
+    report_and_log(('Round 1: mapping extracted reads to input genomes'), pwd_log_file, keep_quiet)
 
     combined_input_gnms_no_ext = '.'.join(combined_input_gnms.split('.')[:-1])
     bowtie_build_input_gnm_cmd      = 'bowtie2-build --quiet --threads %s -f %s %s'       % (num_threads, combined_input_gnms, combined_input_gnms_no_ext)
@@ -2545,6 +2704,8 @@ def link_16s(args):
 
 
     ##################################################### parse MappingRecord_dict ####################################################
+
+    report_and_log(('Round 1: analysing mappping results'), pwd_log_file, keep_quiet)
 
     processed_num = 0
     for each_mp in MappingRecord_dict:
@@ -2678,7 +2839,9 @@ def link_16s(args):
         if (processed_num % report_interval == 0):
             processed_pct = processed_num * 100 / len(MappingRecord_dict)
             processed_pct = float("{0:.2f}".format(processed_pct))
-            report_and_log(('Processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%')), pwd_log_file, keep_quiet)
+            report_and_log(('Round 1: processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%')), pwd_log_file, keep_quiet)
+
+    report_and_log(('Round 1: processed %sk (100%s)' % (float("{0:.2f}".format(processed_num/1000)), '%')), pwd_log_file, keep_quiet)
 
 
     ##################################################### get linkages from MappingRecord_dict #####################################################
@@ -2838,6 +3001,8 @@ def link_16s(args):
 
 
     ####################################### filter_linkages_iteratively ########################################
+
+    report_and_log(('Round 1: filtering linkages iteratively'), pwd_log_file, keep_quiet)
 
     filter_linkages_iteratively(link_stats_combined, 'Number', pairwise_16s_iden_dict,
                                 mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple,
@@ -3058,7 +3223,7 @@ def link_16s(args):
     ############################################### second round linking ###############################################
     ####################################################################################################################
 
-    ################################################# step 2 #################################################
+    ################################################# define file name #################################################
 
     free_living_16s_R1                              = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
     free_living_16s_R2                              = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
@@ -3132,22 +3297,6 @@ def link_16s(args):
     stats_GapFilling_ctg                            = '%s/stats_GapFilling_ctg.txt'                     % step_2_wd
 
 
-    ################################################# combine linkages from two steps #################################################
-
-    combined_linkage_file_tmp                       = '%s/combined_linkages_tmp.txt'                    % step_2_wd
-    combined_linkage_file                           = '%s/%s_identified_linkages_genome_level.txt'      % (working_directory, output_prefix)
-    combined_linkage_file_ctg_level                 = '%s/%s_identified_linkages_contig_level.txt'      % (working_directory, output_prefix)
-    linkage_plot_rd1_html                           = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
-    linkage_plot_rd2_html                           = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
-
-    parameter_str = '\n'.join(parameter_list)
-    report_and_log(('Specified parameters:\n%s'      % parameter_str), pwd_log_file, keep_quiet)
-    report_and_log(('Number of paired reads: %s'     % paired_reads_num), pwd_log_file, keep_quiet)
-    report_and_log(('Read length median: %s'         % read_len_median), pwd_log_file, keep_quiet)
-    report_and_log(('Read length max: %s'            % read_len_max), pwd_log_file, keep_quiet)
-    report_and_log(('Estimated total length: %s Gbp' % estimated_total_read_len_gbp), pwd_log_file, keep_quiet)
-
-
     #################### get the sequences of 1st round unlinked marker genes and genomic sequences ####################
 
     os.mkdir(step_2_wd)
@@ -3186,40 +3335,42 @@ def link_16s(args):
     ######################################## extract reads matched to unlinked 16S #######################################
 
     # get all rd1 linking reads
-    all_linking_reads_rd1 = set()
+    all_linking_reads_for_rd1_linkages = set()
     for each_link in marker_to_ctg_linkage_num_dict_min3_passed_ratio_check:
         current_linking_reads = marker_to_ctg_linking_reads_dict[each_link]
         marker_to_gnm_key = each_link.split(gnm_to_ctg_connector)[0]
         if marker_to_gnm_key in linked_16s_to_gnm_set:
-            all_linking_reads_rd1.update(current_linking_reads)
+            all_linking_reads_for_rd1_linkages.update(current_linking_reads)
 
-    # get sequences of r1 reads free living 16s
+    # get sequences of r1 matched to unlinked 16S in round one
     free_living_16s_R1_handle = open(free_living_16s_R1, 'w')
     for each_r1 in SeqIO.parse(rd1_extracted_p_r1, 'fasta'):
         each_r1_base = '.'.join(each_r1.id.split('.')[:-1])
-        if each_r1_base not in all_linking_reads_rd1:
+        if each_r1_base not in all_linking_reads_for_rd1_linkages:
             free_living_16s_R1_handle.write('>%s\n' % each_r1.id)
             free_living_16s_R1_handle.write('%s\n' % str(each_r1.seq))
     free_living_16s_R1_handle.close()
 
-    # get sequences of r2 reads free living 16s
+    # get sequences of r2 matched to unlinked 16S in round one
     free_living_16s_R2_handle = open(free_living_16s_R2, 'w')
     for each_r2 in SeqIO.parse(rd1_extracted_p_r2, 'fasta'):
         each_r2_base = '.'.join(each_r2.id.split('.')[:-1])
-        if each_r2_base not in all_linking_reads_rd1:
+        if each_r2_base not in all_linking_reads_for_rd1_linkages:
             free_living_16s_R2_handle.write('>%s\n' % each_r2.id)
             free_living_16s_R2_handle.write('%s\n' % str(each_r2.seq))
     free_living_16s_R2_handle.close()
 
     # remove mapping record already linked in rd1
-    print('MappingRecord_dict size: %s' % len(MappingRecord_dict))
+    #print('MappingRecord_dict size: %s' % len(MappingRecord_dict))
     for each_mp in MappingRecord_dict.copy():
-        if each_mp in all_linking_reads_rd1:
+        if each_mp in all_linking_reads_for_rd1_linkages:
             MappingRecord_dict.pop(each_mp)
-    print('MappingRecord_dict size without rd1 linking reads: %s' % len(MappingRecord_dict))
+    #print('MappingRecord_dict size without rd1 linking reads: %s' % len(MappingRecord_dict))
 
 
     ######################################## extract sequences flanking ctg ends #######################################
+
+    report_and_log(('Round 2: Mapping input reads to the ends of contigs in round 1 unlinked genomes'), pwd_log_file, keep_quiet)
 
     get_unlinked_mag_end_seq(combined_1st_round_unlinked_mags, combined_1st_round_unlinked_mag_end_seq, end_seq_len)
 
@@ -3232,6 +3383,7 @@ def link_16s(args):
     os.system(bowtie_cmd_unlinked_ctg)
 
     # convert cigar format
+    report_and_log(('Round 1: transforming cigar format from 1.3 to 1.4'), pwd_log_file, keep_quiet)
     bbmap_reformat_rd1_unlinked_mags_sam  = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (rd1_unlinked_mags_sam_bowtie, rd1_unlinked_mags_sam_bowtie_reformat, rd1_unlinked_mags_sam_bowtie_reformat_log)
     os.system(bbmap_reformat_rd1_unlinked_mags_sam)
 
@@ -3330,7 +3482,7 @@ def link_16s(args):
     os.system('cat %s %s > %s' % (free_living_16s, free_living_ctg, free_living_all))
 
     # assemble
-    if round_2_spades is False:
+    if round_2_mira is True:
 
         free_living_all_id_r1 = set()
         free_living_all_id_r2 = set()
@@ -3569,6 +3721,15 @@ def link_16s(args):
     ####################################### combine linkages from step 1 and 2  ########################################
     ####################################################################################################################
 
+    ################################################# define file name #################################################
+
+    combined_linkage_file_tmp                       = '%s/combined_linkages_tmp.txt'                    % step_2_wd
+    combined_linkage_file                           = '%s/%s_identified_linkages_genome_level.txt'      % (working_directory, output_prefix)
+    combined_linkage_file_ctg_level                 = '%s/%s_identified_linkages_contig_level.txt'      % (working_directory, output_prefix)
+    linkage_plot_rd1_html                           = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
+    linkage_plot_rd2_html                           = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
+
+
     report_and_log(('Combining linkages from step 1 and 2'), pwd_log_file, keep_quiet)
 
     combined_linkage_file_handle     = open(combined_linkage_file, 'w')
@@ -3731,7 +3892,6 @@ if __name__ == '__main__':
     link_16s_parser_input_files.add_argument('-depth_ratio',required=False, metavar='', type=float, default=0,              help='minimum depth multiple between 16S and  genomic sequences, a value of no higher than 0.2 is recommended, (default: %(default)s)')
     link_16s_parser_input_files.add_argument('-depth_16s',  required=False, metavar='',             default=None,           help='depth info for 16S rRNA genes')
     link_16s_parser_input_files.add_argument('-depth_mag',  required=False, metavar='',             default=None,           help='depth info for MAGs')
-    link_16s_parser_input_files.add_argument('-r16s',       required=False, metavar='',                                     help='16S reads for depth calculation')
 
     # 16S rRNA gene related parameters
     link_16s_parser_16s.add_argument('-min_iden_16s',       required=False, metavar='', type=float, default=98,             help='minimum similarity for 16S sequences to be assigned to the same genome, (default: %(default)s)')
@@ -3739,8 +3899,8 @@ if __name__ == '__main__':
     link_16s_parser_16s.add_argument('-min_aln_16s',        required=False, metavar='', type=int,   default=500,            help='alignment length cutoff for calculating pairwise 16S similarity, (default: %(default)s)')
 
     # parameters for both rounds linking
-    link_16s_parser_both_rds.add_argument('-mismatch',      required=False, metavar='', type=float, default=1,              help='maximum mismatch percentage, (default: %(default)s)')
-    link_16s_parser_both_rds.add_argument('-min_M_len_16s', required=False, metavar='', type=int,   default=75,             help='minimum length aligned to 16S, (default: %(default)s)')
+    link_16s_parser_both_rds.add_argument('-mismatch',      required=False, metavar='', type=float, default=2,              help='maximum mismatch percentage, (default: %(default)s)')
+    link_16s_parser_both_rds.add_argument('-min_M_len_16s', required=False, metavar='', type=int,   default=45,             help='minimum length aligned to 16S, (default: %(default)s)')
     link_16s_parser_both_rds.add_argument('-min_M_len_ctg', required=False, metavar='', type=int,   default=45,             help='minimum length aligned to ctg, (default: %(default)s)')
     link_16s_parser_both_rds.add_argument('-min_M_pct',     required=False, metavar='', type=float, default=35,             help='minimum aligned percentage, (default: %(default)s)')
     link_16s_parser_both_rds.add_argument('-min_link',      required=False, metavar='', type=int,   default=8,              help='minimum number of linkages to report, (default: %(default)s)')
@@ -3756,8 +3916,8 @@ if __name__ == '__main__':
     #link_16s_parser_rd2.add_argument('-min_overlap_len',    required=False, metavar='', type=int,   default=50,             help='min_overlap_len, (default: %(default)s)')
     #link_16s_parser_rd2.add_argument('-min_overlap_num',    required=False, metavar='', type=int,   default=10,             help='minimum number of overlapping reads for a linkages to be reported, (default: %(default)s)')
     link_16s_parser_rd2.add_argument('-assemble_clp',       required=False, action="store_true",                            help='use clipping mapped reads for mini-assembly')
+    link_16s_parser_rd2.add_argument('-mira',               required=False, action="store_true",                            help='run Mira, instead of Spades')
     link_16s_parser_rd2.add_argument('-mira_tmp',           required=False, default=None,                                   help='tmp dir for mira')
-    link_16s_parser_rd2.add_argument('-spades',             required=False, action="store_true",                            help='run spades, instead of Mira')
     link_16s_parser_rd2.add_argument('-link_bias_rd2',      required=False, metavar='', type=float, default=40,             help='max_mini_assembly_link_num_diff_between_ctg_16s, (default: %(default)s)')
 
     # # preset parameters
@@ -3778,13 +3938,14 @@ if __name__ == '__main__':
     # for debugging
     link_16s_parser_debug.add_argument('-test_mode',        required=False, action="store_true",                            help='only for debugging, do not provide')
     link_16s_parser_debug.add_argument('-rd2_only',         required=False, action="store_true",                            help='run round 2 only')
-    link_16s_parser_debug.add_argument('-filtered_sam',     required=False, default=None,                                   help='filtered_sam')
+    link_16s_parser_debug.add_argument('-sam16s',           required=False, default=None,                                   help='mapping of input reads to 16S')
 
     args = vars(link_16s_parser.parse_args())
     link_16s(args)
 
 
 '''
+
 1. the depth of 16S sequences always not lower than the genome they come from
 2. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
 3. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
@@ -3793,5 +3954,6 @@ if __name__ == '__main__':
 6. insert size is important
 7. check duplicate sequences in input files
 8. a genome depth of 0 will triggle error !!!!!!
+9. no header in mag depth and 16s depth files !!!!!!
 
 '''

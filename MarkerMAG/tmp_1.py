@@ -1,62 +1,36 @@
-import os
 
-def sep_path_basename_ext(file_in):
-
-    # separate path and file name
-    file_path, file_name = os.path.split(file_in)
-    if file_path == '':
-        file_path = '.'
-
-    # separate file basename and extension
-    file_basename, file_extension = os.path.splitext(file_name)
-
-    return file_path, file_basename, file_extension
+depth_file_mag = '/Users/songweizhi/Desktop/666/hc_0513_with_depth_global_mean_depth_gnm.txt'
+depth_file_16s = '/Users/songweizhi/Desktop/666/hc_0513_with_depth_global_mean_depth_16s.txt'
+linkage_file   = '/Users/songweizhi/Desktop/666/hc_0514_stats_combined_filtered_with_assessment_ani97_imag99.5_i16S99.5.txt'
 
 
-def get_ctg_mean_depth_by_samtools_coverage(index_ref, ref_seq, reads_r1, reads_r2, reads_unpaired, num_threads):
+mean_depth_dict_gnm = {}
+for each_mag_depth in open(depth_file_mag):
+    each_mag_depth_split = each_mag_depth.strip().split('\t')
+    mag_id = each_mag_depth_split[0]
+    mag_depth = float(each_mag_depth_split[1])
+    mean_depth_dict_gnm[mag_id] = mag_depth
 
-    ref_seq_file_path, ref_seq_file_basename, ref_seq_file_extension = sep_path_basename_ext(ref_seq)
+mean_depth_dict_16s = {}
+for each_16s_depth in open(depth_file_16s):
+    each_16s_depth_split = each_16s_depth.strip().split('\t')
+    s16_id = each_16s_depth_split[0]
+    s16_depth = float(each_16s_depth_split[1])
+    mean_depth_dict_16s[s16_id] = s16_depth
 
-    sam_file        = '%s/%s.sam'          % (ref_seq_file_path, ref_seq_file_basename)
-    sam_file_sorted = '%s/%s_sorted.sam'   % (ref_seq_file_path, ref_seq_file_basename)
-    coverage_file   = '%s/%s_cov.txt'      % (ref_seq_file_path, ref_seq_file_basename)
+for each_link in open(linkage_file):
+    each_link_split = each_link.strip().split('\t')
+    id_16s = each_link_split[0]
+    id_mag = each_link_split[1]
 
-    # build reference index
-    cmd_bowtie2_build   = 'bowtie2-build --quiet --threads %s -f %s %s/%s' % (num_threads, ref_seq, ref_seq_file_path, ref_seq_file_basename)
-    if index_ref is True:
-        os.system(cmd_bowtie2_build)
+    depth_16s = mean_depth_dict_16s[id_16s]
+    depth_mag = mean_depth_dict_gnm[id_mag]
+    ratio = depth_16s/depth_mag
+    depth_16s = float("{0:.2f}".format(depth_16s))
+    depth_mag = float("{0:.2f}".format(depth_mag))
+    ratio = float("{0:.2f}".format(ratio))
 
-    # mapping
-    if reads_unpaired == '':
-        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, sam_file, num_threads)
-    else:
-        cmd_bowtie2_mapping = 'bowtie2 -x %s/%s -1 %s -2 %s -U %s -S %s -p %s --all -f --quiet' % (ref_seq_file_path, ref_seq_file_basename, reads_r1, reads_r2, reads_unpaired, sam_file, num_threads)
-    os.system(cmd_bowtie2_mapping)
+    print('%s\t%s\t%s\t%s' % (each_link.strip(), depth_16s, depth_mag, ratio))
 
-    # sort mapping
-    cmd_samtools_sort = 'samtools sort %s -o %s' % (sam_file, sam_file_sorted)
-    os.system(cmd_samtools_sort)
-
-    # get mean depth
-    cmd_samtools_coverage = 'samtools coverage %s -o %s' % (sam_file_sorted, coverage_file)
-    os.system(cmd_samtools_coverage)
-
-    # remove sam files
-    os.system('rm %s' % sam_file)
-    os.system('rm %s' % sam_file_sorted)
-
-    # store mean depth into dict
-    mean_depth_dict_ctg = {}
-    ctg_len_dict = {}
-    for each_ctg_depth in open(coverage_file):
-        if not each_ctg_depth.startswith('#'):
-            ctg_depth_split = each_ctg_depth.strip().split('\t')
-            ctg_id = ctg_depth_split[0]
-            ctg_len = int(ctg_depth_split[2])
-            ctg_depth = float(ctg_depth_split[6])
-            mean_depth_dict_ctg[ctg_id] = ctg_depth
-            ctg_len_dict[ctg_id] = ctg_len
-
-    return mean_depth_dict_ctg, ctg_len_dict
 
 
