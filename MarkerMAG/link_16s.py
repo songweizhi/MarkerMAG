@@ -773,16 +773,16 @@ def get_accuracy(file_in, marker_num):
     linkage_num_correct = 0
     recovered_markers = set()
     for each_match in open(file_in):
-        if not each_match.startswith('MarkerGene,GenomicSeq,Number'):
-            match_split = each_match.strip().split(',')
+        if not each_match.startswith('MarkerGene\tGenomicSeq\tLinkage'):
+            match_split = each_match.strip().split('\t')
             linkage_num = int(match_split[2])
-            MarkerGene_genome = match_split[0][12:][:2]
-            GenomicSeq_genome = match_split[1][12:]
+            MarkerGene_genome = match_split[0][:2]
+            GenomicSeq_genome = match_split[1]
 
             linkage_num_total += linkage_num
             if MarkerGene_genome == GenomicSeq_genome:
                 linkage_num_correct += linkage_num
-                recovered_markers.add(match_split[0][12:])
+                recovered_markers.add(match_split[0])
 
     marker_recovery = float("{0:.2f}".format(len(recovered_markers)*100/marker_num))
 
@@ -805,16 +805,15 @@ def get_accuracy_by_genome(file_in, mag_folder, mag_file_extension):
     genome_with_right_16s_assignment_tmp = set()
     genome_with_wrong_16s_assignment = set()
     for each_match in open(file_in):
-        if not each_match.startswith('MarkerGene,GenomicSeq,Number'):
-            match_split = each_match.strip().split(',')
-            MarkerGene_genome = match_split[0][12:][:2]
-            GenomicSeq_genome = match_split[1][12:]
+        if not each_match.startswith('MarkerGene\tGenomicSeq\tLinkage'):
+            match_split = each_match.strip().split('\t')
+            MarkerGene_genome = match_split[0][:2]
+            GenomicSeq_genome = match_split[1]
 
             if GenomicSeq_genome == MarkerGene_genome:
                 genome_with_right_16s_assignment_tmp.add(GenomicSeq_genome)
             else:
                 genome_with_wrong_16s_assignment.add(GenomicSeq_genome)
-
 
     genome_with_right_16s_assignment_always = []
     genome_without_right_16s_assignment = []
@@ -933,6 +932,9 @@ class MappingRecord:
 
         #################### round 1 16s ####################
 
+        self.consider_r1_unmapped_mate = False
+        self.consider_r2_unmapped_mate = False
+
         self.r1_16s_ref_dict = dict()
         self.r2_16s_ref_dict = dict()
 
@@ -969,31 +971,17 @@ class MappingRecord:
         self.r1_ctg_refs_lowest_mismatch_rd2 = None
         self.r2_ctg_refs_lowest_mismatch_rd2 = None
 
-        #################################################
+        #################### round 2 mini_assembly ####################
 
+        self.r1_mini_ref_dict = dict()
+        self.r2_mini_ref_dict = dict()
 
-        self.r1_longest_clp_cigar = ''
-        self.r1_longest_clp_falg = ''
-        self.r2_longest_clp_cigar = ''
-        self.r2_longest_clp_falg = ''
+        self.r1_mini_refs_lowest_mismatch = None
+        self.r2_mini_refs_lowest_mismatch = None
 
-        self.consider_r1_unmapped_mate = False
-        self.consider_r1_clipping_part = False
-        self.consider_r2_unmapped_mate = False
-        self.consider_r2_clipping_part = False
-
-        self.consider_round_2 = False
-
-        self.r1_filtered_refs = set()
-        self.r2_filtered_refs = set()
-        self.unmapped_r1_refs = set()
-        self.unmapped_r2_refs = set()
-        self.clipping_r1_refs = set()
-        self.clipping_r2_refs = set()
-        self.unmapped_r1_refs_with_pos = set()
-        self.unmapped_r2_refs_with_pos = set()
-        self.clipping_r1_refs_with_pos = set()
-        self.clipping_r2_refs_with_pos = set()
+        self.r1_mini_refs_no_ignored = dict()
+        self.r2_mini_refs_no_ignored = dict()
+        self.shared_mini_refs_no_ignored = dict()
 
 
 def get_cigar_stats(cigar_splitted):
@@ -1088,17 +1076,17 @@ def sankey_linkages(combined_linkage_file_ctg_level, linkage_plot_rd1_html, link
     marker_gene_set_rd1 = set()
     marker_gene_set_rd2 = set()
     for each_linkage in open(combined_linkage_file_ctg_level):
-        if not each_linkage.startswith('Marker___Genome(total)	Contig	Paired	Clipping	Overlapped	Step'):
+        if not each_linkage.startswith('Marker___Genome(total)\tContig\tRd1\tRd2'):
             each_linkage_split = each_linkage.strip().split('\t')
 
             marker_id = each_linkage_split[0].split('___')[0]
             gnm_id = each_linkage_split[0].split('___')[1].split('(')[0]
             ctg_id = each_linkage_split[1]
-            total_link_num = int(each_linkage_split[2]) + int(each_linkage_split[3]) + int(each_linkage_split[4])
+            total_link_num = int(each_linkage_split[2]) + int(each_linkage_split[3])
             marker_to_ctg_key = '%s%s%s' % (marker_id, dict_for_sankey_key_connector, ctg_id)
             ctg_to_gnm_key = '%s%s%s' % (ctg_id, dict_for_sankey_key_connector, gnm_id)
 
-            if each_linkage_split[5] == 'S1':
+            if int(each_linkage_split[3]) == 0:
                 genome_set_rd1.add(gnm_id)
                 contig_set_rd1.add(ctg_id)
                 marker_gene_set_rd1.add(marker_id)
@@ -1119,7 +1107,7 @@ def sankey_linkages(combined_linkage_file_ctg_level, linkage_plot_rd1_html, link
                 else:
                     linkage_num_dict_rd1[ctg_to_gnm_key] += total_link_num
 
-            if each_linkage_split[5] == 'S2':
+            if int(each_linkage_split[2]) == 0:
                 genome_set_rd2.add(gnm_id)
                 contig_set_rd2.add(ctg_id)
                 marker_gene_set_rd2.add(marker_id)
@@ -1317,58 +1305,6 @@ def keep_best_matches_in_sam_keep_short_M(sam_in, min_M_len, sam_out):
                 if both_ends_clp is False:
                     aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_split)
                     if mismatch_pct <= (read_min_mismatch_dict[read_id] * 1.5):
-                        sam_file_best_match_handle.write(each_line)
-    sam_file_best_match_handle.close()
-
-
-def keep_best_matches_in_sam_drop_short_M(sam_in, min_M_len, sam_out):
-
-    # get read_to_cigar_dict
-    read_to_cigar_dict = {}
-    for each_line in open(sam_in):
-        each_line_split = each_line.strip().split('\t')
-        if not each_line.startswith('@'):
-            read_id = each_line_split[0]
-            cigar = each_line_split[5]
-            if cigar != '*':
-                both_ends_clp = check_both_ends_clipping(cigar_splitter(cigar))
-                if both_ends_clp is False:
-                    if read_id not in read_to_cigar_dict:
-                        read_to_cigar_dict[read_id] = {cigar}
-                    else:
-                        read_to_cigar_dict[read_id].add(cigar)
-
-    # get min_mismatch for each read
-    read_min_mismatch_dict = {}
-    for each_read in read_to_cigar_dict:
-        read_mismatch_set_all_M = set()
-        read_mismatch_set_long_M = set()
-        for each_cigar in read_to_cigar_dict[each_read]:
-            aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitter(each_cigar))
-            read_mismatch_set_all_M.add(mismatch_pct)
-            if aligned_len >= min_M_len:
-                read_mismatch_set_long_M.add(mismatch_pct)
-        read_min_mismatch = min(read_mismatch_set_all_M)
-        if len(read_mismatch_set_long_M) > 0:
-            read_min_mismatch = min(read_mismatch_set_long_M)
-        read_min_mismatch_dict[each_read] = read_min_mismatch
-
-    sam_file_best_match_handle = open(sam_out, 'w')
-    for each_line in open(sam_in):
-        if each_line.startswith('@'):
-            sam_file_best_match_handle.write(each_line)
-        else:
-            each_line_split = each_line.strip().split('\t')
-            cigar = each_line_split[5]
-            if cigar == '*':
-                sam_file_best_match_handle.write(each_line)
-            else:
-                read_id = each_line_split[0]
-                cigar_split = cigar_splitter(cigar)
-                both_ends_clp = check_both_ends_clipping(cigar_splitter(cigar))
-                if both_ends_clp is False:
-                    aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_split)
-                    if (mismatch_pct <= (read_min_mismatch_dict[read_id] * 1.5)) and (aligned_len >= min_M_len):
                         sam_file_best_match_handle.write(each_line)
     sam_file_best_match_handle.close()
 
@@ -1571,146 +1507,8 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
     stats_GapFilling_gnm_handle.close()
 
 
-def mview_linkage(seq_file, plot_title, mafft_exe, mview_exe):
-
-    # define file name
-    seq_path, seq_basename, seq_ext = sep_path_basename_ext(seq_file)
-    msa_file                    = '%s/%s.aln'               % (seq_path, seq_basename)
-    msa_file_mview              = '%s/%s_MView.aln'         % (seq_path, seq_basename)
-    msa_file_mviewd_html_tmp    = '%s/%s_MView_tmp.html'    % (seq_path, seq_basename)
-    msa_file_mviewd_html        = '%s/%s_MView.html'        % (seq_path, seq_basename)
-
-    gap_char                = '-'
-    break_line_char         = '='
-
-    # align sequences
-    mafft_cmd = '%s --quiet --retree 1 %s > %s' % (mafft_exe, seq_file, msa_file)
-    os.system(mafft_cmd)
-
-    mapped_reads_dict = {}
-    ref_id = ''
-    ref_seq = ''
-    current_line = 0
-    for each_seq in AlignIO.read(msa_file, "fasta"):
-        seq_id = each_seq.id
-        seq_seq = str(each_seq.seq).upper()
-        if current_line == 0:
-            ref_id = seq_id
-            ref_seq = seq_seq
-        else:
-            seq_id_base = '.'.join(seq_id.split('.')[:-1])
-            seq_id_strand = seq_id.split('.')[-1]
-            if seq_id_base not in mapped_reads_dict:
-                if seq_id_strand == '1':
-                    mapped_reads_dict[seq_id_base] = [seq_seq, '']
-                if seq_id_strand == '2':
-                    mapped_reads_dict[seq_id_base] = ['', seq_seq]
-            else:
-                if seq_id_strand == '1':
-                    mapped_reads_dict[seq_id_base][0] = seq_seq
-                if seq_id_strand == '2':
-                    mapped_reads_dict[seq_id_base][1] = seq_seq
-
-        current_line += 1
-
-    # create an empty list to hold all sequences in a msa
-    seq_record_list = []
-
-    # add ref_seq to seq_record_list
-    align_record_mview = MultipleSeqAlignment([])
-    ref_seq_split_by_n = ref_seq.split('N')
-    ref_seq_split_by_n_updated = []
-    for segment in ref_seq_split_by_n:
-        if ('-' in segment) and (segment == '-' * len(segment)):
-            segment = 'N' * len(segment)
-        ref_seq_split_by_n_updated.append(segment)
-    ref_seq_updated = 'N'.join(ref_seq_split_by_n_updated)
-    seq_record_list.append(SeqRecord(Seq(ref_seq_updated), id=ref_id, description='Reference'))
-
-    # add break line
-    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
-
-    # add paired reads to seq_record_list
-    singleton_dict = {}
-    overlapping_reads_dict = {}
-    for each_read_base in mapped_reads_dict:
-
-        r1_seq = mapped_reads_dict[each_read_base][0]
-        r2_seq = mapped_reads_dict[each_read_base][1]
-
-        if (r1_seq == '') or (r2_seq == ''):
-            if not ((r1_seq == '') and (r2_seq == '')):
-                singleton_dict[each_read_base] = mapped_reads_dict[each_read_base]
-        else:
-            overlapping_bps = 0
-            for bp1, bp2 in zip(r1_seq, r2_seq):
-                if (bp1 != '-') and (bp2 != '-'):
-                    overlapping_bps += 1
-
-            if overlapping_bps > 0:
-                overlapping_reads_dict[each_read_base] = mapped_reads_dict[each_read_base]
-            else:
-                merge_r1_r2 = ''
-                for bp1, bp2 in zip(r1_seq, r2_seq):
-                    if (bp1 == '-') and (bp2 == '-'):
-                        merge_r1_r2 += '-'
-                    if (bp1 != '-') and (bp2 == '-'):
-                        merge_r1_r2 += bp1
-                    if (bp1 == '-') and (bp2 != '-'):
-                        merge_r1_r2 += bp2
-                seq_record_list.append(SeqRecord(Seq(merge_r1_r2), id=each_read_base, description='In_Pair'))
-
-    # add break line
-    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
-
-    # add overlapped reads to seq_record_list
-    for each_overlapping_reads in overlapping_reads_dict:
-        r1_id  = '%s.1' % each_overlapping_reads
-        r2_id  = '%s.2' % each_overlapping_reads
-        r1_seq = overlapping_reads_dict[each_overlapping_reads][0]
-        r2_seq = overlapping_reads_dict[each_overlapping_reads][1]
-        seq_record_list.append(SeqRecord(Seq(r1_seq), id=r1_id, description='Overlapped'))
-        seq_record_list.append(SeqRecord(Seq(r2_seq), id=r2_id, description='Overlapped'))
-
-    # add break line
-    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
-
-    # add singleton to seq_record_list
-    for each_singleton in singleton_dict:
-        r1_id  = '%s.1' % each_singleton
-        r2_id  = '%s.2' % each_singleton
-        r1_seq = singleton_dict[each_singleton][0]
-        r2_seq = singleton_dict[each_singleton][1]
-        if (r1_seq != '') and (r2_seq == ''):
-            seq_record_list.append(SeqRecord(Seq(r1_seq), id=r1_id, description='Unpaired'))
-        if (r1_seq == '') and (r2_seq != ''):
-            seq_record_list.append(SeqRecord(Seq(r2_seq), id=r2_id, description='Unpaired'))
-
-    # add break line
-    seq_record_list.append(SeqRecord(Seq(break_line_char*len(ref_seq_updated)), id='#', description=''))
-
-    # get updated msa record
-    align_record_mview = MultipleSeqAlignment(seq_record_list)
-
-    # write out updated msa
-    msa_file_mview_handle = open(msa_file_mview, 'w')
-    AlignIO.write(align_record_mview, msa_file_mview_handle, 'fasta')
-    msa_file_mview_handle.close()
-
-    # visualize update msa
-    # coloring: any,identity,mismatch,consensus,group
-    mview_parameter_str = '-in fasta -moltype dna -colormap CLUSTAL_NUC -coloring any -css on -html head -ruler off -label0 -label4 -label5 -gap "%s"' % gap_char
-    mview_cmd = '%s %s -title %s %s > %s' % (mview_exe, mview_parameter_str, plot_title, msa_file_mview, msa_file_mviewd_html_tmp)
-    os.system(mview_cmd)
-
-    msa_file_mviewd_html_handle = open(msa_file_mviewd_html, 'w')
-    for each_line in open(msa_file_mviewd_html_tmp):
-        if not (('Reference sequence' in each_line) or ('Colored by' in each_line)):
-            msa_file_mviewd_html_handle.write(each_line)
-    msa_file_mviewd_html_handle.close()
-
-
 def get_unmapped_mates_seq(sam_file, input_r1_fasta, input_r2_fasta, extracted_seq_file):
+
     sam_path, sam_basename, sam_ext = sep_path_basename_ext(sam_file)
     reads_to_extract_r1_txt = '%s/%s_unmapped_mates_R1.txt' % (sam_path, sam_basename)
     reads_to_extract_r2_txt = '%s/%s_unmapped_mates_R2.txt' % (sam_path, sam_basename)
@@ -2006,13 +1804,13 @@ def link_16s(args):
     end_ctg_len_for_mafft                           = 1000
     keep_short_M                                    = True
     gap_N_num                                       = 50
-    report_interval                                 = 50000
+    report_interval                                 = 25000
     clp_pct_ctg_side_max_num                        = 65
     clp_pct_ratio_cutoff                            = 3.5
     # mismatch cutoff for filtering matches between unmapped mates and clipping reads against contig end
     mismatch_ctg_ends = 1
     subsample_rate_for_depth_estimation = 0.1  # between 0 and 1
-
+    min_M_len_mini = min_M_len_ctg
 
     ################################################ check dependencies ################################################
 
@@ -2170,7 +1968,8 @@ def link_16s(args):
     blast_parameters = '-evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads %s' % num_threads
     bbmap_parameter  = 'local=t nodisk=t ambiguous=all keepnames=t saa=f trd=t silent=true threads=%s -Xmx%sg' % (num_threads, bbmap_memory)
     # --very-sensitive-local    -D 20 -R 3 -N 0 -L 20 -i S,1,0.50
-    bowtie_parameter = '--local --all --no-unal -N 1 -L 30'
+    bowtie_parameter                = '--local --all --no-unal -N 1 -L 30'
+    bowtie_parameter_mini_assembly  = ' --all --no-unal -N 1 -L 30'
     #bowtie_parameter = '--local --all --no-unal --very-sensitive-local'
     #bowtie_parameter = '--local --all --no-unal -D 30 -R 5 -N 0 -L 20 -i S,1,0.50'
 
@@ -2303,25 +2102,8 @@ def link_16s(args):
 
             report_and_log(('Round 1: calculating depth for 16S'), pwd_log_file, keep_quiet)
 
-            # if reads_file_16s is None:
-            #     print('16S rRNA reads not provided, program exited!')
-            #     exit()
-                # print('Run SortMeRNA, be patient')
-                # sortmerna_cmd = '%s --ref /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered.fasta,/srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95.clustered --reads MBARC26_R1_R2.fasta --aligned MBARC26_Matam16S_wd/MBARC26 --fastx --sam --blast "1" --log --best 10 --min_lis 10 -e 1.00e-05 -a 16 -v > MBARC26_Matam16S_wd/MBARC26.SortMeRNA_stdout.txt' % (sortmerna_exe)
-                # print(sortmerna_cmd)
-                # os.system(sortmerna_cmd)
-
-            # separate paired and singleton reads
-            # reads_file_16s_path, reads_file_16s_basename, reads_file_16s_extension = sep_path_basename_ext(reads_file_16s)
-            # reads_file_16s_r1        = '%s/%s_16S_R1.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
-            # reads_file_16s_r2        = '%s/%s_16S_R2.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
-            # reads_file_16s_singleton = '%s/%s_16S_UP.fa' % (input_16s_folder_in_wd, reads_file_16s_basename)
-            # sep_paired_and_singleton_reads(reads_file_16s, reads_file_16s_r1, reads_file_16s_r2, reads_file_16s_singleton)
-
             # get mean depth for 16S sequences
             mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage_global(True, input_16s_polished, reads_file_r1_subset, reads_file_r2_subset, '', subsample_rate_for_depth_estimation, num_threads)
-            #os.system('rm %s' % reads_file_r1_subset)
-            #os.system('rm %s' % reads_file_r2_subset)
 
             # write out 16s depth
             depth_file_16s_handle = open(depth_file_16s_calculated, 'w')
@@ -2338,12 +2120,7 @@ def link_16s(args):
                 s16_depth = float(each_16s_depth_split[1])
                 mean_depth_dict_16s[s16_id] = s16_depth
 
-    ####################################################################################################################
-
     # made 16s depth and genome depth comparable
-
-
-
 
 
     ####################################################################################################################
@@ -2561,9 +2338,6 @@ def link_16s(args):
             # if the shortest S longer than min_M_ctg_len, also consider as clipping mapped
             r1_16s_refs_no_ignored_cigar_list = list(r1_16s_refs_no_ignored.values())
             r1_min_cigar_S, r1_max_cigar_S = get_min_max_cigar_S(r1_16s_refs_no_ignored_cigar_list)
-            if r1_min_cigar_S >= min_M_len_ctg:
-                MappingRecord_dict[each_mp].consider_r1_clipping_part = True
-                to_extract_read_base.add(each_mp)
 
         # only r2 has no_ignored alignments
         elif (len(r1_16s_refs_no_ignored) == 0) and (len(r2_16s_refs_no_ignored) > 0):
@@ -2576,9 +2350,6 @@ def link_16s(args):
             # if the shortest S longer than min_M_ctg_len, also consider as clipping mapped
             r2_16s_refs_no_ignored_cigar_list = list(r2_16s_refs_no_ignored.values())
             r2_min_cigar_S, r2_max_cigar_S = get_min_max_cigar_S(r2_16s_refs_no_ignored_cigar_list)
-            if r2_min_cigar_S >= min_M_len_ctg:
-                MappingRecord_dict[each_mp].consider_r2_clipping_part = True
-                to_extract_read_base.add(each_mp)
 
         # both r1 and r2 have no_ignored alignments
         else:
@@ -2710,9 +2481,6 @@ def link_16s(args):
 
     processed_num = 0
     for each_mp in MappingRecord_dict:
-
-        # print('%s\tr1_ctg_ref_dict\t%s'       % (each_mp, current_mp_record.r1_ctg_ref_dict))
-        # print('%s\tr2_ctg_ref_dict\t%s'       % (each_mp, current_mp_record.r2_ctg_ref_dict))
 
         current_mp_record = MappingRecord_dict[each_mp]
         refs_to_ignore_ctg = set()
@@ -2855,12 +2623,12 @@ def link_16s(args):
     marker_to_ctg_linking_reads_dict = {}
     for qualified_read in MappingRecord_dict:
 
-        read_mr = MappingRecord_dict[qualified_read]
-        r1_16s_refs = read_mr.r1_16s_refs_no_ignored
-        r2_16s_refs = read_mr.r2_16s_refs_no_ignored
+        read_mr         = MappingRecord_dict[qualified_read]
+        r1_16s_refs     = read_mr.r1_16s_refs_no_ignored
+        r2_16s_refs     = read_mr.r2_16s_refs_no_ignored
         shared_16s_refs = read_mr.shared_16s_refs_no_ignored
-        r1_ctg_refs = read_mr.r1_ctg_refs_no_ignored
-        r2_ctg_refs = read_mr.r2_ctg_refs_no_ignored
+        r1_ctg_refs     = read_mr.r1_ctg_refs_no_ignored
+        r2_ctg_refs     = read_mr.r2_ctg_refs_no_ignored
         shared_ctg_refs = read_mr.shared_ctg_refs_no_ignored
 
         # combine dict
@@ -3366,30 +3134,33 @@ def link_16s(args):
             all_linking_reads_for_rd1_linkages.update(current_linking_reads)
 
     # get the id of reads to extract
+    free_living_16s_ref_file_handle = open(free_living_16s_ref_file, 'w')
     rd2_read_to_extract_flanking_16s = set()
     for each_mp in MappingRecord_dict.copy():
         if each_mp in all_linking_reads_for_rd1_linkages:
             MappingRecord_dict.pop(each_mp)
         else:
+            r1_16s_refs = MappingRecord_dict[each_mp].r1_16s_refs_no_ignored
+            r2_16s_refs = MappingRecord_dict[each_mp].r2_16s_refs_no_ignored
             if len(MappingRecord_dict[each_mp].shared_16s_refs_no_ignored) > 0:
                 MappingRecord_dict.pop(each_mp)
-            elif (len(MappingRecord_dict[each_mp].r1_16s_refs_no_ignored) > 0) or (
-                    len(MappingRecord_dict[each_mp].r2_16s_refs_no_ignored) > 0):
+            elif (len(r1_16s_refs) > 0) or (len(r2_16s_refs) == 0):
                 rd2_read_to_extract_flanking_16s.add(each_mp)
+                free_living_16s_ref_file_handle.write('%s\t%s\n' % (each_mp, ','.join(r1_16s_refs)))
+            elif (len(r1_16s_refs) == 0) or (len(r2_16s_refs) > 0):
+                rd2_read_to_extract_flanking_16s.add(each_mp)
+                free_living_16s_ref_file_handle.write('%s\t%s\n' % (each_mp, ','.join(r2_16s_refs)))
+    free_living_16s_ref_file_handle.close()
 
     # write out id of linking reads for extraction
     with open(rd2_to_extract_flking_16s_r1_id, 'w') as rd2_to_extract_flking_16s_r1_id_handle:
-        rd2_to_extract_flking_16s_r1_id_handle.write(
-            '%s\n' % '\n'.join(sorted([('%s.1' % i) for i in rd2_read_to_extract_flanking_16s])))
+        rd2_to_extract_flking_16s_r1_id_handle.write('%s\n' % '\n'.join(sorted([('%s.1' % i) for i in rd2_read_to_extract_flanking_16s])))
     with open(rd2_to_extract_flking_16s_r2_id, 'w') as rd2_to_extract_flking_16s_r2_id_handle:
-        rd2_to_extract_flking_16s_r2_id_handle.write(
-            '%s\n' % '\n'.join(sorted([('%s.2' % i) for i in rd2_read_to_extract_flanking_16s])))
+        rd2_to_extract_flking_16s_r2_id_handle.write('%s\n' % '\n'.join(sorted([('%s.2' % i) for i in rd2_read_to_extract_flanking_16s])))
 
     # extract reads with seqtk
     seqtk_extract_cmd_rd2_flk_16s_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd2_to_extract_flking_16s_r1_id, rd2_extracted_flking_16s_r1_seq_tmp)
     seqtk_extract_cmd_rd2_flk_16s_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, rd2_to_extract_flking_16s_r2_id, rd2_extracted_flking_16s_r2_seq_tmp)
-    report_and_log((seqtk_extract_cmd_rd2_flk_16s_r1), pwd_log_file, True)
-    report_and_log((seqtk_extract_cmd_rd2_flk_16s_r2), pwd_log_file, True)
     os.system(seqtk_extract_cmd_rd2_flk_16s_r1)
     os.system(seqtk_extract_cmd_rd2_flk_16s_r2)
 
@@ -3409,7 +3180,7 @@ def link_16s(args):
     os.system(bowtie_cmd_unlinked_ctg)
 
     # convert cigar format
-    report_and_log(('Round 1: transforming cigar format from 1.3 to 1.4'), pwd_log_file, keep_quiet)
+    report_and_log(('Round 2: transforming cigar format from 1.3 to 1.4'), pwd_log_file, keep_quiet)
     bbmap_reformat_rd1_unlinked_mags_sam  = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (rd1_unlinked_mags_sam_bowtie, rd1_unlinked_mags_sam_bowtie_reformat, rd1_unlinked_mags_sam_bowtie_reformat_log)
     os.system(bbmap_reformat_rd1_unlinked_mags_sam)
 
@@ -3460,6 +3231,7 @@ def link_16s(args):
 
     report_and_log(('Round 2: analysing mappping results'), pwd_log_file, keep_quiet)
 
+    free_living_ctg_ref_file_handle = open(free_living_ctg_ref_file, 'w')
     processed_num = 0
     to_extract_read_base_rd2_ctg = set()
     for each_mp in round_2_MappingRecord_dict.copy():
@@ -3576,6 +3348,7 @@ def link_16s(args):
                             else:
                                 r2_ctg_refs_passed_qc[r2_ctg_ref_rd2] = [r2_ctg_ref_cigar]
 
+
         ####################################################################################################
 
         r1_ctg_refs_rd2_no_ignored = {key: value for key, value in r1_ctg_refs_passed_qc.items() if key not in ctg_refs_to_ignore_rd2}
@@ -3585,18 +3358,22 @@ def link_16s(args):
         if (len(r1_ctg_refs_rd2_no_ignored) > 0) and (len(r2_ctg_refs_rd2_no_ignored) == 0):
             round_2_MappingRecord_dict[each_mp].qualified_reads_rd2 = True
             to_extract_read_base_rd2_ctg.add(each_mp)
+            free_living_ctg_ref_file_handle.write('%s\t%s\n' % (each_mp, ','.join(r1_ctg_refs_rd2_no_ignored)))
 
         # only r2 has no_ignored alignments
         if (len(r1_ctg_refs_rd2_no_ignored) == 0) and (len(r2_ctg_refs_rd2_no_ignored) > 0):
             round_2_MappingRecord_dict[each_mp].qualified_reads_rd2 = True
             to_extract_read_base_rd2_ctg.add(each_mp)
+            free_living_ctg_ref_file_handle.write('%s\t%s\n' % (each_mp, ','.join(r2_ctg_refs_rd2_no_ignored)))
 
+        # report progress
         processed_num += 1
         if (processed_num % report_interval == 0):
             processed_pct = processed_num * 100 / len(round_2_MappingRecord_dict)
             processed_pct = float("{0:.2f}".format(processed_pct))
-            report_and_log(('Round 1: processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%')), pwd_log_file, keep_quiet)
-    report_and_log(('Round 1: processed %sk (100%s)' % (float("{0:.2f}".format(processed_num/1000)), '%')), pwd_log_file, keep_quiet)
+            report_and_log(('Round 2: processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%')), pwd_log_file, keep_quiet)
+    report_and_log(('Round 2: processed %sk (100%s)' % (float("{0:.2f}".format(processed_num/1000)), '%')), pwd_log_file, keep_quiet)
+    free_living_ctg_ref_file_handle.close()
 
     # remove unqualified mapping record from dict
     for each_mp in round_2_MappingRecord_dict.copy():
@@ -3612,8 +3389,6 @@ def link_16s(args):
     # extract reads with seqtk
     seqtk_extract_cmd_rd2_flk_ctg_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd2_to_extract_flking_ctg_r1_id, rd2_extracted_flking_ctg_r1_seq_tmp)
     seqtk_extract_cmd_rd2_flk_ctg_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, rd2_to_extract_flking_ctg_r2_id, rd2_extracted_flking_ctg_r2_seq_tmp)
-    report_and_log((seqtk_extract_cmd_rd2_flk_ctg_r1), pwd_log_file, True)
-    report_and_log((seqtk_extract_cmd_rd2_flk_ctg_r2), pwd_log_file, True)
     os.system(seqtk_extract_cmd_rd2_flk_ctg_r1)
     os.system(seqtk_extract_cmd_rd2_flk_ctg_r2)
 
@@ -3645,39 +3420,6 @@ def link_16s(args):
         rd2_extracted_r2_combined_handle.write('%s\n' % current_r2_seq)
     rd2_extracted_r1_combined_handle.close()
     rd2_extracted_r2_combined_handle.close()
-
-    # # write out paired in the same order
-    # rd2_extracted_flking_16s_r1_handle = open(rd2_extracted_flking_16s_r1_seq, 'w')
-    # rd2_extracted_flking_16s_r2_handle = open(rd2_extracted_flking_16s_r2_seq, 'w')
-    # for each_read_base in rd2_read_to_extract_flanking_16s:
-    #     current_r1 = '%s.1' % each_read_base
-    #     current_r2 = '%s.2' % each_read_base
-    #     current_r1_seq = extract_rd2_read_seq_dict.get(current_r1, '')
-    #     current_r2_seq = extract_rd2_read_seq_dict.get(current_r2, '')
-    #     rd2_extracted_flking_16s_r1_handle.write('>%s\n' % current_r1)
-    #     rd2_extracted_flking_16s_r1_handle.write('%s\n' % current_r1_seq)
-    #     rd2_extracted_flking_16s_r2_handle.write('>%s\n' % current_r2)
-    #     rd2_extracted_flking_16s_r2_handle.write('%s\n' % current_r2_seq)
-    # rd2_extracted_flking_16s_r1_handle.close()
-    # rd2_extracted_flking_16s_r2_handle.close()
-
-    # # write out paired in the same order
-    # rd2_extracted_flking_ctg_r1_handle = open(rd2_extracted_flking_ctg_r1_seq, 'w')
-    # rd2_extracted_flking_ctg_r2_handle = open(rd2_extracted_flking_ctg_r2_seq, 'w')
-    # for each_read_base in to_extract_read_base_rd2_ctg:
-    #     current_r1 = '%s.1' % each_read_base
-    #     current_r2 = '%s.2' % each_read_base
-    #     current_r1_seq = extract_rd2_read_seq_dict.get(current_r1, '')
-    #     current_r2_seq = extract_rd2_read_seq_dict.get(current_r2, '')
-    #     rd2_extracted_flking_ctg_r1_handle.write('>%s\n' % current_r1)
-    #     rd2_extracted_flking_ctg_r1_handle.write('%s\n' % current_r1_seq)
-    #     rd2_extracted_flking_ctg_r2_handle.write('>%s\n' % current_r2)
-    #     rd2_extracted_flking_ctg_r2_handle.write('%s\n' % current_r2_seq)
-    # rd2_extracted_flking_ctg_r1_handle.close()
-    # rd2_extracted_flking_ctg_r2_handle.close()
-
-    # os.system('cat %s %s > %s' % (rd2_extracted_flking_16s_r1_seq, rd2_extracted_flking_ctg_r1_seq, rd2_extracted_r1_combined))
-    # os.system('cat %s %s > %s' % (rd2_extracted_flking_16s_r2_seq, rd2_extracted_flking_ctg_r2_seq, rd2_extracted_r2_combined))
 
 
     ####################################################################################################################
@@ -3723,7 +3465,7 @@ def link_16s(args):
     os.system(bowtie_build_mini_assemblies_cmd)
 
     # mapping with bowtie
-    bowtie_cmd_miniassembly = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s'    % (mini_assemblies_no_ext, rd2_extracted_r1_combined, rd2_extracted_r2_combined, sam_file_mini_assembly, num_threads, bowtie_parameter, sam_file_mini_assembly_log)
+    bowtie_cmd_miniassembly = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s'    % (mini_assemblies_no_ext, rd2_extracted_r1_combined, rd2_extracted_r2_combined, sam_file_mini_assembly, num_threads, bowtie_parameter_mini_assembly, sam_file_mini_assembly_log)
     os.system(bowtie_cmd_miniassembly)
 
     # reformat cigar string
@@ -3736,7 +3478,7 @@ def link_16s(args):
     report_and_log(('Round 2: read in sam file'), pwd_log_file, keep_quiet)
 
     mini_assembly_len_dict = {}
-    mini_assembly_MappingRecord_dict = {}
+    mini_assembly_mp_dict = {}
     for each_read in open(sam_file_mini_assembly_reformatted):
         each_read_split = each_read.strip().split('\t')
         if each_read.startswith('@'):
@@ -3757,121 +3499,180 @@ def link_16s(args):
                 ref_id = each_read_split[2]
                 ref_pos = int(each_read_split[3])
 
-                if read_id_base not in mini_assembly_MappingRecord_dict:
-                    mini_assembly_MappingRecord_dict[read_id_base] = MappingRecord()
+                if read_id_base not in mini_assembly_mp_dict:
+                    mini_assembly_mp_dict[read_id_base] = MappingRecord()
 
                 if read_strand == '1':
-                    if ref_id not in mini_assembly_MappingRecord_dict[read_id_base].r1_16s_ref_dict:
-                        mini_assembly_MappingRecord_dict[read_id_base].r1_16s_ref_dict[ref_id] = {ref_pos: cigar}
+                    if ref_id not in mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict:
+                        mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id] = {ref_pos: cigar}
                     else:
-                        mini_assembly_MappingRecord_dict[read_id_base].r1_16s_ref_dict[ref_id][ref_pos] = cigar
+                        mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id][ref_pos] = cigar
 
                 if read_strand == '2':
-                    if ref_id not in mini_assembly_MappingRecord_dict[read_id_base].r2_16s_ref_dict:
-                        mini_assembly_MappingRecord_dict[read_id_base].r2_16s_ref_dict[ref_id] = {ref_pos: cigar}
+                    if ref_id not in mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict:
+                        mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id] = {ref_pos: cigar}
                     else:
-                        mini_assembly_MappingRecord_dict[read_id_base].r2_16s_ref_dict[ref_id][ref_pos] = cigar
+                        mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id][ref_pos] = cigar
 
 
     #################################################### parse sam file ####################################################
 
     report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
 
+    # get mini assembly to 16s reads dict
+    mini_assembly_to_16s_reads_dict = {}
+    mini_assembly_to_ctg_reads_dict = {}
+    for each_mp in mini_assembly_mp_dict:
 
+        current_mp_record = mini_assembly_mp_dict[each_mp]
+        mini_refs_to_ignore = set()
 
+        ########## get lowest mismatch for r1/r2 16s refs ##########
 
+        # get r1_ref_cigar_set
+        r1_ref_cigar_set = set()
+        for each_pos_dict in current_mp_record.r1_mini_ref_dict.values():
+            each_pos_dict_values = {each_pos_dict[i] for i in each_pos_dict}
+            r1_ref_cigar_set.update(each_pos_dict_values)
 
+        # get r2_ref_cigar_set
+        r2_ref_cigar_set = set()
+        for each_pos_dict in current_mp_record.r2_mini_ref_dict.values():
+            each_pos_dict_values = {each_pos_dict[i] for i in each_pos_dict}
+            r2_ref_cigar_set.update(each_pos_dict_values)
 
-    # get gap seq to 16s reads dict
-    gap_seq_len_dict = {}
-    gap_seq_to_16s_reads_dict = {}
-    for each_read in open(sam_file_mini_assembly_reformatted):
-        each_read_split = each_read.strip().split('\t')
-        if each_read.startswith('@'):
-            gap_seq_id = ''
-            gap_seq_len = 0
-            for each_element in each_read_split:
-                if each_element.startswith('SN:'):
-                    gap_seq_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    gap_seq_len = int(each_element[3:])
-            gap_seq_len_dict[gap_seq_id] = gap_seq_len
-        else:
-            cigar = each_read_split[5]
-            if cigar != '*':
-                read_id = each_read_split[0]
-                ref_id = each_read_split[2]
-                ref_pos = int(each_read_split[3])
-                cigar_splitted = cigar_splitter(cigar)
-                aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-                if (aligned_len >= min_M_len_ctg) and (aligned_pct >= min_M_pct) and (mismatch_pct <= mismatch_cutoff):
+        r1_ref_min_mismatch = get_min_mismatch_from_cigar_list(r1_ref_cigar_set, min_M_len_mini)
+        r2_ref_min_mismatch = get_min_mismatch_from_cigar_list(r2_ref_cigar_set, min_M_len_mini)
+        mini_assembly_mp_dict[each_mp].r1_mini_refs_lowest_mismatch = r1_ref_min_mismatch
+        mini_assembly_mp_dict[each_mp].r2_mini_refs_lowest_mismatch = r2_ref_min_mismatch
 
-                    # check if clp in the middle
-                    clip_in_middle = False
-                    if ('S' in cigar) or ('s' in cigar):
-                        clip_in_middle = True
-                        if (cigar_splitted[0][-1] in ['S', 's']) and (ref_pos == 1):
-                            clip_in_middle = False
-                        if (cigar_splitted[-1][-1] in ['S', 's']):
-                            if (ref_pos + aligned_len - 1) == gap_seq_len_dict[ref_id]:
-                                clip_in_middle = False
+        ########## filter r1 mini refs ##########
 
-                    # if not clp in the middle
-                    if clip_in_middle is False:
-                        if ref_id not in gap_seq_to_16s_reads_dict:
-                            gap_seq_to_16s_reads_dict[ref_id] = [read_id]
+        r1_mini_refs_passed_qc = {}
+        for r1_mini_ref in current_mp_record.r1_mini_ref_dict:
+            r1_matched_pos_dict = current_mp_record.r1_mini_ref_dict[r1_mini_ref]
+
+            # one read need to mapped to one 16S only for one time
+            if len(r1_matched_pos_dict) > 1:
+                mini_refs_to_ignore.add(r1_mini_ref)
+            else:
+                r1_mini_ref_pos = list(r1_matched_pos_dict.keys())[0]
+                r1_mini_ref_cigar = r1_matched_pos_dict[r1_mini_ref_pos]
+                r1_mini_ref_cigar_splitted = cigar_splitter(r1_mini_ref_cigar)
+
+                # check both end clip
+                both_end_clp = check_both_ends_clipping(r1_mini_ref_cigar_splitted)
+                if both_end_clp is True:
+                    mini_refs_to_ignore.add(r1_mini_ref)
+                else:
+                    # check mismatch
+                    r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(
+                        r1_mini_ref_cigar_splitted)
+                    if r1_ref_min_mismatch == 'NA':
+                        mini_refs_to_ignore.add(r1_mini_ref)
+                    elif (r1_mismatch_pct > r1_ref_min_mismatch) or (r1_mismatch_pct > mismatch_cutoff):
+                        mini_refs_to_ignore.add(r1_mini_ref)
+                    else:
+                        # check aligned length
+                        if r1_aligned_len < min_M_len_mini:
+                            mini_refs_to_ignore.add(r1_mini_ref)
                         else:
-                            gap_seq_to_16s_reads_dict[ref_id].append(read_id)
-
-    # get gap seq to ctg reads dict
-    gap_seq_to_ctg_reads_dict = {}
-    for each_read in open(sam_file_mini_assembly_ctg_best_match):
-        each_read_split = each_read.strip().split('\t')
-        if each_read.startswith('@'):
-            gap_seq_id = ''
-            gap_seq_len = 0
-            for each_element in each_read_split:
-                if each_element.startswith('SN:'):
-                    gap_seq_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    gap_seq_len = int(each_element[3:])
-            gap_seq_len_dict[gap_seq_id] = gap_seq_len
-        else:
-            cigar = each_read_split[5]
-            if cigar != '*':
-                read_id = each_read_split[0]
-                ref_id = each_read_split[2]
-                ref_pos = int(each_read_split[3])
-                cigar_splitted = cigar_splitter(cigar)
-                aligned_len, aligned_pct, clipping_len, clipping_pct, mismatch_pct = get_cigar_stats(cigar_splitted)
-                if (aligned_len >= min_M_len_ctg) and (aligned_pct >= min_M_pct) and (mismatch_pct <= mismatch_cutoff):
-
-                    # check if clp in the middle
-                    clip_in_middle = False
-                    if ('S' in cigar) or ('s' in cigar):
-                        clip_in_middle = True
-                        if (cigar_splitted[0][-1] in ['S', 's']) and (ref_pos == 1):
+                            # check if clp in the middle
                             clip_in_middle = False
-                        if (cigar_splitted[-1][-1] in ['S', 's']):
-                            if (ref_pos + aligned_len - 1) == gap_seq_len_dict[ref_id]:
-                                clip_in_middle = False
+                            if ('S' in r1_mini_ref_cigar) or ('s' in r1_mini_ref_cigar):
+                                clip_in_middle = True
+                                if (r1_mini_ref_cigar_splitted[0][-1] in ['S', 's']) and (r1_mini_ref_pos == 1):
+                                    clip_in_middle = False
+                                if (r1_mini_ref_cigar_splitted[-1][-1] in ['S', 's']):
+                                    if (r1_mini_ref_pos + r1_aligned_len - 1) == mini_assembly_len_dict[r1_mini_ref]:
+                                        clip_in_middle = False
 
-                    # if not clp in the middle
-                    if clip_in_middle is False:
-                        if ref_id not in gap_seq_to_ctg_reads_dict:
-                            gap_seq_to_ctg_reads_dict[ref_id] = [read_id]
+                            # exclude the ref if clp in the middle is True
+                            if clip_in_middle is True:
+                                mini_refs_to_ignore.add(r1_mini_ref)
+                            else:
+                                r1_mini_refs_passed_qc[r1_mini_ref] = [r1_mini_ref_cigar]
+
+        ########## filter r2 mini refs ##########
+
+        r2_mini_refs_passed_qc = {}
+        for r2_mini_ref in current_mp_record.r2_mini_ref_dict:
+            r2_matched_pos_dict = current_mp_record.r2_mini_ref_dict[r2_mini_ref]
+
+            # one read need to mapped to one 16S only once
+            if len(r2_matched_pos_dict) > 1:
+                mini_refs_to_ignore.add(r2_mini_ref)
+            else:
+                r2_mini_ref_pos = list(r2_matched_pos_dict.keys())[0]
+                r2_mini_ref_cigar = r2_matched_pos_dict[r2_mini_ref_pos]
+                r2_mini_ref_cigar_splitted = cigar_splitter(r2_mini_ref_cigar)
+
+                # check both end clip
+                both_end_clp = check_both_ends_clipping(r2_mini_ref_cigar_splitted)
+                if both_end_clp is True:
+                    mini_refs_to_ignore.add(r2_mini_ref)
+                else:
+                    # check mismatch
+                    r2_aligned_len, r2_aligned_pct, r2_clipping_len, r2_clipping_pct, r2_mismatch_pct = get_cigar_stats(
+                        r2_mini_ref_cigar_splitted)
+                    if r2_ref_min_mismatch == 'NA':
+                        mini_refs_to_ignore.add(r2_mini_ref)
+                    elif (r2_mismatch_pct > r2_ref_min_mismatch) or (r2_mismatch_pct > mismatch_cutoff):
+                        mini_refs_to_ignore.add(r2_mini_ref)
+                    else:
+                        # check aligned length
+                        if r2_aligned_len < min_M_len_mini:
+                            mini_refs_to_ignore.add(r2_mini_ref)
                         else:
-                            gap_seq_to_ctg_reads_dict[ref_id].append(read_id)
+                            # check if clp in the middle
+                            clip_in_middle = False
+                            if ('S' in r2_mini_ref_cigar) or ('s' in r2_mini_ref_cigar):
+                                clip_in_middle = True
+                                if (r2_mini_ref_cigar_splitted[0][-1] in ['S', 's']) and (r2_mini_ref_pos == 1):
+                                    clip_in_middle = False
+                                if (r2_mini_ref_cigar_splitted[-1][-1] in ['S', 's']):
+                                    if (r2_mini_ref_pos + r2_aligned_len - 1) == mini_assembly_len_dict[r2_mini_ref]:
+                                        clip_in_middle = False
 
+                            # exclude the ref if clp in the middle is True
+                            if clip_in_middle is True:
+                                mini_refs_to_ignore.add(r2_mini_ref)
+                            else:
+                                r2_mini_refs_passed_qc[r2_mini_ref] = [r2_mini_ref_cigar]
 
+        ####################################################################################################
+
+        r1_mini_refs_no_ignored = {key: value for key, value in r1_mini_refs_passed_qc.items() if key not in mini_refs_to_ignore}
+        r2_mini_refs_no_ignored = {key: value for key, value in r2_mini_refs_passed_qc.items() if key not in mini_refs_to_ignore}
+        shared_mini_ref_dict = {key: [r1_mini_refs_no_ignored[key][0], r2_mini_refs_no_ignored[key][0]] for key in set(r1_mini_refs_no_ignored).intersection(set(r2_mini_refs_no_ignored))}
+
+        # both r1 and r2 mapped to the same mini assembly
+        if len(shared_mini_ref_dict) > 0:
+
+            if (each_mp in rd2_read_to_extract_flanking_16s) and (each_mp not in to_extract_read_base_rd2_ctg):
+                for each_mini_assembly in shared_mini_ref_dict:
+                    if each_mini_assembly not in mini_assembly_to_16s_reads_dict:
+                        mini_assembly_to_16s_reads_dict[each_mini_assembly] = {each_mp}
+                    else:
+                        mini_assembly_to_16s_reads_dict[each_mini_assembly].add(each_mp)
+
+            elif (each_mp not in rd2_read_to_extract_flanking_16s) and (each_mp in to_extract_read_base_rd2_ctg):
+                for each_mini_assembly in shared_mini_ref_dict:
+                    if each_mini_assembly not in mini_assembly_to_ctg_reads_dict:
+                        mini_assembly_to_ctg_reads_dict[each_mini_assembly] = {each_mp}
+                    else:
+                        mini_assembly_to_ctg_reads_dict[each_mini_assembly].add(each_mp)
+
+    # write out mini_assembly_to_16s_reads
     mini_assembly_to_16s_reads_handle = open(mini_assembly_to_16s_reads, 'w')
-    for each_mini_assembly in gap_seq_to_16s_reads_dict:
-        mini_assembly_to_16s_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(gap_seq_to_16s_reads_dict[each_mini_assembly])))
+    for each_mini_assembly in mini_assembly_to_16s_reads_dict:
+        mini_assembly_to_16s_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(mini_assembly_to_16s_reads_dict[each_mini_assembly])))
     mini_assembly_to_16s_reads_handle.close()
 
+    # write out mini_assembly_to_ctg_reads
     mini_assembly_to_ctg_reads_handle = open(mini_assembly_to_ctg_reads, 'w')
-    for each_mini_assembly in gap_seq_to_ctg_reads_dict:
-        mini_assembly_to_ctg_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(gap_seq_to_ctg_reads_dict[each_mini_assembly])))
+    for each_mini_assembly in mini_assembly_to_ctg_reads_dict:
+        mini_assembly_to_ctg_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(mini_assembly_to_ctg_reads_dict[each_mini_assembly])))
     mini_assembly_to_ctg_reads_handle.close()
 
 
@@ -3908,78 +3709,52 @@ def link_16s(args):
 
     ################################################# define file name #################################################
 
-    combined_linkage_file_tmp                       = '%s/combined_linkages_tmp.txt'                    % step_2_wd
     combined_linkage_file                           = '%s/%s_identified_linkages_genome_level.txt'      % (working_directory, output_prefix)
     combined_linkage_file_ctg_level                 = '%s/%s_identified_linkages_contig_level.txt'      % (working_directory, output_prefix)
     linkage_plot_rd1_html                           = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
     linkage_plot_rd2_html                           = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
 
-
     report_and_log(('Combining linkages from step 1 and 2'), pwd_log_file, keep_quiet)
 
     combined_linkage_file_handle     = open(combined_linkage_file, 'w')
-    combined_linkage_file_tmp_handle = open(combined_linkage_file_tmp, 'w')
-    combined_linkage_file_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\n')
-    combined_linkage_file_tmp_handle.write('MarkerGene,GenomicSeq,Number\n')
+    combined_linkage_file_handle.write('MarkerGene\tGenomicSeq\tLinkage\tRound\n')
     for step_1_link in open(link_stats_combined_filtered_s1):
         if not step_1_link.startswith('MarkerGene,GenomicSeq,Number'):
             marker_id = step_1_link.strip().split(',')[0][12:]
             genome_id = step_1_link.strip().split(',')[1][12:]
             link_num  = step_1_link.strip().split(',')[2]
-            combined_linkage_file_handle.write('%s\t%s\t%s\tS1\n' % (marker_id, genome_id, link_num))
-            combined_linkage_file_tmp_handle.write(step_1_link)
+            combined_linkage_file_handle.write('%s\t%s\t%s\tRd1\n' % (marker_id, genome_id, link_num))
     for step_2_link in open(stats_GapFilling_file_filtered):
         if not step_2_link.startswith('MarkerGene,GenomicSeq,Number'):
             marker_id = step_2_link.strip().split(',')[0][12:]
             genome_id = step_2_link.strip().split(',')[1][12:]
             link_num  = step_2_link.strip().split(',')[2]
-            combined_linkage_file_handle.write('%s\t%s\t%s\tS2\n' % (marker_id, genome_id, link_num))
-            combined_linkage_file_tmp_handle.write(step_2_link)
+            combined_linkage_file_handle.write('%s\t%s\t%s\tRd2\n' % (marker_id, genome_id, link_num))
     combined_linkage_file_handle.close()
-    combined_linkage_file_tmp_handle.close()
 
     #################### summarize linkages at contig level ####################
 
     combined_linkage_file_ctg_level_handle = open(combined_linkage_file_ctg_level, 'w')
-    combined_linkage_file_ctg_level_handle.write('Marker___Genome(total)\tContig\tPaired\tClipping\tOverlapped\tStep\n')
+    combined_linkage_file_ctg_level_handle.write('Marker___Genome(total)\tContig\tRd1\tRd2\n')
     for each_linkage in open(combined_linkage_file):
-        if not each_linkage.startswith('MarkerGene	GenomicSeq	Linkage	Step'):
+        if not each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tRound'):
             each_linkage_split = each_linkage.strip().split('\t')
             marker_id = each_linkage_split[0]
             mag_id = each_linkage_split[1]
             total_link_num = int(each_linkage_split[2])
             link_step = each_linkage_split[3]
 
-            if link_step == 'S1':
-                # first go through link num dict by paired reads
-                counted_16s_to_ctg_key = set()
-                for each_paired_link in marker_to_ctg_linkage_num_dict_min3_passed_ratio_check:
-                    if each_paired_link in marker_to_ctg_linkage_num_dict_min3_passed_ratio_check:
-                        paired_link_16s_id = each_paired_link.split(marker_to_ctg_gnm_Key_connector)[0]
-                        paired_link_ctg_id = each_paired_link.split(marker_to_ctg_gnm_Key_connector)[1]
-                        paired_link_ctg_id_no_gnm = paired_link_ctg_id.split(gnm_to_ctg_connector)[1]
-                        paired_link_gnm_id = paired_link_ctg_id.split(gnm_to_ctg_connector)[0]
-                        if (paired_link_16s_id == marker_id) and (paired_link_gnm_id == mag_id):
-                            current_pair_link_num = marker_to_ctg_linkage_num_dict_min3_passed_ratio_check[each_paired_link]
-                            current_clip_link_num = marker_to_ctg_linkage_num_dict_min3_passed_ratio_check.get(each_paired_link, 0)
-                            combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t%s\t%s\t0\tS1\n' % (paired_link_16s_id, paired_link_gnm_id, total_link_num, paired_link_ctg_id_no_gnm, current_pair_link_num, current_clip_link_num))
-                            counted_16s_to_ctg_key.add(each_paired_link)
+            if link_step == 'Rd1':
+                for each_link in marker_to_ctg_linkage_num_dict_min3_passed_ratio_check:
+                    link_16s_id = each_link.split(marker_to_ctg_gnm_Key_connector)[0]
+                    link_ctg_id = each_link.split(marker_to_ctg_gnm_Key_connector)[1]
+                    link_ctg_id_no_gnm = link_ctg_id.split(gnm_to_ctg_connector)[1]
+                    link_gnm_id = link_ctg_id.split(gnm_to_ctg_connector)[0]
+                    if (link_16s_id == marker_id) and (link_gnm_id == mag_id):
+                        current_link_num = marker_to_ctg_linkage_num_dict_min3_passed_ratio_check[each_link]
+                        combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t%s\t0\n' % (link_16s_id, link_gnm_id, total_link_num, link_ctg_id_no_gnm, current_link_num))
 
-                # then go through link num dict by clipping reads
-                for each_clip_link in marker_to_ctg_linkage_num_dict_min3_passed_ratio_check:
-                    if each_clip_link in marker_to_ctg_linkage_num_dict_min3_passed_ratio_check:
-                        if each_clip_link not in counted_16s_to_ctg_key:
-                            clip_link_16s_id = each_clip_link.split(marker_to_ctg_gnm_Key_connector)[0]
-                            clip_link_ctg_id = each_clip_link.split(marker_to_ctg_gnm_Key_connector)[1]
-                            clip_link_ctg_id_no_gnm = clip_link_ctg_id.split(gnm_to_ctg_connector)[1]
-                            clip_link_gnm_id = clip_link_ctg_id.split(gnm_to_ctg_connector)[0]
-                            if (clip_link_16s_id == marker_id) and (clip_link_gnm_id == mag_id):
-                                current_pair_link_num = marker_to_ctg_linkage_num_dict_min3_passed_ratio_check.get(each_clip_link, 0)
-                                current_clip_link_num = marker_to_ctg_linkage_num_dict_min3_passed_ratio_check[each_clip_link]
-                                combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t%s\t%s\t0\tS1\n' % (clip_link_16s_id, clip_link_gnm_id, total_link_num, clip_link_ctg_id_no_gnm, current_pair_link_num, current_clip_link_num))
-                                counted_16s_to_ctg_key.add(each_clip_link)
-
-            if link_step == 'S2':
+            if link_step == 'Rd2':
                 for each_rd2_linkage in free_living_16s_to_ctg_linkage_dict_to_use:
                     rd2_link_16s_id = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)[0]
                     rd2_link_ctg_id = each_rd2_linkage.split(marker_to_ctg_gnm_Key_connector)[1]
@@ -3987,7 +3762,8 @@ def link_16s(args):
                     rd2_link_gnm_id = rd2_link_ctg_id.split(gnm_to_ctg_connector)[0]
                     if (rd2_link_16s_id == marker_id) and (rd2_link_gnm_id == mag_id):
                         current_ctg_link_num = free_living_16s_to_ctg_linkage_dict_to_use[each_rd2_linkage]
-                        combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t0\t0\t%s\tS2\n' % (rd2_link_16s_id, rd2_link_gnm_id, total_link_num, rd2_link_ctg_id_no_gnm, current_ctg_link_num))
+                        combined_linkage_file_ctg_level_handle.write('%s___%s(%s)\t%s\t0\t%s\n' % (rd2_link_16s_id, rd2_link_gnm_id, total_link_num, rd2_link_ctg_id_no_gnm, current_ctg_link_num))
+
     combined_linkage_file_ctg_level_handle.close()
 
 
@@ -4018,14 +3794,14 @@ def link_16s(args):
             marker_id_set.add(marker_seq_record.id)
 
         # get recovery and accuracy
-        recovery_combined, accuracy_combined, recovered_combined = get_accuracy(combined_linkage_file_tmp, len(marker_id_set))
+        recovery_combined, accuracy_combined, recovered_combined = get_accuracy(combined_linkage_file, len(marker_id_set))
 
         # get unrecovered markers
         unrecovered_markers_paired = get_unrecovered_markers(marker_id_set, recovered_combined)
         unrecovered_markers_paired_str = 'Unrecovered(%s):%s' % (len(unrecovered_markers_paired), ','.join(sorted([i for i in unrecovered_markers_paired])))
 
         # assessment by genome
-        assign_rate, assign_accuracy, right_assign, wrong_assign = get_accuracy_by_genome(combined_linkage_file_tmp, mag_folder, mag_file_extension)
+        assign_rate, assign_accuracy, right_assign, wrong_assign = get_accuracy_by_genome(combined_linkage_file, mag_folder, mag_file_extension)
         unrecovered_paired_report_str = 'Unrecovered(%s):%s' % (len(wrong_assign), ','.join(sorted([i for i in wrong_assign])))
 
         # report
@@ -4103,7 +3879,7 @@ if __name__ == '__main__':
     link_16s_parser_rd2.add_argument('-assemble_clp',       required=False, action="store_true",                            help='use clipping mapped reads for mini-assembly')
     link_16s_parser_rd2.add_argument('-mira',               required=False, action="store_true",                            help='run Mira, instead of Spades')
     link_16s_parser_rd2.add_argument('-mira_tmp',           required=False, default=None,                                   help='tmp dir for mira')
-    link_16s_parser_rd2.add_argument('-link_bias_rd2',      required=False, metavar='', type=float, default=40,             help='max_mini_assembly_link_num_diff_between_ctg_16s, (default: %(default)s)')
+    link_16s_parser_rd2.add_argument('-link_bias_rd2',      required=False, metavar='', type=float, default=10,             help='max_mini_assembly_link_num_diff_between_ctg_16s, (default: %(default)s)')
 
     # # preset parameters
     # link_16s_parser_preset.add_argument('-very_sensitive',  required=False, action="store_true",                            help='for greater sensitivity, shortcut for  "min_overlap_iden 99.5 min_overlap_cov 25 min_overlap_len 50 min_overlap_num 3"')
@@ -4134,11 +3910,10 @@ if __name__ == '__main__':
 1. the depth of 16S sequences always not lower than the genome they come from
 2. with no_ambiguous option, 16S rRNA gene sequences need to be dereplicated. (include dereplication step? with identity and coverage cutoffs?)
 3. (doesn't work)!!! to ignore list even without assignment (to handle situations like DM_m4, meanwhile capicable of not assign very diverde 16S (e.g. <98% identity) to the same genome)
-4. add "16S_reads" to SortMeRNA's output prefix
-5. for clipping mapped reads, the mismatch of clipping part must be 0
-6. insert size is important
-7. check duplicate sequences in input files
-8. a genome depth of 0 will triggle error !!!!!!
-9. no header in mag depth and 16s depth files !!!!!!
+4. for clipping mapped reads, the mismatch of clipping part must be 0
+5. insert size is important
+6. check duplicate sequences in input files
+7. a genome depth of 0 will triggle error !!!!!!
+8. no header in mag depth and 16s depth files !!!!!!
 
 '''
