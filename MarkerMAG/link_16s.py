@@ -1366,7 +1366,6 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                                      stats_GapFilling_ctg,
                                      stats_GapFilling_gnm):
 
-
     round2_free_living_16s_ref_dict = {}
     for free_living_read_16s in open(free_living_16s_ref_file):
         free_living_read_16s_split = free_living_read_16s.strip().split('\t')
@@ -2994,96 +2993,40 @@ def link_16s(args):
 
     ################################################# define file name #################################################
 
-    free_living_16s_R1                              = '%s/round2_free_living_16s_R1.fa'                 % step_2_wd
-    free_living_16s_R2                              = '%s/round2_free_living_16s_R2.fa'                 % step_2_wd
-    free_living_16s_UP                              = '%s/round2_free_living_16s_UP.fa'                 % step_2_wd
-    marker_gene_seqs_1st_round_unlinked             = '%s/round_1_unlinked_16s.fa'                      % step_2_wd
     combined_1st_round_unlinked_mags                = '%s/round_1_unlinked_gnm.fa'                      % step_2_wd
     combined_1st_round_unlinked_mag_end_seq         = '%s/round_1_unlinked_gnm_end_%sbp.fa'             % (step_2_wd, end_seq_len)
     rd1_unlinked_mag_end_seq_no_ext                 = '%s/round_1_unlinked_gnm_end_%sbp'                % (step_2_wd, end_seq_len)
-    combined_1st_round_unlinked_mags_sam            = '%s/round_1_unlinked_gnm.sam'                     % step_2_wd
     rd1_unlinked_mags_sam_bowtie_log                = '%s/round_1_unlinked_gnm_bowtie.log'              % step_2_wd
     rd1_unlinked_mags_sam_bowtie                    = '%s/round_1_unlinked_gnm_bowtie.sam'              % step_2_wd
     rd1_unlinked_mags_sam_bowtie_reformat           = '%s/round_1_unlinked_gnm_bowtie_reformatted.sam'  % step_2_wd
     rd1_unlinked_mags_sam_bowtie_reformat_log       = '%s/round_1_unlinked_gnm_bowtie_reformat.log'     % step_2_wd
-    combined_1st_round_unlinked_ctgs                = '%s/round_1_unlinked_ctg.fa'                      % step_2_wd
     stats_GapFilling_file                           = '%s/stats_GapFilling_gnm.txt'                     % step_2_wd
     stats_GapFilling_file_filtered                  = '%s/stats_GapFilling_gnm_filtered.txt'            % step_2_wd
-    free_living_ctg_R1                              = '%s/round2_free_living_ctg_R1.fa'                 % step_2_wd
-    free_living_ctg_R2                              = '%s/round2_free_living_ctg_R2.fa'                 % step_2_wd
-    free_living_ctg_UP                              = '%s/round2_free_living_ctg_UP.fa'                 % step_2_wd
-    free_living_16s                                 = '%s/round2_free_living_16s.fa'                    % step_2_wd
-    free_living_ctg                                 = '%s/round2_free_living_ctg.fa'                    % step_2_wd
     free_living_16s_ref_file                        = '%s/round2_free_living_16s_refs.txt'              % step_2_wd
     free_living_ctg_ref_file                        = '%s/round2_free_living_ctg_refs.txt'              % step_2_wd
-    free_living_blast_result                        = '%s/free_living_reads_blastn.tab'                 % step_2_wd
     free_living_all                                 = '%s/round2_free_living_all.fa'                    % step_2_wd
     free_living_all_fq_r1                           = '%s/round2_free_living_all_R1.fastq'              % step_2_wd
     free_living_all_fq_r2                           = '%s/round2_free_living_all_R2.fastq'              % step_2_wd
     free_living_all_fq                              = '%s/round2_free_living_all.fastq'                 % step_2_wd
-    free_living_R1                                  = '%s/round2_free_living_R1.fa'                     % step_2_wd
-    free_living_R2                                  = '%s/round2_free_living_R2.fa'                     % step_2_wd
-    free_living_UP                                  = '%s/round2_free_living_UP.fa'                     % step_2_wd
     spades_wd                                       = '%s/mini_assembly_SPAdes_wd'                      % step_2_wd
     spades_log                                      = '%s/SPAdes_stdout.txt'                            % step_2_wd
     mira_manifest                                   = '%s/mira_manifest.txt'                            % step_2_wd
     mira_stdout                                     = '%s/mira_stdout.txt'                              % step_2_wd
-    sam_file_mini_assembly_16s_P                    = '%s/scaffolds_16s_P.sam'                          % step_2_wd
-    sam_file_mini_assembly_16s_UP                   = '%s/scaffolds_16s_UP.sam'                         % step_2_wd
-    sam_file_mini_assembly_ctg_P                    = '%s/scaffolds_ctg_P.sam'                          % step_2_wd
-    sam_file_mini_assembly_ctg_UP                   = '%s/scaffolds_ctg_UP.sam'                         % step_2_wd
-    sam_file_mini_assembly_16s_P_stderr             = '%s/scaffolds_16s_P_bbmap_stderr.txt'             % step_2_wd
-    sam_file_mini_assembly_16s_UP_stderr            = '%s/scaffolds_16s_UP_bbmap_stderr.txt'            % step_2_wd
-    sam_file_mini_assembly_ctg_P_stderr             = '%s/scaffolds_ctg_P_bbmap_stderr.txt'             % step_2_wd
-    sam_file_mini_assembly_ctg_UP_stderr            = '%s/scaffolds_ctg_UP_bbmap_stderr.txt'            % step_2_wd
-    sam_file_mini_assembly_16s_P_best_match         = '%s/scaffolds_16s_P_best_match.sam'               % step_2_wd
-    sam_file_mini_assembly_16s_UP_best_match        = '%s/scaffolds_16s_UP_best_match.sam'              % step_2_wd
-    sam_file_mini_assembly_ctg_P_best_match         = '%s/scaffolds_ctg_P_best_match.sam'               % step_2_wd
-    sam_file_mini_assembly_ctg_UP_best_match        = '%s/scaffolds_ctg_UP_best_match.sam'              % step_2_wd
-    sam_file_mini_assembly_P                        = '%s/scaffolds_P.sam'                              % step_2_wd
-    sam_file_mini_assembly_UP                       = '%s/scaffolds_UP.sam'                             % step_2_wd
-    sam_file_mini_assembly_stderr_P                 = '%s/scaffolds_bbmap_stderr_P.txt'                 % step_2_wd
-    sam_file_mini_assembly_stderr_UP                = '%s/scaffolds_bbmap_stderr_UP.txt'                % step_2_wd
-    sam_file_mini_assembly_combined                 = '%s/scaffolds_combined.sam'                       % step_2_wd
-    sam_file_mini_assembly_16s_bowtie_log           = '%s/scaffolds_16s_bowtie.log'                     % step_2_wd
-    sam_file_mini_assembly_16s                      = '%s/scaffolds_16s_bowtie.sam'                     % step_2_wd
-    sam_file_mini_assembly_16s_single_clp           = '%s/scaffolds_16s_bowtie_single_clp.sam'          % step_2_wd
-    sam_file_mini_assembly_16s_single_clp_fmt       = '%s/scaffolds_16s_bowtie_single_clp_reformat.sam' % step_2_wd
-    sam_file_mini_assembly_16s_single_clp_fmt_log   = '%s/scaffolds_16s_bowtie_single_clp_reformat.log' % step_2_wd
-    sam_file_mini_assembly_ctg_bowtie_log           = '%s/scaffolds_ctg_bowtie.log'                     % step_2_wd
-    sam_file_mini_assembly_ctg                      = '%s/scaffolds_ctg_bowtie.sam'                     % step_2_wd
-    sam_file_mini_assembly_ctg_single_clp           = '%s/scaffolds_ctg_bowtie_single_clp.sam'          % step_2_wd
-    sam_file_mini_assembly_ctg_single_clp_fmt       = '%s/scaffolds_ctg_bowtie_single_clp_reformat.sam' % step_2_wd
-    sam_file_mini_assembly_ctg_single_clp_fmt_log   = '%s/scaffolds_ctg_bowtie_single_clp_reformat.log' % step_2_wd
-    sam_file_mini_assembly_16s_stderr               = '%s/scaffolds_16s_stderr.txt'                     % step_2_wd
-    sam_file_mini_assembly_ctg_stderr               = '%s/scaffolds_ctg_stderr.txt'                     % step_2_wd
-    sam_file_mini_assembly_16s_best_match           = '%s/scaffolds_16s_best_match.sam'                 % step_2_wd
-    sam_file_mini_assembly_ctg_best_match           = '%s/scaffolds_ctg_best_match.sam'                 % step_2_wd
-    sam_file_mini_assembly_both_best_match          = '%s/scaffolds_both_best_match.sam'                % step_2_wd
-    sam_file_mini_assembly_both_best_match_fa       = '%s/scaffolds_both_best_match.fa'                 % step_2_wd
     mini_assembly_to_16s_reads                      = '%s/mini_assembly_to_16s_reads.txt'               % step_2_wd
     mini_assembly_to_ctg_reads                      = '%s/mini_assembly_to_ctg_reads.txt'               % step_2_wd
     stats_GapFilling_ctg                            = '%s/stats_GapFilling_ctg.txt'                     % step_2_wd
-
-    sam_file_mini_assembly                          = '%s/scaffolds_bowtie.sam'                     % step_2_wd
-    sam_file_mini_assembly_log                      = '%s/scaffolds_bowtie.log'                     % step_2_wd
-    sam_file_mini_assembly_reformatted              = '%s/scaffolds_bowtie_reformatted.sam'                     % step_2_wd
-    sam_file_mini_assembly_reformatted_log          = '%s/scaffolds_bowtie_reformatted.log'                     % step_2_wd
-
+    sam_file_mini_assembly                          = '%s/scaffolds_bowtie.sam'                         % step_2_wd
+    sam_file_mini_assembly_log                      = '%s/scaffolds_bowtie.log'                         % step_2_wd
+    sam_file_mini_assembly_reformatted              = '%s/scaffolds_bowtie_reformatted.sam'             % step_2_wd
+    sam_file_mini_assembly_reformatted_log          = '%s/scaffolds_bowtie_reformatted.log'             % step_2_wd
     rd2_to_extract_flking_16s_r1_id                 = '%s/rd2_to_extract_flking_16s_r1_id.txt'          % step_2_wd
     rd2_to_extract_flking_16s_r2_id                 = '%s/rd2_to_extract_flking_16s_r2_id.txt'          % step_2_wd
     rd2_extracted_flking_16s_r1_seq_tmp             = '%s/rd2_extracted_flking_16s_r1_tmp.fa'           % step_2_wd
     rd2_extracted_flking_16s_r2_seq_tmp             = '%s/rd2_extracted_flking_16s_r2_tmp.fa'           % step_2_wd
-    rd2_extracted_flking_16s_r1_seq                 = '%s/rd2_extracted_flking_16s_r1.fa'               % step_2_wd
-    rd2_extracted_flking_16s_r2_seq                 = '%s/rd2_extracted_flking_16s_r2.fa'               % step_2_wd
-
     rd2_to_extract_flking_ctg_r1_id                 = '%s/rd2_to_extract_flking_ctg_r1_id.txt'          % step_2_wd
     rd2_to_extract_flking_ctg_r2_id                 = '%s/rd2_to_extract_flking_ctg_r2_id.txt'          % step_2_wd
     rd2_extracted_flking_ctg_r1_seq_tmp             = '%s/rd2_extracted_flking_ctg_r1_tmp.fa'           % step_2_wd
     rd2_extracted_flking_ctg_r2_seq_tmp             = '%s/rd2_extracted_flking_ctg_r2_tmp.fa'           % step_2_wd
-    rd2_extracted_flking_ctg_r1_seq                 = '%s/rd2_extracted_flking_ctg_r1.fa'               % step_2_wd
-    rd2_extracted_flking_ctg_r2_seq                 = '%s/rd2_extracted_flking_ctg_r2.fa'               % step_2_wd
-
     rd2_extracted_r1_combined                       = '%s/rd2_extracted_r1_combined.fa'                 % step_2_wd
     rd2_extracted_r2_combined                       = '%s/rd2_extracted_r2_combined.fa'                 % step_2_wd
 
@@ -3709,14 +3652,14 @@ def link_16s(args):
 
     ################################################# define file name #################################################
 
-    combined_linkage_file                           = '%s/%s_identified_linkages_genome_level.txt'      % (working_directory, output_prefix)
-    combined_linkage_file_ctg_level                 = '%s/%s_identified_linkages_contig_level.txt'      % (working_directory, output_prefix)
-    linkage_plot_rd1_html                           = '%s/%s_identified_linkages_round1.html'           % (working_directory, output_prefix)
-    linkage_plot_rd2_html                           = '%s/%s_identified_linkages_round2.html'           % (working_directory, output_prefix)
+    combined_linkage_file_by_gnm = '%s/%s_linkages_by_genome.txt'    % (working_directory, output_prefix)
+    combined_linkage_file_by_ctg = '%s/%s_linkages_by_contig.txt'    % (working_directory, output_prefix)
+    linkage_plot_rd1_html        = '%s/%s_linkages_plot_round1.html' % (working_directory, output_prefix)
+    linkage_plot_rd2_html        = '%s/%s_linkages_plot_round2.html' % (working_directory, output_prefix)
 
     report_and_log(('Combining linkages from step 1 and 2'), pwd_log_file, keep_quiet)
 
-    combined_linkage_file_handle     = open(combined_linkage_file, 'w')
+    combined_linkage_file_handle     = open(combined_linkage_file_by_gnm, 'w')
     combined_linkage_file_handle.write('MarkerGene\tGenomicSeq\tLinkage\tRound\n')
     for step_1_link in open(link_stats_combined_filtered_s1):
         if not step_1_link.startswith('MarkerGene,GenomicSeq,Number'):
@@ -3734,9 +3677,9 @@ def link_16s(args):
 
     #################### summarize linkages at contig level ####################
 
-    combined_linkage_file_ctg_level_handle = open(combined_linkage_file_ctg_level, 'w')
+    combined_linkage_file_ctg_level_handle = open(combined_linkage_file_by_ctg, 'w')
     combined_linkage_file_ctg_level_handle.write('Marker___Genome(total)\tContig\tRd1\tRd2\n')
-    for each_linkage in open(combined_linkage_file):
+    for each_linkage in open(combined_linkage_file_by_gnm):
         if not each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tRound'):
             each_linkage_split = each_linkage.strip().split('\t')
             marker_id = each_linkage_split[0]
@@ -3766,13 +3709,9 @@ def link_16s(args):
 
     combined_linkage_file_ctg_level_handle.close()
 
-
-    ####################################################################################################################
-    ####################################################### plot #######################################################
-    ####################################################################################################################
-
+    # plot
     report_and_log(('Visualising linkages'), pwd_log_file, keep_quiet)
-    sankey_linkages(combined_linkage_file_ctg_level, linkage_plot_rd1_html, linkage_plot_rd2_html)
+    sankey_linkages(combined_linkage_file_by_ctg, linkage_plot_rd1_html, linkage_plot_rd2_html)
 
 
     ######################################## report assessment under test mode #########################################
@@ -3794,14 +3733,14 @@ def link_16s(args):
             marker_id_set.add(marker_seq_record.id)
 
         # get recovery and accuracy
-        recovery_combined, accuracy_combined, recovered_combined = get_accuracy(combined_linkage_file, len(marker_id_set))
+        recovery_combined, accuracy_combined, recovered_combined = get_accuracy(combined_linkage_file_by_gnm, len(marker_id_set))
 
         # get unrecovered markers
         unrecovered_markers_paired = get_unrecovered_markers(marker_id_set, recovered_combined)
         unrecovered_markers_paired_str = 'Unrecovered(%s):%s' % (len(unrecovered_markers_paired), ','.join(sorted([i for i in unrecovered_markers_paired])))
 
         # assessment by genome
-        assign_rate, assign_accuracy, right_assign, wrong_assign = get_accuracy_by_genome(combined_linkage_file, mag_folder, mag_file_extension)
+        assign_rate, assign_accuracy, right_assign, wrong_assign = get_accuracy_by_genome(combined_linkage_file_by_gnm, mag_folder, mag_file_extension)
         unrecovered_paired_report_str = 'Unrecovered(%s):%s' % (len(wrong_assign), ','.join(sorted([i for i in wrong_assign])))
 
         # report
@@ -3915,5 +3854,6 @@ if __name__ == '__main__':
 6. check duplicate sequences in input files
 7. a genome depth of 0 will triggle error !!!!!!
 8. no header in mag depth and 16s depth files !!!!!!
+9. remove short mini-assemblies?
 
 '''

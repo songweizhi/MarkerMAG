@@ -40,7 +40,6 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                                      stats_GapFilling_ctg,
                                      stats_GapFilling_gnm):
 
-
     round2_free_living_16s_ref_dict = {}
     for free_living_read_16s in open(free_living_16s_ref_file):
         free_living_read_16s_split = free_living_read_16s.strip().split('\t')
@@ -62,6 +61,7 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
         round2_free_living_ctg_ref_dict[read_ctg_id] = read_ctg_refs_no_suffix
 
     mini_assembly_to_16s_dict = {}
+    mini_assembly_to_16s_linking_reads_dict = {}
     for each_mini_assembly in open(mini_assembly_to_16s_reads):
         mini_assembly_split = each_mini_assembly.strip().split('\t')
         mini_assembly_id = mini_assembly_split[0]
@@ -72,10 +72,13 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                 mini_assembly_to_16s_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_16s_ref)
                 if mini_assembly_to_16s_key not in mini_assembly_to_16s_dict:
                     mini_assembly_to_16s_dict[mini_assembly_to_16s_key] = 1
+                    mini_assembly_to_16s_linking_reads_dict[mini_assembly_to_16s_key] = {each_mapped_read}
                 else:
                     mini_assembly_to_16s_dict[mini_assembly_to_16s_key] += 1
+                    mini_assembly_to_16s_linking_reads_dict[mini_assembly_to_16s_key].add(each_mapped_read)
 
     mini_assembly_to_ctg_dict = {}
+    mini_assembly_to_ctg_linking_reads_dict = {}
     for each_mini_assembly in open(mini_assembly_to_ctg_reads):
         mini_assembly_split = each_mini_assembly.strip().split('\t')
         mini_assembly_id = mini_assembly_split[0]
@@ -86,8 +89,11 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                 mini_assembly_to_ctg_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_ctg_ref)
                 if mini_assembly_to_ctg_key not in mini_assembly_to_ctg_dict:
                     mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] = 1
+                    mini_assembly_to_ctg_linking_reads_dict[mini_assembly_to_ctg_key] = {each_mapped_read}
                 else:
                     mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] += 1
+                    mini_assembly_to_ctg_linking_reads_dict[mini_assembly_to_ctg_key].add(each_mapped_read)
+
 
     mini_assembly_to_16s_dict_reformatted = {}
     max_link_nun_dict_16s = {}
@@ -111,6 +117,8 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                 if linkage_num > max_link_nun_dict_16s[seq_16s_id]:
                     max_link_nun_dict_16s[seq_16s_id] = linkage_num
 
+    print('mini_assembly_to_16s_dict_reformatted: %s' % mini_assembly_to_16s_dict_reformatted)
+
     mini_assembly_to_ctg_dict_reformatted = {}
     max_link_nun_dict_ctg = {}
     for each in mini_assembly_to_ctg_dict:
@@ -133,7 +141,11 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                 if linkage_num > max_link_nun_dict_ctg[ctg_id]:
                     max_link_nun_dict_ctg[ctg_id] = linkage_num
 
+    #print(mini_assembly_to_ctg_dict)
+    #print(mini_assembly_to_ctg_dict_reformatted)
+
     mini_assembly_linked_both = set(mini_assembly_to_16s_dict_reformatted).intersection(mini_assembly_to_ctg_dict_reformatted)
+    print('mini_assembly_linked_both: %s' % mini_assembly_linked_both)
 
     stats_GapFilling_ctg_handle = open(stats_GapFilling_ctg, 'w')
     stats_GapFilling_gnm_dict = {}
