@@ -1,15 +1,11 @@
 import os
 
-bin_id_file = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_refined_bins_id.txt'
-bin_id_file = '/srv/scratch/z5039045/MarkerMAG_wd/CAMI1/ref_id.txt'
-#bin_id_file = '/Users/songweizhi/Desktop/cami_hc_refined_bins_id.txt'
+bin_id_file = '/Users/songweizhi/Desktop/refined_MAGs_prefix.txt'
 
 for each in open(bin_id_file):
-    file_name = each.strip()
-    bin_id = file_name.split('.')[0]
-    #add_prefix_cmd = 'BioSAK rename_seq -in /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/cami_hc_refined_bins/%s -prefix %s' % (file_name, bin_id)
-    add_prefix_cmd = 'BioSAK rename_seq -in /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/ref_genomes_hc_04_20/%s -prefix %s' % (file_name, bin_id)
+    bin_id = each.strip()
+    add_prefix_cmd = 'blastn -query /srv/scratch/z5039045/MarkerMAG_wd/CAMI_high/CAMI_high_refined_bins_renamed/%s.fasta -db combined_refs.fna -out %s_vs_ref.tab -evalue 1e-5 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen" -task blastn -num_threads 12' % (bin_id, bin_id)
     print(add_prefix_cmd)
-    os.system(add_prefix_cmd)
 
 
+# /srv/scratch/z5039045/MarkerMAG_wd/CAMI_high/blast_between_bin_and_ref/combined_refs.fna

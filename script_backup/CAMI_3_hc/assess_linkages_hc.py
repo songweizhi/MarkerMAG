@@ -86,273 +86,10 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/hc_0514_stats_combined_filtered.txt'                  % wd
-linkages_from_rd1           = True
+MarkerMAG_linkages          = '%s/hc_0519_linkages_by_genome.txt'                  % wd
+#MarkerMAG_linkages          = '%s/hc_0514_stats_combined_filtered.txt'                  % wd
+linkages_from_rd1           = False
 
-
-'''
-------------------------------------------------------------------------------------------------------------
-
-# cami_hc_SILVA138_id99_50_subsample_100_3569
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_tmp_MarkerMAG_wd_up/hc_0512_tmp_step_1_wd
-grep -E '@|cami_hc_SILVA138_id99_50_subsample_100_3569' /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd/hc_0511_very_sensitive_input_reads_to_16S_reformatted.sam > input_reads_to_16S_subset.sam
-
-# cami_hc_14___NODE_13073_length_6967_cov_0.639487
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_tmp_MarkerMAG_wd_up/hc_0512_tmp_step_1_wd
-grep -E '@|cami_hc_14___C___NODE_13073_length_6967_cov_0.639487' rd1_extracted_to_gnm_reformatted.sam > rd1_extracted_to_gnm_subset.sam
-
-------------------------------------------------------------------------------------------------------------
-
-
-cami_hc_S1_24842618.2
-
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_MarkerMAG_wd/hc_0512_step_1_wd
-grep 'cami_hc_S1_24842618.' hc_0512_input_reads_to_16S_reformatted.sam > reads_to_16s_subset.sam
-grep 'cami_hc_S1_24842618.' rd1_extracted_to_gnm_reformatted.sam > extracted_to_gnm_subset.sam
-
-bowtie2-build --quiet --threads 12 -f cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd.fa cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd
-bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -1 cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa -2 cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_p.sam -p 12 -f --local --all --no-unal
-
-bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -U cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa,cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_up.sam -p 12 -f --local --all --no-unal
-
-bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -U cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa,cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_up2.sam -p 12 -f --local --all --no-unal -N 1
-bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -U cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa,cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_up_L30.sam -p 12 -f --local --all --no-unal -N 1 -L 30
-
-
-------------------------------------------------------------------------------------------------------------
-
-cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	126	S1	Correct
-cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	69
-cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	69
-
-cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	41	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	41	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	29                  why much less this time?
-
-
-why lost the following three linkages in the new run?
-cami_hc_SILVA138_id99_50_subsample_100_2419___cami_hc_66___NODE_1112_length_54304_cov_1.219168
-cami_hc_S2_9871673.1
-cami_hc_S2_9871673.2
-
-cami_hc_SILVA138_id99_50_subsample_100_2419___cami_hc_66___NODE_1393_length_45743_cov_1.217991
-cami_hc_SILVA138_id99_50_subsample_100_2419___cami_hc_66___NODE_5764_length_14276_cov_1.210482
-
-# check cami_hc_S2_9871673
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_MarkerMAG_wd
-grep 'cami_hc_S2_9871673.' ../hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd/hc_0511_very_sensitive_input_reads_to_16S_reformatted.sam > linked_to_16s.sam
-grep 'cami_hc_S2_9871673.' hc_0512_step_1_wd/rd1_extracted_to_gnm_reformatted.sam > linked_to_gnm.sam
-
->cami_hc_S2_9871673.1
-AATCAATAAAAACGTCAACGTTTTAGTTTTAAATCTTATCTGGCAGATGCCCGTCATCTGCAGATAAACAATTGAGCAAGTCAAACACTTTTTGGAGAGT
->cami_hc_S2_9871673.2
-CTCACCCGTCCGCCGCTAACTTGAACGGAGCAAGCTCCGTCAAGTCCGCTCGACTTGCATGTATTAGGCACGCCGCCAGCGTTCGTCCTGAGCCAGGATC
-
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_MarkerMAG_wd/hc_0512_step_1_wd/cami_hc_refined_bins_db
-
-# got it
-bowtie2-build --quiet --threads 12 -f cami_hc_66___NODE_1112_length_54304_cov_1.219168.fa cami_hc_66___NODE_1112_length_54304_cov_1.219168
-bowtie2 -x cami_hc_66___NODE_1112_length_54304_cov_1.219168 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673.sam -p 12 -f --local --all --no-unal
-# cami_hc_S2_9871673.1	89	cami_hc_66___C___NODE_1112_length_54304_cov_1.219168	1	255	50S50M	=	1	0	ACTCTCCAAAAAGTGTTTGACTTGCTCAATTGTTTATCTGCAGATGACGGGCATCTGCCAGATAAGATTTAAAACTAAAACGTTGACGTTTTTATTGATT	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:100	XN:i:0	XM:i:0	XO:i:0	XG:i:0	NM:i:0	MD:Z:50	YT:Z:UP
-
-# not here !!!
-bowtie2 -x cami_hc_refined_bins_combined -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_all.sam -p 12 -f --local --all --no-unal
-
-# not here !!!
-bowtie2-build --quiet --threads 12 -f cami_hc_66.fasta cami_hc_66
-bowtie2 -x cami_hc_66 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_p.sam -p 12 -f --local --all --no-unal
-bowtie2 -x cami_hc_66 -U cami_hc_S2_9871673.1.fa,cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_up.sam -p 12 -f --local --all --no-unal
-bowtie2 -x cami_hc_66 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_p_all.sam -p 12 -f --local --all
-
-bowtie2 -x cami_hc_refined_bins_renamed/cami_hc_66 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_p_all.sam -p 12 -f --local --all
-
-
-# got it
-bowtie2-build --quiet --threads 12 -f Node_1112.fa Node_1112
-bowtie2 -x Node_1112 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_1112.sam -p 12 -f --local --all --no-unal
-
-
-# why not here
-bowtie2 -x cami_hc_refined_bins_db/cami_hc_refined_bins_combined -1 rd1_extracted_R1.fasta -2 rd1_extracted_R2.fasta -S double_check.sam -p 12 -f --local --all --no-unal
-
-# also not here
-bowtie2 -x cami_hc_refined_bins_db/cami_hc_refined_bins_combined -1 rd1_extracted_R1.fasta -2 rd1_extracted_R2.fasta -S double_check_very_sensitive.sam -p 12 -f --local --all --no-unal --very-sensitive-local
-
-bowtie2 -x cami_hc_refined_bins_db/cami_hc_refined_bins_combined -1 rd1_extracted_R1.fasta -2 rd1_extracted_R2.fasta -S double_check_super_sensitive.sam -p 12 -f --local --all --no-unal --very-sensitive-local
-
-
-
-------------------------------------------------------------------------------------------------------------
-
-cami_hc_S4_52228456.2       middle clip on      cami_hc_SILVA138_id99_75_subsample_75_3121      why?  A: not mapped, need to try very sensitive parameters
- 
- 
- 
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_05010_MarkerMAG_wd/hc_05010_step_1_wd/cami_hc_SILVA138_uclust_0.999_polished_index
-
-
-
-
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_super_sensitive_MarkerMAG_wd/hc_0511_super_sensitive_step_1_wd
-grep cami_hc_S4_52228456.2 hc_0511_super_sensitive_input_reads_to_16S_best_match.sam > super_sensitive_subset.sam
-
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd
-grep cami_hc_S4_52228456.2 hc_0511_very_sensitive_input_reads_to_16S_best_match.sam > very_sensitive_subset.sam
-
-grep cami_hc_S4_52228456.2 ../hc_05010_input_reads_to_16S.sam > vs_all_vs_all.sam
-
-
-module load bowtie
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_05010_MarkerMAG_wd/hc_05010_step_1_wd/cami_hc_SILVA138_uclust_0.999_polished_index
-bowtie2-build --quiet --threads 12 -f cami_hc_SILVA138_id99_75_subsample_75_3121.fa cami_hc_SILVA138_id99_75_subsample_75_3121
-bowtie2-build --quiet --threads 12 -f cami_hc_SILVA138_uclust_0.999_polished.fa cami_hc_SILVA138_uclust_0.999_polished
-bowtie2-build --quiet --threads 12 -f Five_16s.fa Five_16s
-
-BioSAK select_seq -seq cami_hc_SILVA138_uclust_0.999_polished.fa -id Ten_16s.txt -out Ten_16s.fa -option 1 -oneline
-BioSAK select_seq -seq cami_hc_SILVA138_uclust_0.999_polished.fa -id Twenty_16s.txt -out Twenty_16s.fa -option 1 -oneline
-bowtie2-build --quiet --threads 12 -f Ten_16s.fa Ten_16s
-bowtie2-build --quiet --threads 12 -f Twenty_16s.fa Twenty_16s
-
-bowtie2 -x cami_hc_SILVA138_uclust_0.999_polished -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_all_default.sam -p 12 -f --local --all --no-unal
-bowtie2 -x cami_hc_SILVA138_id99_75_subsample_75_3121 -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_single_default.sam -p 12 -f --local --all --no-unal
-bowtie2 -x Five_16s -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_Five_16s_default.sam -p 12 -f --local --all --no-unal
-
-bowtie2 -x Ten_16s -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_Ten_16s_default.sam -p 12 -f --local --all --no-unal
-bowtie2 -x Twenty_16s -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_Twenty_16s_default.sam -p 12 -f --local --all --no-unal
-
-
-bowtie2 -x cami_hc_SILVA138_id99_75_subsample_75_3121 -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S cami_hc_S4_52228456.sam -p 12 -f --local --all --no-unal
-
-
-
-cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	126	S1	Correct
-cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	69
-cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	69
-
-cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	41	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	41	S1	Wrong
-cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	29                  why much less this time?
-
-
-
-hc_0514_stats_combined_filtered.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
-hc_0514_stats_combined_filtered.txt	Rd_1	|	93	87	0	6	87/93(93.55)	|	42	38	0	4	0	38/97(39.18)	38/42(90.48)
-hc_0514_stats_combined_filtered.txt	Rd_2	|	0	0	0	0	0/0(0)	|	0	0	0	0	0	0/97(0.0)	0/0(0)
-hc_0514_stats_combined_filtered.txt	Both	|	93	87	0	6	87/93(93.55)	|	42	38	0	4	0	38/97(39.18)	38/42(90.48)
-
-
-hc_05010_stats_combined_filtered.txt	Rd_1	|	84	80	0	4	80/84(95.24)	|	40	36	0	4	0	36/97(37.11)	36/40(90.0)
-hc_05010_stats_combined_filtered.txt	Rd_2	|	0	0	0	0	0/0(0)	        |	0	0	0	0	0	0/97(0.0)	    0/0(0)
-hc_05010_stats_combined_filtered.txt	Both	|	84	80	0	4	80/84(95.24)	|	40	36	0	4	0	36/97(37.11)	36/40(90.0)
-
-hc_0507_mis2_75_45_stats_combined_filtered.txt	Rd_1	|	39	33	1	5	33/38(86.84)	|	24	22	1	1	0	22/97(22.68)	22/23(95.65)
-hc_0507_mis2_80_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
-hc_0507_mis2_85_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
-
-'''
-
-'''
-# cami_hc_S3_49165521.1
-
-cami_hc_S5_42397362.1	{'cami_hc_SILVA138_id99_50_subsample_50_1792'}
-cami_hc_S5_42397362.1	345	cami_hc_SILVA138_id99_75_subsample_75_2741	1	11	24S13=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:144	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:13G62	YT:Z:UP
-cami_hc_S5_42397362.1	345	cami_hc_SILVA138_id99_50_subsample_10_876	1	11	24S13=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:144	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:13G62	YT:Z:UP
-cami_hc_S5_42397362.1	89	cami_hc_SILVA138_id99_50_subsample_50_1792	1	11	16S21=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:160	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:21G62	YT:Z:UP
-
-correct
-cami_hc_SILVA138_id99_75_subsample_75_2741	cami_hc_3
-cami_hc_SILVA138_id99_50_subsample_10_876	cami_hc_3
-cami_hc_SILVA138_id99_50_subsample_50_1792  cami_hc_13
-
-wrong
-MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_3,534
-MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_3,294
-MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_3,294
-MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_13,72
-MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_13,43
-MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_13,38
-
-cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0505_mis2_75_45_keep_short_M_MarkerMAG_wd/hc_0505_mis2_75_45_keep_short_M_step_1_wd
-grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_1.sam
-grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_2.sam
-grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_3.sam
-cat sub_1.sam sub_2.sam sub_3.sam > sub.sam
-
-grep cami_hc_SILVA138_id99_75_subsample_75_3138 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_4.sam
-cat sub_1.sam sub_2.sam sub_3.sam sub_4.sam > sub.sam
-
-grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_1.sam
-grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_2.sam
-grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_3.sam
-cat sub_1.sam sub_2.sam sub_3.sam > sub.sam
-
-
-grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_1all.sam
-grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_2all.sam
-grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_3all.sam
-cat sub_1all.sam sub_2all.sam sub_3all.sam > sub_all.sam
-
-
-wrong
-cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_780_length_68394_cov_3.028655	115	0	0	S1
-cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_208_length_155603_cov_3.027781	136	0	0	S1
-cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_701_length_72282_cov_3.046022	185	0	0	S1
-cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_1353_length_46895_cov_3.028037	98	0	0	S1
-MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_3,534
-MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_3,294
-MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_3,294
-
-
-hc_0505_mis2_75_45_drop_short_M	Rd_1	|	56	49	2	5	49/54(90.74)	|	40	35	2	3	0	35/97(36.08)	35/38(92.11)
-hc_0505_mis2_75_45_drop_short_M	Rd_2	|	5	4	0	1	4/5(80.0)	    |	5	4	0	1	0	4/97(4.12)	    4/5(80.0)
-hc_0505_mis2_75_45_drop_short_M	Both	|	61	53	2	6	53/59(89.83)	|	45	39	2	4	0	39/97(40.21)	39/43(90.7)
-
-hc_0505_mis2_75_45_keep_short_M	Rd_1	|	53	46	2	5	46/51(90.2)	    |	40	35	2	3	0	35/97(36.08)	35/38(92.11)
-hc_0505_mis2_75_45_keep_short_M	Rd_2	|	8	4	2	2	4/6(66.67)	    |	6	3	1	2	0	3/97(3.09)	    3/5(60.0)
-hc_0505_mis2_75_45_keep_short_M	Both	|	61	50	4	7	50/57(87.72)	|	46	38	3	5	0	38/97(39.18)	38/43(88.37)
-
-hc_0505_mis2_75_45	    Rd_1	|	60	41	2	17	41/58(70.69)	|	37	30	2	5	0	30/97(30.93)	30/35(85.71)
-hc_0505_mis2_75_45	    Rd_2	|	12	9	2	1	9/10(90.0)	    |	8	6	1	1	0	6/97(6.19)	    6/7(85.71)
-hc_0505_mis2_75_45	    Both	|	72	50	4	18	50/68(73.53)	|	45	36	3	6	0	36/97(37.11)	36/42(85.71)
-
-hc_0505_mis1.9_75_45	Rd_1	|	72	42	2	28	42/70(60.0)	    |	37	27	2	8	0	27/97(27.84)	27/35(77.14)
-hc_0505_mis1.9_75_45	Rd_2	|	13	7	2	4	7/11(63.64)	    |	9	6	1	2	0	6/97(6.19)	    6/8(75.0)
-hc_0505_mis1.9_75_45	Both	|	85	49	4	32	49/81(60.49)	|	46	33	3	10	0	33/97(34.02)	33/43(76.74)
-
-hc_0505_mis1.8_75_45	Rd_1	|	73	42	3	28	42/70(60.0)	    |	37	27	2	8	0	27/97(27.84)	27/35(77.14)
-hc_0505_mis1.8_75_45	Rd_2	|	15	7	2	6	7/13(53.85)	    |	10	6	1	3	0	6/97(6.19)	    6/9(66.67)
-hc_0505_mis1.8_75_45	Both	|	88	49	5	34	49/83(59.04)	|	47	33	3	11	0	33/97(34.02)	33/44(75.0)
-
-
-stats_combined_filtered.txt	Rd_1	|	57	55	2	0	55/55(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
-stats_combined_filtered.txt	Rd_1	|	55	53	2	0	53/53(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
-
-
-	                                                    Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
-CAMI_hc_0428_stats_combined_filtered.txt	            Rd_1	|	49	41	4	4	41/45(91.11)	|	41	33	4	4	0	33/97(34.02)	33/37(89.19)
-CAMI_hc_0428_specific_stats_combined_filtered.txt	    Rd_1	|	48	41	3	4	41/45(91.11)	|	40	33	3	4	0	33/97(34.02)	33/37(89.19)
-CAMI_hc_0428_very_specific_stats_combined_filtered.txt	Rd_1	|	42	34	3	5	34/39(87.18)	|	38	30	3	5	0	30/97(30.93)	30/35(85.71)
-
-
-1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	16S	C246_1	tax_1137264	NA
-1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	16S	C246_1	tax_1169165	NA
-1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	MAG	C248_0	tax_134676	NA
-
-2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	16S	C229_0	tax_1051629	NA
-2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	MAG	C246_1	tax_1137264	NA
-2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	MAG	C246_1	tax_1169165	NA
-
-3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_1124469	NA
-3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_991945	NA
-3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_991968	NA
-3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	MAG	C100_0	tax_349966	NA
-
-4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_1160164	NA
-4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_1328339	NA
-4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_520453	NA
-4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	MAG	C277_0	tax_1287182	NA
-
-'''
 
 ########## script ##########
 
@@ -549,8 +286,8 @@ linkage_num_unknown = 0
 linkage_assessment_dict = {}
 for each_linkage in open(MarkerMAG_linkages):
     #if each_linkage.startswith('MarkerGene\tGenomicSeq\tLinkage\tStep'):
-    if ('MarkerGene\tGenomicSeq\tLinkage\tStep' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
-        MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\tAssessment\n')
+    if ('MarkerGene\tGenomicSeq\tLinkage\tRound' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
+        MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tRound\tAssessment\n')
     else:
         id_16s = ''
         id_mag = ''
@@ -593,9 +330,9 @@ for each_linkage in open(MarkerMAG_linkages):
                     linkage_assessment_dict[id_mag].append('Correct')
 
             else:
-                print('matched_cluster_16s: %s' % matched_cluster_16s)
-                print('matched_cluster_mag: %s' % matched_cluster_mag)
-                print()
+                #print('matched_cluster_16s: %s' % matched_cluster_16s)
+                #print('matched_cluster_mag: %s' % matched_cluster_mag)
+                #print()
                 linkage_num_wrong += 1
 
                 if linkages_from_rd1 is False:
@@ -657,7 +394,7 @@ wrong_link_rd2 = 0
 unknown_link_rd1 = 0
 unknown_link_rd2 = 0
 for each_link in open(MarkerMAG_linkages_assessed):
-    if not each_link.startswith('MarkerGene	GenomicSeq	Linkage	Step	Assessment'):
+    if not each_link.startswith('MarkerGene	GenomicSeq	Linkage	Round	Assessment'):
         each_link_split = each_link.strip().split('\t')
         gnm_id = each_link_split[1]
         linked_rd = each_link_split[3]
@@ -706,24 +443,303 @@ ambiguous_gnm_both_num  = len(rd1_ambiguous_gnm) + len(rd2_ambiguous_gnm)
 recovery_str_rd1   = '%s/%s(%s)' % (rd1_correct_num,  total_query_mag_num, float("{0:.2f}".format(rd1_correct_num*100/total_query_mag_num)))
 recovery_str_rd2   = '%s/%s(%s)' % (rd2_correct_num,  total_query_mag_num, float("{0:.2f}".format(rd2_correct_num*100/total_query_mag_num)))
 recovery_str_both  = '%s/%s(%s)' % (correct_num_both, total_query_mag_num, float("{0:.2f}".format(correct_num_both*100/total_query_mag_num)))
-accuracy_str_rd1   = '%s/%s(%s)' % (rd1_correct_num,  (len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)), float("{0:.2f}".format(rd1_correct_num*100/(len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)))))
+
+accuracy_str_rd1 = '0/0(0)'
+if (len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)) > 0:
+    accuracy_str_rd1 = '%s/%s(%s)' % (rd1_correct_num, (len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)), float("{0:.2f}".format(rd1_correct_num * 100 / (len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)))))
+
 accuracy_str_rd2 = '0/0(0)'
 if (len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)) > 0:
     accuracy_str_rd2   = '%s/%s(%s)' % (rd2_correct_num,  (len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)), float("{0:.2f}".format(rd2_correct_num*100/(len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)))))
-accuracy_str_both  = '%s/%s(%s)' % (correct_num_both, (total_linked_mag_num - unknown_gnm_both_num), float("{0:.2f}".format(correct_num_both*100/(total_linked_mag_num - unknown_gnm_both_num))))
+
+accuracy_str_both = '0/0(0)'
+if (total_linked_mag_num - unknown_gnm_both_num) > 0:
+    accuracy_str_both  = '%s/%s(%s)' % (correct_num_both, (total_linked_mag_num - unknown_gnm_both_num), float("{0:.2f}".format(correct_num_both*100/(total_linked_mag_num - unknown_gnm_both_num))))
 
 correct_link_both = correct_link_rd1 + correct_link_rd2
 wrong_link_both   = wrong_link_rd1 + wrong_link_rd2
 unknown_link_both = unknown_link_rd1 + unknown_link_rd2
 
-accuracy_str_rd1_link_level   = '%s/%s(%s)' % (correct_link_rd1,  (total_linkage_num_rd1 - unknown_link_rd1), float("{0:.2f}".format(correct_link_rd1*100/(total_linkage_num_rd1 - unknown_link_rd1))))
+accuracy_str_rd1_link_level = '0/0(0)'
+if (total_linkage_num_rd1 - unknown_link_rd1) > 0:
+    accuracy_str_rd1_link_level   = '%s/%s(%s)' % (correct_link_rd1,  (total_linkage_num_rd1 - unknown_link_rd1), float("{0:.2f}".format(correct_link_rd1*100/(total_linkage_num_rd1 - unknown_link_rd1))))
+
+
 accuracy_str_rd2_link_level = '0/0(0)'
 if (total_linkage_num_rd2 - unknown_link_rd2) > 0:
     accuracy_str_rd2_link_level   = '%s/%s(%s)' % (correct_link_rd2,  (total_linkage_num_rd2 - unknown_link_rd2), float("{0:.2f}".format(correct_link_rd2*100/(total_linkage_num_rd2 - unknown_link_rd2))))
-accuracy_str_both_link_level  = '%s/%s(%s)' % (correct_link_both, (total_linkage_num_both - unknown_link_both), float("{0:.2f}".format(correct_link_both*100/(total_linkage_num_both - unknown_link_both))))
+
+accuracy_str_both_link_level = '0/0(0)'
+if (total_linkage_num_both - unknown_link_both) > 0:
+    accuracy_str_both_link_level  = '%s/%s(%s)' % (correct_link_both, (total_linkage_num_both - unknown_link_both), float("{0:.2f}".format(correct_link_both*100/(total_linkage_num_both - unknown_link_both))))
 
 prefix = os.path.basename(MarkerMAG_linkages).split('_identified_linkages_genome_level')[0]
 print('%s\tRound\t|\tLink\tYes\tNA\tNo\tAccuracy\t|\tMAG\tYes\tNA\tNo\tY/N\tRecovery\tAccuracy' % prefix)
 print('%s\tRd_1\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_rd1,  correct_link_rd1,  unknown_link_rd1,  wrong_link_rd1,  accuracy_str_rd1_link_level,  len(linked_mag_dict_rd1), rd1_correct_num,  len(rd1_unknown_gnm), len(rd1_wrong_gnm), len(rd1_ambiguous_gnm), recovery_str_rd1, accuracy_str_rd1))
 print('%s\tRd_2\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_rd2,  correct_link_rd2,  unknown_link_rd2,  wrong_link_rd2,  accuracy_str_rd2_link_level,  len(linked_mag_dict_rd2), rd2_correct_num,  len(rd2_unknown_gnm), len(rd2_wrong_gnm), len(rd2_ambiguous_gnm), recovery_str_rd2, accuracy_str_rd2))
 print('%s\tBoth\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_both, correct_link_both, unknown_link_both, wrong_link_both, accuracy_str_both_link_level, total_linked_mag_num,      correct_num_both, unknown_gnm_both_num, wrong_gnm_both_num, ambiguous_gnm_both_num, recovery_str_both, accuracy_str_both))
+
+
+'''
+------------------------------------------------------------------------------------------------------------
+
+# cami_hc_SILVA138_id99_50_subsample_100_3569
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_tmp_MarkerMAG_wd_up/hc_0512_tmp_step_1_wd
+grep -E '@|cami_hc_SILVA138_id99_50_subsample_100_3569' /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd/hc_0511_very_sensitive_input_reads_to_16S_reformatted.sam > input_reads_to_16S_subset.sam
+
+# cami_hc_14___NODE_13073_length_6967_cov_0.639487
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_tmp_MarkerMAG_wd_up/hc_0512_tmp_step_1_wd
+grep -E '@|cami_hc_14___C___NODE_13073_length_6967_cov_0.639487' rd1_extracted_to_gnm_reformatted.sam > rd1_extracted_to_gnm_subset.sam
+
+------------------------------------------------------------------------------------------------------------
+
+
+cami_hc_S1_24842618.2
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_MarkerMAG_wd/hc_0512_step_1_wd
+grep 'cami_hc_S1_24842618.' hc_0512_input_reads_to_16S_reformatted.sam > reads_to_16s_subset.sam
+grep 'cami_hc_S1_24842618.' rd1_extracted_to_gnm_reformatted.sam > extracted_to_gnm_subset.sam
+
+bowtie2-build --quiet --threads 12 -f cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd.fa cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd
+bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -1 cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa -2 cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_p.sam -p 12 -f --local --all --no-unal
+
+bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -U cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa,cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_up.sam -p 12 -f --local --all --no-unal
+
+bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -U cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa,cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_up2.sam -p 12 -f --local --all --no-unal -N 1
+bowtie2 -x cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_cbd -U cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R1.fa,cami_hc_SILVA138_id99_50_subsample_100_3770___cami_hc_14___NODE_13073_length_6967_cov_0.639487_R2.fa -S test_up_L30.sam -p 12 -f --local --all --no-unal -N 1 -L 30
+
+
+------------------------------------------------------------------------------------------------------------
+
+cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	126	S1	Correct
+cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	69
+cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	69
+
+cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	41	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	41	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	29                  why much less this time?
+
+
+why lost the following three linkages in the new run?
+cami_hc_SILVA138_id99_50_subsample_100_2419___cami_hc_66___NODE_1112_length_54304_cov_1.219168
+cami_hc_S2_9871673.1
+cami_hc_S2_9871673.2
+
+cami_hc_SILVA138_id99_50_subsample_100_2419___cami_hc_66___NODE_1393_length_45743_cov_1.217991
+cami_hc_SILVA138_id99_50_subsample_100_2419___cami_hc_66___NODE_5764_length_14276_cov_1.210482
+
+# check cami_hc_S2_9871673
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_MarkerMAG_wd
+grep 'cami_hc_S2_9871673.' ../hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd/hc_0511_very_sensitive_input_reads_to_16S_reformatted.sam > linked_to_16s.sam
+grep 'cami_hc_S2_9871673.' hc_0512_step_1_wd/rd1_extracted_to_gnm_reformatted.sam > linked_to_gnm.sam
+
+>cami_hc_S2_9871673.1
+AATCAATAAAAACGTCAACGTTTTAGTTTTAAATCTTATCTGGCAGATGCCCGTCATCTGCAGATAAACAATTGAGCAAGTCAAACACTTTTTGGAGAGT
+>cami_hc_S2_9871673.2
+CTCACCCGTCCGCCGCTAACTTGAACGGAGCAAGCTCCGTCAAGTCCGCTCGACTTGCATGTATTAGGCACGCCGCCAGCGTTCGTCCTGAGCCAGGATC
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0512_MarkerMAG_wd/hc_0512_step_1_wd/cami_hc_refined_bins_db
+
+# got it
+bowtie2-build --quiet --threads 12 -f cami_hc_66___NODE_1112_length_54304_cov_1.219168.fa cami_hc_66___NODE_1112_length_54304_cov_1.219168
+bowtie2 -x cami_hc_66___NODE_1112_length_54304_cov_1.219168 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673.sam -p 12 -f --local --all --no-unal
+# cami_hc_S2_9871673.1	89	cami_hc_66___C___NODE_1112_length_54304_cov_1.219168	1	255	50S50M	=	1	0	ACTCTCCAAAAAGTGTTTGACTTGCTCAATTGTTTATCTGCAGATGACGGGCATCTGCCAGATAAGATTTAAAACTAAAACGTTGACGTTTTTATTGATT	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:100	XN:i:0	XM:i:0	XO:i:0	XG:i:0	NM:i:0	MD:Z:50	YT:Z:UP
+
+# not here !!!
+bowtie2 -x cami_hc_refined_bins_combined -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_all.sam -p 12 -f --local --all --no-unal
+
+# not here !!!
+bowtie2-build --quiet --threads 12 -f cami_hc_66.fasta cami_hc_66
+bowtie2 -x cami_hc_66 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_p.sam -p 12 -f --local --all --no-unal
+bowtie2 -x cami_hc_66 -U cami_hc_S2_9871673.1.fa,cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_up.sam -p 12 -f --local --all --no-unal
+bowtie2 -x cami_hc_66 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_p_all.sam -p 12 -f --local --all
+
+bowtie2 -x cami_hc_refined_bins_renamed/cami_hc_66 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_hc_66_as_p_all.sam -p 12 -f --local --all
+
+
+# got it
+bowtie2-build --quiet --threads 12 -f Node_1112.fa Node_1112
+bowtie2 -x Node_1112 -1 cami_hc_S2_9871673.1.fa -2 cami_hc_S2_9871673.2.fa -S cami_hc_S2_9871673_vs_1112.sam -p 12 -f --local --all --no-unal
+
+
+# why not here
+bowtie2 -x cami_hc_refined_bins_db/cami_hc_refined_bins_combined -1 rd1_extracted_R1.fasta -2 rd1_extracted_R2.fasta -S double_check.sam -p 12 -f --local --all --no-unal
+
+# also not here
+bowtie2 -x cami_hc_refined_bins_db/cami_hc_refined_bins_combined -1 rd1_extracted_R1.fasta -2 rd1_extracted_R2.fasta -S double_check_very_sensitive.sam -p 12 -f --local --all --no-unal --very-sensitive-local
+
+bowtie2 -x cami_hc_refined_bins_db/cami_hc_refined_bins_combined -1 rd1_extracted_R1.fasta -2 rd1_extracted_R2.fasta -S double_check_super_sensitive.sam -p 12 -f --local --all --no-unal --very-sensitive-local
+
+
+
+------------------------------------------------------------------------------------------------------------
+
+cami_hc_S4_52228456.2       middle clip on      cami_hc_SILVA138_id99_75_subsample_75_3121      why?  A: not mapped, need to try very sensitive parameters
+
+
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_05010_MarkerMAG_wd/hc_05010_step_1_wd/cami_hc_SILVA138_uclust_0.999_polished_index
+
+
+
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_super_sensitive_MarkerMAG_wd/hc_0511_super_sensitive_step_1_wd
+grep cami_hc_S4_52228456.2 hc_0511_super_sensitive_input_reads_to_16S_best_match.sam > super_sensitive_subset.sam
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0511_very_sensitive_MarkerMAG_wd/hc_0511_very_sensitive_step_1_wd
+grep cami_hc_S4_52228456.2 hc_0511_very_sensitive_input_reads_to_16S_best_match.sam > very_sensitive_subset.sam
+
+grep cami_hc_S4_52228456.2 ../hc_05010_input_reads_to_16S.sam > vs_all_vs_all.sam
+
+
+module load bowtie
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_05010_MarkerMAG_wd/hc_05010_step_1_wd/cami_hc_SILVA138_uclust_0.999_polished_index
+bowtie2-build --quiet --threads 12 -f cami_hc_SILVA138_id99_75_subsample_75_3121.fa cami_hc_SILVA138_id99_75_subsample_75_3121
+bowtie2-build --quiet --threads 12 -f cami_hc_SILVA138_uclust_0.999_polished.fa cami_hc_SILVA138_uclust_0.999_polished
+bowtie2-build --quiet --threads 12 -f Five_16s.fa Five_16s
+
+BioSAK select_seq -seq cami_hc_SILVA138_uclust_0.999_polished.fa -id Ten_16s.txt -out Ten_16s.fa -option 1 -oneline
+BioSAK select_seq -seq cami_hc_SILVA138_uclust_0.999_polished.fa -id Twenty_16s.txt -out Twenty_16s.fa -option 1 -oneline
+bowtie2-build --quiet --threads 12 -f Ten_16s.fa Ten_16s
+bowtie2-build --quiet --threads 12 -f Twenty_16s.fa Twenty_16s
+
+bowtie2 -x cami_hc_SILVA138_uclust_0.999_polished -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_all_default.sam -p 12 -f --local --all --no-unal
+bowtie2 -x cami_hc_SILVA138_id99_75_subsample_75_3121 -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_single_default.sam -p 12 -f --local --all --no-unal
+bowtie2 -x Five_16s -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_Five_16s_default.sam -p 12 -f --local --all --no-unal
+
+bowtie2 -x Ten_16s -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_Ten_16s_default.sam -p 12 -f --local --all --no-unal
+bowtie2 -x Twenty_16s -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S vs_Twenty_16s_default.sam -p 12 -f --local --all --no-unal
+
+
+bowtie2 -x cami_hc_SILVA138_id99_75_subsample_75_3121 -1 cami_hc_S4_52228456.1.fas -2 cami_hc_S4_52228456.2.fas -S cami_hc_S4_52228456.sam -p 12 -f --local --all --no-unal
+
+
+
+cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	126	S1	Correct
+cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	69
+cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	69
+
+cami_hc_SILVA138_id99_50_subsample_100_1159	cami_hc_66	41	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_100_1198	cami_hc_66	41	S1	Wrong
+cami_hc_SILVA138_id99_50_subsample_100_2419	cami_hc_66	29                  why much less this time?
+
+
+
+hc_0514_stats_combined_filtered.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	Accuracy
+hc_0514_stats_combined_filtered.txt	Rd_1	|	93	87	0	6	87/93(93.55)	|	42	38	0	4	0	38/97(39.18)	38/42(90.48)
+hc_0514_stats_combined_filtered.txt	Rd_2	|	0	0	0	0	0/0(0)	|	0	0	0	0	0	0/97(0.0)	0/0(0)
+hc_0514_stats_combined_filtered.txt	Both	|	93	87	0	6	87/93(93.55)	|	42	38	0	4	0	38/97(39.18)	38/42(90.48)
+
+
+hc_05010_stats_combined_filtered.txt	Rd_1	|	84	80	0	4	80/84(95.24)	|	40	36	0	4	0	36/97(37.11)	36/40(90.0)
+hc_05010_stats_combined_filtered.txt	Rd_2	|	0	0	0	0	0/0(0)	        |	0	0	0	0	0	0/97(0.0)	    0/0(0)
+hc_05010_stats_combined_filtered.txt	Both	|	84	80	0	4	80/84(95.24)	|	40	36	0	4	0	36/97(37.11)	36/40(90.0)
+
+hc_0507_mis2_75_45_stats_combined_filtered.txt	Rd_1	|	39	33	1	5	33/38(86.84)	|	24	22	1	1	0	22/97(22.68)	22/23(95.65)
+hc_0507_mis2_80_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
+hc_0507_mis2_85_45_stats_combined_filtered.txt	Rd_1	|	45	36	1	8	36/44(81.82)	|	28	24	1	3	0	24/97(24.74)	24/27(88.89)
+
+'''
+
+'''
+# cami_hc_S3_49165521.1
+
+cami_hc_S5_42397362.1	{'cami_hc_SILVA138_id99_50_subsample_50_1792'}
+cami_hc_S5_42397362.1	345	cami_hc_SILVA138_id99_75_subsample_75_2741	1	11	24S13=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:144	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:13G62	YT:Z:UP
+cami_hc_S5_42397362.1	345	cami_hc_SILVA138_id99_50_subsample_10_876	1	11	24S13=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:144	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:13G62	YT:Z:UP
+cami_hc_S5_42397362.1	89	cami_hc_SILVA138_id99_50_subsample_50_1792	1	11	16S21=1X62=	=	1	0	CAGTTTTTCAACAGATTTTGTTGGAGAGTTTGATCCTCGCTCAGGACGAACGCTGGCGGCGTGCTTAACACATGCAAGTCGAGCGGAAAGGCCCTTCGGG	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	AS:i:160	XN:i:0	XM:i:1	XO:i:0	XG:i:0	NM:i:1	MD:Z:21G62	YT:Z:UP
+
+correct
+cami_hc_SILVA138_id99_75_subsample_75_2741	cami_hc_3
+cami_hc_SILVA138_id99_50_subsample_10_876	cami_hc_3
+cami_hc_SILVA138_id99_50_subsample_50_1792  cami_hc_13
+
+wrong
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_3,534
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_3,294
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_3,294
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_13,72
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_13,43
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_13,38
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/CAMI1/3_High_Complexity/hc_0505_mis2_75_45_keep_short_M_MarkerMAG_wd/hc_0505_mis2_75_45_keep_short_M_step_1_wd
+grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_1.sam
+grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_2.sam
+grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_3.sam
+cat sub_1.sam sub_2.sam sub_3.sam > sub.sam
+
+grep cami_hc_SILVA138_id99_75_subsample_75_3138 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_4.sam
+cat sub_1.sam sub_2.sam sub_3.sam sub_4.sam > sub.sam
+
+grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_1.sam
+grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_2.sam
+grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S_best_match.sam > sub_3.sam
+cat sub_1.sam sub_2.sam sub_3.sam > sub.sam
+
+
+grep cami_hc_SILVA138_id99_75_subsample_75_2741 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_1all.sam
+grep cami_hc_SILVA138_id99_50_subsample_10_876 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_2all.sam
+grep cami_hc_SILVA138_id99_50_subsample_50_1792 hc_0505_mis2_75_45_keep_short_M_input_reads_to_16S.sam > sub_3all.sam
+cat sub_1all.sam sub_2all.sam sub_3all.sam > sub_all.sam
+
+
+wrong
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_780_length_68394_cov_3.028655	115	0	0	S1
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_208_length_155603_cov_3.027781	136	0	0	S1
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_701_length_72282_cov_3.046022	185	0	0	S1
+cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3(534)	NODE_1353_length_46895_cov_3.028037	98	0	0	S1
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_50_1792,GenomicSeq__cami_hc_3,534
+MarkerGene__cami_hc_SILVA138_id99_75_subsample_75_2741,GenomicSeq__cami_hc_3,294
+MarkerGene__cami_hc_SILVA138_id99_50_subsample_10_876,GenomicSeq__cami_hc_3,294
+
+
+hc_0505_mis2_75_45_drop_short_M	Rd_1	|	56	49	2	5	49/54(90.74)	|	40	35	2	3	0	35/97(36.08)	35/38(92.11)
+hc_0505_mis2_75_45_drop_short_M	Rd_2	|	5	4	0	1	4/5(80.0)	    |	5	4	0	1	0	4/97(4.12)	    4/5(80.0)
+hc_0505_mis2_75_45_drop_short_M	Both	|	61	53	2	6	53/59(89.83)	|	45	39	2	4	0	39/97(40.21)	39/43(90.7)
+
+hc_0505_mis2_75_45_keep_short_M	Rd_1	|	53	46	2	5	46/51(90.2)	    |	40	35	2	3	0	35/97(36.08)	35/38(92.11)
+hc_0505_mis2_75_45_keep_short_M	Rd_2	|	8	4	2	2	4/6(66.67)	    |	6	3	1	2	0	3/97(3.09)	    3/5(60.0)
+hc_0505_mis2_75_45_keep_short_M	Both	|	61	50	4	7	50/57(87.72)	|	46	38	3	5	0	38/97(39.18)	38/43(88.37)
+
+hc_0505_mis2_75_45	    Rd_1	|	60	41	2	17	41/58(70.69)	|	37	30	2	5	0	30/97(30.93)	30/35(85.71)
+hc_0505_mis2_75_45	    Rd_2	|	12	9	2	1	9/10(90.0)	    |	8	6	1	1	0	6/97(6.19)	    6/7(85.71)
+hc_0505_mis2_75_45	    Both	|	72	50	4	18	50/68(73.53)	|	45	36	3	6	0	36/97(37.11)	36/42(85.71)
+
+hc_0505_mis1.9_75_45	Rd_1	|	72	42	2	28	42/70(60.0)	    |	37	27	2	8	0	27/97(27.84)	27/35(77.14)
+hc_0505_mis1.9_75_45	Rd_2	|	13	7	2	4	7/11(63.64)	    |	9	6	1	2	0	6/97(6.19)	    6/8(75.0)
+hc_0505_mis1.9_75_45	Both	|	85	49	4	32	49/81(60.49)	|	46	33	3	10	0	33/97(34.02)	33/43(76.74)
+
+hc_0505_mis1.8_75_45	Rd_1	|	73	42	3	28	42/70(60.0)	    |	37	27	2	8	0	27/97(27.84)	27/35(77.14)
+hc_0505_mis1.8_75_45	Rd_2	|	15	7	2	6	7/13(53.85)	    |	10	6	1	3	0	6/97(6.19)	    6/9(66.67)
+hc_0505_mis1.8_75_45	Both	|	88	49	5	34	49/83(59.04)	|	47	33	3	11	0	33/97(34.02)	33/44(75.0)
+
+
+stats_combined_filtered.txt	Rd_1	|	57	55	2	0	55/55(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
+stats_combined_filtered.txt	Rd_1	|	55	53	2	0	53/53(100.0)	|	35	33	2	0	0	33/97(34.02)	33/33(100.0)
+
+
+	                                                    Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
+CAMI_hc_0428_stats_combined_filtered.txt	            Rd_1	|	49	41	4	4	41/45(91.11)	|	41	33	4	4	0	33/97(34.02)	33/37(89.19)
+CAMI_hc_0428_specific_stats_combined_filtered.txt	    Rd_1	|	48	41	3	4	41/45(91.11)	|	40	33	3	4	0	33/97(34.02)	33/37(89.19)
+CAMI_hc_0428_very_specific_stats_combined_filtered.txt	Rd_1	|	42	34	3	5	34/39(87.18)	|	38	30	3	5	0	30/97(30.93)	30/35(85.71)
+
+
+1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	16S	C246_1	tax_1137264	NA
+1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	16S	C246_1	tax_1169165	NA
+1	cami_hc_SILVA138_id99_50_subsample_50_1792___cami_hc_3	MAG	C248_0	tax_134676	NA
+
+2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	16S	C229_0	tax_1051629	NA
+2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	MAG	C246_1	tax_1137264	NA
+2	cami_hc_SILVA138_id99_75_subsample_75_1629___cami_hc_13	MAG	C246_1	tax_1169165	NA
+
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_1124469	NA
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_991945	NA
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	16S	C103_1	tax_991968	NA
+3	cami_hc_SILVA138_id99_75_subsample_75_5112___cami_hc_18	MAG	C100_0	tax_349966	NA
+
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_1160164	NA
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_1328339	NA
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	16S	C259_1	tax_520453	NA
+4	cami_hc_SILVA138_id99_50_subsample_50_2324___cami_hc_11	MAG	C277_0	tax_1287182	NA
+
+'''

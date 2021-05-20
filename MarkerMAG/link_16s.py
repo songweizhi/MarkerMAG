@@ -2157,41 +2157,42 @@ def link_16s(args):
 
     marker_len_dict = {}
     MappingRecord_dict = {}
-    for each_read in open(input_reads_to_16s_sam):
-        each_read_split = each_read.strip().split('\t')
+    with open(input_reads_to_16s_sam) as input_reads_to_16s_sam_opened:
+        for each_read in input_reads_to_16s_sam_opened:
+            each_read_split = each_read.strip().split('\t')
 
-        if each_read.startswith('@'):
-            marker_id = ''
-            marker_len = 0
-            for each_element in each_read_split:
-                if each_element.startswith('SN:'):
-                    marker_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    marker_len = int(each_element[3:])
-            marker_len_dict[marker_id] = marker_len
-        else:
-            cigar = each_read_split[5]
-            if cigar != '*':
-                read_id = each_read_split[0]
-                read_id_base = '.'.join(read_id.split('.')[:-1])
-                read_strand = read_id.split('.')[-1]
-                ref_id = each_read_split[2]
-                ref_pos = int(each_read_split[3])
+            if each_read.startswith('@'):
+                marker_id = ''
+                marker_len = 0
+                for each_element in each_read_split:
+                    if each_element.startswith('SN:'):
+                        marker_id = each_element[3:]
+                    if each_element.startswith('LN:'):
+                        marker_len = int(each_element[3:])
+                marker_len_dict[marker_id] = marker_len
+            else:
+                cigar = each_read_split[5]
+                if cigar != '*':
+                    read_id = each_read_split[0]
+                    read_id_base = '.'.join(read_id.split('.')[:-1])
+                    read_strand = read_id.split('.')[-1]
+                    ref_id = each_read_split[2]
+                    ref_pos = int(each_read_split[3])
 
-                if read_id_base not in MappingRecord_dict:
-                    MappingRecord_dict[read_id_base] = MappingRecord()
+                    if read_id_base not in MappingRecord_dict:
+                        MappingRecord_dict[read_id_base] = MappingRecord()
 
-                if read_strand == '1':
-                    if ref_id not in MappingRecord_dict[read_id_base].r1_16s_ref_dict:
-                        MappingRecord_dict[read_id_base].r1_16s_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        MappingRecord_dict[read_id_base].r1_16s_ref_dict[ref_id][ref_pos] = cigar
+                    if read_strand == '1':
+                        if ref_id not in MappingRecord_dict[read_id_base].r1_16s_ref_dict:
+                            MappingRecord_dict[read_id_base].r1_16s_ref_dict[ref_id] = {ref_pos: cigar}
+                        else:
+                            MappingRecord_dict[read_id_base].r1_16s_ref_dict[ref_id][ref_pos] = cigar
 
-                if read_strand == '2':
-                    if ref_id not in MappingRecord_dict[read_id_base].r2_16s_ref_dict:
-                        MappingRecord_dict[read_id_base].r2_16s_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        MappingRecord_dict[read_id_base].r2_16s_ref_dict[ref_id][ref_pos] = cigar
+                    if read_strand == '2':
+                        if ref_id not in MappingRecord_dict[read_id_base].r2_16s_ref_dict:
+                            MappingRecord_dict[read_id_base].r2_16s_ref_dict[ref_id] = {ref_pos: cigar}
+                        else:
+                            MappingRecord_dict[read_id_base].r2_16s_ref_dict[ref_id][ref_pos] = cigar
 
 
     ##################################################### parse MappingRecord_dict ####################################################
@@ -2437,41 +2438,42 @@ def link_16s(args):
     ######################################### read mapping results of rd1 extracted mates into mp dict  #########################################
 
     ctg_len_dict = {}
-    for each_read in open(rd1_extracted_to_gnm_sam_reformatted):
-        each_read_split = each_read.strip().split('\t')
+    with open(rd1_extracted_to_gnm_sam_reformatted) as rd1_extracted_to_gnm_sam_reformatted_opened:
+        for each_read in rd1_extracted_to_gnm_sam_reformatted_opened:
+            each_read_split = each_read.strip().split('\t')
 
-        if each_read.startswith('@'):
-            ctg_id = ''
-            ctg_len = 0
-            for each_element in each_read_split:
-                if each_element.startswith('SN:'):
-                    ctg_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    ctg_len = int(each_element[3:])
-            ctg_len_dict[ctg_id] = ctg_len
-        else:
-            cigar = each_read_split[5]
-            if cigar != '*':
-                read_id = each_read_split[0]
-                read_id_base = '.'.join(read_id.split('.')[:-1])
-                read_strand = read_id.split('.')[-1]
-                ref_id = each_read_split[2]
-                ref_pos = int(each_read_split[3])
+            if each_read.startswith('@'):
+                ctg_id = ''
+                ctg_len = 0
+                for each_element in each_read_split:
+                    if each_element.startswith('SN:'):
+                        ctg_id = each_element[3:]
+                    if each_element.startswith('LN:'):
+                        ctg_len = int(each_element[3:])
+                ctg_len_dict[ctg_id] = ctg_len
+            else:
+                cigar = each_read_split[5]
+                if cigar != '*':
+                    read_id = each_read_split[0]
+                    read_id_base = '.'.join(read_id.split('.')[:-1])
+                    read_strand = read_id.split('.')[-1]
+                    ref_id = each_read_split[2]
+                    ref_pos = int(each_read_split[3])
 
-                if read_id_base not in MappingRecord_dict:
-                    MappingRecord_dict[read_id_base] = MappingRecord()
+                    if read_id_base not in MappingRecord_dict:
+                        MappingRecord_dict[read_id_base] = MappingRecord()
 
-                if read_strand == '1':
-                    if ref_id not in MappingRecord_dict[read_id_base].r1_ctg_ref_dict:
-                        MappingRecord_dict[read_id_base].r1_ctg_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        MappingRecord_dict[read_id_base].r1_ctg_ref_dict[ref_id][ref_pos] = cigar
+                    if read_strand == '1':
+                        if ref_id not in MappingRecord_dict[read_id_base].r1_ctg_ref_dict:
+                            MappingRecord_dict[read_id_base].r1_ctg_ref_dict[ref_id] = {ref_pos: cigar}
+                        else:
+                            MappingRecord_dict[read_id_base].r1_ctg_ref_dict[ref_id][ref_pos] = cigar
 
-                if read_strand == '2':
-                    if ref_id not in MappingRecord_dict[read_id_base].r2_ctg_ref_dict:
-                        MappingRecord_dict[read_id_base].r2_ctg_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        MappingRecord_dict[read_id_base].r2_ctg_ref_dict[ref_id][ref_pos] = cigar
+                    if read_strand == '2':
+                        if ref_id not in MappingRecord_dict[read_id_base].r2_ctg_ref_dict:
+                            MappingRecord_dict[read_id_base].r2_ctg_ref_dict[ref_id] = {ref_pos: cigar}
+                        else:
+                            MappingRecord_dict[read_id_base].r2_ctg_ref_dict[ref_id][ref_pos] = cigar
 
 
     ##################################################### parse MappingRecord_dict ####################################################
@@ -3134,40 +3136,41 @@ def link_16s(args):
 
     round_2_ctg_end_seq_len_dict = {}
     round_2_MappingRecord_dict = {}
-    for each_line in open(rd1_unlinked_mags_sam_bowtie_reformat):
-        each_line_split = each_line.strip().split('\t')
-        if each_line.startswith('@'):
-            rd2_ref_id = ''
-            rd2_ref_len = 0
-            for each_element in each_line_split:
-                if each_element.startswith('SN:'):
-                    rd2_ref_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    rd2_ref_len = int(each_element[3:])
-            round_2_ctg_end_seq_len_dict[rd2_ref_id] = rd2_ref_len
-        else:
-            cigar = each_line_split[5]
-            if cigar != '*':
-                read_id = each_line_split[0]
-                read_id_base = '.'.join(read_id.split('.')[:-1])
-                read_strand = read_id.split('.')[-1]
-                ref_id = each_line_split[2]
-                ref_pos = int(each_line_split[3])
+    with open(rd1_unlinked_mags_sam_bowtie_reformat) as rd1_unlinked_mags_sam_bowtie_reformat_opened:
+        for each_line in rd1_unlinked_mags_sam_bowtie_reformat_opened:
+            each_line_split = each_line.strip().split('\t')
+            if each_line.startswith('@'):
+                rd2_ref_id = ''
+                rd2_ref_len = 0
+                for each_element in each_line_split:
+                    if each_element.startswith('SN:'):
+                        rd2_ref_id = each_element[3:]
+                    if each_element.startswith('LN:'):
+                        rd2_ref_len = int(each_element[3:])
+                round_2_ctg_end_seq_len_dict[rd2_ref_id] = rd2_ref_len
+            else:
+                cigar = each_line_split[5]
+                if cigar != '*':
+                    read_id = each_line_split[0]
+                    read_id_base = '.'.join(read_id.split('.')[:-1])
+                    read_strand = read_id.split('.')[-1]
+                    ref_id = each_line_split[2]
+                    ref_pos = int(each_line_split[3])
 
-                if read_id_base not in round_2_MappingRecord_dict:
-                    round_2_MappingRecord_dict[read_id_base] = MappingRecord()
+                    if read_id_base not in round_2_MappingRecord_dict:
+                        round_2_MappingRecord_dict[read_id_base] = MappingRecord()
 
-                if read_strand == '1':
-                    if ref_id not in round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2:
-                        round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2[ref_id] = {ref_pos: cigar}
-                    else:
-                        round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2[ref_id][ref_pos] = cigar
+                    if read_strand == '1':
+                        if ref_id not in round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2:
+                            round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2[ref_id] = {ref_pos: cigar}
+                        else:
+                            round_2_MappingRecord_dict[read_id_base].r1_ctg_ref_dict_rd2[ref_id][ref_pos] = cigar
 
-                if read_strand == '2':
-                    if ref_id not in round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2:
-                        round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2[ref_id] = {ref_pos: cigar}
-                    else:
-                        round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2[ref_id][ref_pos] = cigar
+                    if read_strand == '2':
+                        if ref_id not in round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2:
+                            round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2[ref_id] = {ref_pos: cigar}
+                        else:
+                            round_2_MappingRecord_dict[read_id_base].r2_ctg_ref_dict_rd2[ref_id][ref_pos] = cigar
 
 
     ##################################################### parse round_2_MappingRecord_dict ####################################################
@@ -3422,40 +3425,41 @@ def link_16s(args):
 
     mini_assembly_len_dict = {}
     mini_assembly_mp_dict = {}
-    for each_read in open(sam_file_mini_assembly_reformatted):
-        each_read_split = each_read.strip().split('\t')
-        if each_read.startswith('@'):
-            mini_assembly_id = ''
-            mini_assembly_len = 0
-            for each_element in each_read_split:
-                if each_element.startswith('SN:'):
-                    mini_assembly_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    mini_assembly_len = int(each_element[3:])
-            mini_assembly_len_dict[mini_assembly_id] = mini_assembly_len
-        else:
-            cigar = each_read_split[5]
-            if cigar != '*':
-                read_id = each_read_split[0]
-                read_id_base = '.'.join(read_id.split('.')[:-1])
-                read_strand = read_id.split('.')[-1]
-                ref_id = each_read_split[2]
-                ref_pos = int(each_read_split[3])
+    with open(sam_file_mini_assembly_reformatted) as sam_file_mini_assembly_reformatted_opened:
+        for each_read in sam_file_mini_assembly_reformatted_opened:
+            each_read_split = each_read.strip().split('\t')
+            if each_read.startswith('@'):
+                mini_assembly_id = ''
+                mini_assembly_len = 0
+                for each_element in each_read_split:
+                    if each_element.startswith('SN:'):
+                        mini_assembly_id = each_element[3:]
+                    if each_element.startswith('LN:'):
+                        mini_assembly_len = int(each_element[3:])
+                mini_assembly_len_dict[mini_assembly_id] = mini_assembly_len
+            else:
+                cigar = each_read_split[5]
+                if cigar != '*':
+                    read_id = each_read_split[0]
+                    read_id_base = '.'.join(read_id.split('.')[:-1])
+                    read_strand = read_id.split('.')[-1]
+                    ref_id = each_read_split[2]
+                    ref_pos = int(each_read_split[3])
 
-                if read_id_base not in mini_assembly_mp_dict:
-                    mini_assembly_mp_dict[read_id_base] = MappingRecord()
+                    if read_id_base not in mini_assembly_mp_dict:
+                        mini_assembly_mp_dict[read_id_base] = MappingRecord()
 
-                if read_strand == '1':
-                    if ref_id not in mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict:
-                        mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id][ref_pos] = cigar
+                    if read_strand == '1':
+                        if ref_id not in mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict:
+                            mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id] = {ref_pos: cigar}
+                        else:
+                            mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id][ref_pos] = cigar
 
-                if read_strand == '2':
-                    if ref_id not in mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict:
-                        mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id][ref_pos] = cigar
+                    if read_strand == '2':
+                        if ref_id not in mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict:
+                            mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id] = {ref_pos: cigar}
+                        else:
+                            mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id][ref_pos] = cigar
 
 
     #################################################### parse sam file ####################################################
@@ -3855,5 +3859,10 @@ if __name__ == '__main__':
 7. a genome depth of 0 will triggle error !!!!!!
 8. no header in mag depth and 16s depth files !!!!!!
 9. remove short mini-assemblies?
+
+split -l 50000 rd1_extracted_to_gnm_reformatted.sam sam_split_ --additional-suffix=.sam
+
+split -n 20 rd1_extracted_to_gnm_reformatted.sam sam_split_ --additional-suffix=.sam
+
 
 '''

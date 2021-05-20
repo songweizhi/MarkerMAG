@@ -192,6 +192,7 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
         stats_GapFilling_gnm_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
     stats_GapFilling_gnm_handle.close()
 
+
 def sep_path_basename_ext(file_in):
 
     # separate path and file name
@@ -323,6 +324,10 @@ gnm_to_ctg_connector                            = '___C___'
 marker_to_ctg_gnm_Key_connector                 = '___M___'
 within_gnm_linkage_num_diff                     = 80
 max_mini_assembly_link_num_diff_between_ctg_16s = 10
+mean_depth_dict_gnm                             = {}
+mean_depth_dict_16s                             = {}
+min_16s_gnm_multiple                            = 0
+min_link_num                                    = 8
 
 # file out
 stats_GapFilling_ctg                            = '%s/stats_GapFilling_ctg.txt'                 % wd
@@ -347,20 +352,7 @@ get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
 
 pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
 
-mean_depth_dict_gnm = {}
-mean_depth_dict_16s = {}
-min_16s_gnm_multiple = 0
-min_link_num = 8
 filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm,
                             mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, min_link_num, min_link_num,
                             within_gnm_linkage_num_diff, stats_GapFilling_file_filtered)
-
-
-
-
-
-
-
-
-
 
