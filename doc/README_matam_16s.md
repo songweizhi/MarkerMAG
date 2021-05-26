@@ -2,6 +2,11 @@
 Manual for the `matam_16s` module
 ---
 
+### Dependencies
+ [SortMeRNA](https://github.com/biocore/sortmerna), 
+ [MATAM](https://github.com/bonsai-team/matam),
+ [Usearch](https://www.drive5.com/usearch/) and 
+ [seqtk](https://github.com/lh3/seqtk)
 
 ### Notes
 

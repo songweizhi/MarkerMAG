@@ -234,7 +234,7 @@ def matam_16s(args):
     uclust_iden_cutoff              = args['i']
     num_threads                     = args['t']
     force_overwrite                 = args['force']
-    matam_assembly_script           = args['matam_assembly']
+    matam_assembly_script           = args['matam']
     usearch_exe                     = args['usearch']
     seqtk_exe                       = args['seqtk']
     keep_quiet                      = args['quiet']
@@ -382,14 +382,9 @@ if __name__ == '__main__':
     matam_16s_parser.add_argument('-t',              required=False, type=int, default=1,                               help='number of threads, default: 1')
     matam_16s_parser.add_argument('-force',          required=False, action="store_true",                               help='force overwrite existing results')
     matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                               help='not report progress')
-    matam_16s_parser.add_argument('-matam_assembly', required=False, type=str, default='matam_assembly.py',             help='path to matam_assembly.py, default: matam_assembly.py')
+    matam_16s_parser.add_argument('-matam',          required=False, type=str, default='matam_assembly.py',             help='path to matam_assembly.py, default: matam_assembly.py')
     matam_16s_parser.add_argument('-seqtk',          required=False, type=str, default='seqtk',                         help='path to seqtk executable file, default: seqtk')
     matam_16s_parser.add_argument('-usearch',        required=False, type=str, default='usearch',                       help='path to usearch executable file, default: usearch')
 
     args = vars(matam_16s_parser.parse_args())
     matam_16s(args)
-
-'''
-
-
-'''

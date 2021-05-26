@@ -82,9 +82,9 @@ GI_0414_specific	Both	|	72	71	1	0	71/71(100.0)	|	48	48	0	0	0	48/97(49.48)	48/48(
 ########## 16S to reference ##########
 
 perform_blastn_16s_vs_refs  = False  # True or False
-combined_GI_ref_16S         = '%s/file_in/combined_GI_ref_16S.ffn'                          % wd
-matam_16s_seqs              = '%s/file_in/3_GI_assembled_16S_uclust_0.999.fasta'            % wd
-matam_16s_blastn            = '%s/file_in/3_GI_assembled_16S_uclust_0.999_vs_ref.tab'       % wd
+combined_GI_ref_16S         = '%s/file_in/combined_GI_ref_16S.ffn'           % wd
+matam_16s_seqs              = '%s/file_in/GI_128_16S_0.999.fasta'            % wd
+matam_16s_blastn            = '%s/file_in/GI_128_16S_0.999_vs_ref.tab'       % wd
 iden_cutoff_16s             = 99.5  # 99.3 (best), 99.5
 aln_len_cutoff_16s          = 500
 cov_q_cutoff_16s            = 70
@@ -92,13 +92,76 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0508_mis2_45_45_identified_linkages_genome_level.txt'             % wd
-linkages_from_rd1           = False
+MarkerMAG_linkages          = '%s/GI_0526_128_60_60_stats_combined_filtered.txt'             % wd
+
+mlen = '45'
+#MarkerMAG_linkages          = '/Users/songweizhi/Desktop/test_filter/GI_0524_128_%s_%s_stats_combined_filtered.txt' % (mlen, mlen)
+linkages_from_rd1           = True
 
 
 
 
 '''
+# new
+GI_0524_128_45_45_stats_combined_filtered.txt	Rd_1	|	128	101	14	13	101/114(88.6)	|	40	30	3	3	4	30/97(30.93)	30/37(81.08)
+GI_0524_128_55_55_stats_combined_filtered.txt	Rd_1	|	135	108	14	13	108/121(89.26)	|	35	31	1	2	1	31/97(31.96)	31/34(91.18)
+GI_0524_128_60_60_stats_combined_filtered.txt	Rd_1	|	102	95	7	0	95/95(100.0)	|	30	29	1	0	0	29/97(29.9)	    29/29(100.0)
+GI_0524_128_65_65_stats_combined_filtered.txt	Rd_1	|	69	65	4	0	65/65(100.0)	|	28	27	1	0	0	27/97(27.84)	27/27(100.0)
+
+
+# old
+GI_0524_128_45_45_stats_combined_filtered.txt	Rd_1	|	124	96	14	14	96/110(87.27)	|	36	27	3	4	2	27/97(27.84)	27/33(81.82)
+GI_0524_128_55_55_stats_combined_filtered.txt	Rd_1	|	140	96	20	24	96/120(80.0)	|	31	28	1	1	1	28/97(28.87)	28/30(93.33)
+GI_0524_128_60_60_stats_combined_filtered.txt	Rd_1	|	106	96	8	2	96/98(97.96)	|	29	27	1	0	1	27/97(27.84)	27/28(96.43)
+GI_0524_128_65_65_stats_combined_filtered.txt	Rd_1	|	68	62	6	0	62/62(100.0)	|	27	26	1	0	0	26/97(26.8)	    26/26(100.0)
+
+
+3_GI_subsample_75_1	Refined_28	10	S1	Correct
+
+3_GI_subsample_75_3263	Refined_28	42	S1	Wrong
+3_GI_subsample_100_4409	Refined_28	42	S1	Unknown
+3_GI_subsample_25_928	Refined_28	35	S1	Unknown
+
+3_GI_subsample_100_3600	Refined_36	203	S1	Unknown
+MarkerGene__3_GI_subsample_100_1395,GenomicSeq__Refined_36,221
+
+
+
+
+
+
+
+
+
+GI_0524_128_60_60_stats_combined_filtered.txt	            Rd_1	|	106	96	8	2	96/98(97.96)	|	29	27	1	0	1	27/97(27.84)	27/28(96.43)
+GI_0524_128_55_55_stats_combined_filtered.txt	            Rd_1	|	140	96	20	24	96/120(80.0)	|	31	28	1	1	1	28/97(28.87)	28/30(93.33)
+GI_0524_128_45_45_no_clp_check2_stats_combined_filtered.txt	Rd_1	|	107	91	12	4	91/95(95.79)	|	35	29	3	2	1	29/97(29.9)	    29/32(90.62)
+GI_0524_128_45_45_no_clp_check2_stats_combined_filtered.txt	Rd_1	|	135	110	9	16	110/126(87.3)	|	33	26	2	4	1	26/97(26.8)	    26/31(83.87)
+
+
+
+
+
+
+
+
+
+3_GI_subsample_5_85	Refined_59	156	S1	Correct
+
+3_GI_subsample_75_1344	Refined_59	57	S1	Wrong
+3_GI_subsample_75_1054	Refined_59	57	S1	Wrong
+3_GI_subsample_50_708	Refined_59	57	S1	Wrong
+3_GI_subsample_75_1194	Refined_59	50	S1	Wrong
+3_GI_subsample_50_649	Refined_59	50	S1	Wrong
+3_GI_subsample_100_1406	Refined_59	50	S1	Wrong
+
+
+
+
+
+
+
+
 GI_0508_mis2_45_45	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
 GI_0508_mis2_45_45	Rd_1	|	98	91	6	1	91/92(98.91)	|	31	30	0	0	1	30/97(30.93)	30/31(96.77)
 GI_0508_mis2_45_45	Rd_2	|	18	17	1	0	17/17(100.0)	|	9	9	0	0	0	9/97(9.28)	    9/9(100.0)
@@ -844,3 +907,71 @@ GI_0412_specific_spades_M2_85_diff_50_20	Rd_2	|	42	    37	1	4	37/41(90.24)|	17	1
 ########################################################################################################################
 
 '''
+'''
+
+
+3_GI_subsample_75_1644	Refined_4	958	S1	Wrong
+3_GI_subsample_75_1159	Refined_4	878	S1	Wrong
+
+3_GI_subsample_100_1336	Refined_4	958	S1	Correct
+3_GI_subsample_25_345	Refined_4	958	S1	Unknown
+3_GI_subsample_75_2502	Refined_4	958	S1	Correct
+3_GI_subsample_25_763	Refined_4	958	S1	Correct
+3_GI_subsample_100_2066	Refined_4	958	S1	Correct
+3_GI_subsample_75_69	Refined_4	958	S1	Correct
+3_GI_subsample_10_173	Refined_4	958	S1	Unknown
+3_GI_subsample_100_3364	Refined_4	958	S1	Correct
+3_GI_subsample_75_1008	Refined_4	958	S1	Correct
+3_GI_subsample_25_565	Refined_4	958	S1	Correct
+3_GI_subsample_75_988	Refined_4	958	S1	Unknown
+3_GI_subsample_100_2322	Refined_4	929	S1	Correct
+3_GI_subsample_50_2029	Refined_4	927	S1	Unknown
+3_GI_subsample_25_913	Refined_4	926	S1	Unknown
+3_GI_subsample_75_2954	Refined_4	919	S1	Unknown
+3_GI_subsample_75_2742	Refined_4	919	S1	Correct
+3_GI_subsample_50_1564	Refined_4	898	S1	Correct
+3_GI_subsample_75_2408	Refined_4	888	S1	Correct
+3_GI_subsample_100_3244	Refined_4	888	S1	Correct
+3_GI_subsample_25_762	Refined_4	888	S1	Correct
+3_GI_subsample_100_3779	Refined_4	849	S1	Correct
+3_GI_subsample_75_2776	Refined_4	836	S1	Correct
+
+Refined_4               C46_1
+
+3_GI_subsample_75_1644  C45_0
+3_GI_subsample_75_1159  C44_1
+
+3_GI_subsample_75_1644	3_GI_subsample_100_1336	98.442	1476
+3_GI_subsample_75_1159	3_GI_subsample_75_2502	97.736	1369
+3_GI_subsample_75_1159	3_GI_subsample_25_763	99.139  697
+3_GI_subsample_75_1159	3_GI_subsample_100_2066	97.450	1412
+
+
+3_GI_subsample_75_1159
+3_GI_subsample_75_1159	3_GI_subsample_100_1336	98.060	1495
+3_GI_subsample_75_1159	3_GI_subsample_75_2502	97.736	1369
+3_GI_subsample_75_1159	3_GI_subsample_75_1644	99.119
+
+
+3_GI_subsample_75_1644	Refined_4	958	S1	Wrong
+3_GI_subsample_75_1644	3_GI_subsample_100_1336	98.442	1476
+3_GI_subsample_75_1644	3_GI_subsample_75_2502	98.028	1369	24
+3_GI_subsample_75_1644	3_GI_subsample_25_763	99.283	697	
+3_GI_subsample_75_1644	3_GI_subsample_100_2066	97.678	1421
+3_GI_subsample_75_1644	3_GI_subsample_75_69	98.252	1373
+
+3_GI_subsample_75_988	3_GI_subsample_100_1336	99.094	1214
+3_GI_subsample_75_988	3_GI_subsample_75_2502	98.848	1215
+3_GI_subsample_75_988	3_GI_subsample_25_763	99.283	697
+3_GI_subsample_75_988	3_GI_subsample_100_2066	98.847
+3_GI_subsample_75_988	3_GI_subsample_75_69	99.012
+3_GI_subsample_75_988	3_GI_subsample_100_3364	98.848
+
+
+
+
+
+
+'''
+print(cluster_to_bin_dict['C45_0'])  # 'Refined_47', 'Refined_50'
+print(cluster_to_bin_dict['C44_1'])  # 'Refined_56', 'Refined_34'

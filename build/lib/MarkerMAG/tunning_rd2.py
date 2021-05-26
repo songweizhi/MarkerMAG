@@ -353,8 +353,30 @@ for each_mp in round_2_MappingRecord_dict.copy():
     if (len(r1_ctg_refs_rd2_no_ignored) == 0) and (len(r2_ctg_refs_rd2_no_ignored) > 0):
         round_2_MappingRecord_dict[each_mp].qualified_reads_rd2 = True
         to_extract_read_base_rd2_ctg.add(each_mp)
+        # print('\n------------------------------\n')
+        # #print('%s\t%s' % (each_mp, ctg_mp_record.r1_ctg_ref_dict_rd2))
+        # #print('%s\t%s' % (each_mp, ctg_mp_record.r2_ctg_ref_dict_rd2))
+        # print('%s\t%s' % (each_mp, r1_ctg_refs_rd2_no_ignored))
+        # print('%s\t%s' % (each_mp, r2_ctg_refs_rd2_no_ignored))
+        # n += 1
 
+    processed_num += 1
+    if (processed_num % report_interval == 0):
+        processed_pct = processed_num * 100 / len(round_2_MappingRecord_dict)
+        processed_pct = float("{0:.2f}".format(processed_pct))
+        #report_and_log(('Round 1: processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%')), pwd_log_file, keep_quiet)
+        print('Round 1: processed %sk (%s%s)' % (int(processed_num / 1000), processed_pct, '%'))
+#report_and_log(('Round 1: processed %sk (100%s)' % (float("{0:.2f}".format(processed_num/1000)), '%')), pwd_log_file, keep_quiet)
+print('Round 1: processed %sk (100%s)' % (float("{0:.2f}".format(processed_num/1000)), '%'))
 
+print(len(round_2_MappingRecord_dict))
+# remove unqualified mapping record from dict
+for each_mp in round_2_MappingRecord_dict.copy():
+    if round_2_MappingRecord_dict[each_mp].qualified_reads_rd2 is False:
+        round_2_MappingRecord_dict.pop(each_mp)
+print(len(round_2_MappingRecord_dict))
+print(n)
+print(len(to_extract_read_base_rd2_ctg))
 
 # extract reads with seqtk
 seqtk_extract_cmd_rd1_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd2_to_extract_flking_ctg_r1_id, rd2_extracted_flking_ctg_r1_seq)

@@ -1,2 +1,4 @@
 biopython
 pandas
+plotly
+seaborn
