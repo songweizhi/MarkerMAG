@@ -91,7 +91,7 @@ cov_q_cutoff_16s            = 70
 '''
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0524_138_55_55_stats_combined_filtered.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0526_138_60_60_stats_combined_filtered.txt'             % wd
 linkages_from_rd1           = True
 
 '''

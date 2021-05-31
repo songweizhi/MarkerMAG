@@ -92,16 +92,31 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0526_128_60_60_stats_combined_filtered.txt'             % wd
-
+MarkerMAG_linkages          = '%s/GI_0528_128_60_60_stats_combined_filtered.txt'             % wd
 mlen = '45'
 #MarkerMAG_linkages          = '/Users/songweizhi/Desktop/test_filter/GI_0524_128_%s_%s_stats_combined_filtered.txt' % (mlen, mlen)
+
+MarkerMAG_linkages          = '/Users/songweizhi/Desktop/tunning_rd1/stats_combined_filtered.txt'
 linkages_from_rd1           = True
 
 
-
-
 '''
+
+3_GI_subsample_25_484	Refined_95	43	S1	Correct
+3_GI_subsample_50_869	Refined_95	42	S1	Correct
+3_GI_subsample_50_811	Refined_95	42	S1	Correct
+3_GI_subsample_75_1381	Refined_95	42	S1	Correct
+
+
+3_GI_subsample_100_1336	Refined_95	15	S1	Wrong
+3_GI_subsample_50_650	Refined_95	15	S1	Wrong
+3_GI_subsample_75_1159	Refined_95	15	S1	Wrong
+3_GI_subsample_75_1644	Refined_95	15	S1	Wrong
+
+
+
+
+
 # new
 GI_0524_128_45_45_stats_combined_filtered.txt	Rd_1	|	128	101	14	13	101/114(88.6)	|	40	30	3	3	4	30/97(30.93)	30/37(81.08)
 GI_0524_128_55_55_stats_combined_filtered.txt	Rd_1	|	135	108	14	13	108/121(89.26)	|	35	31	1	2	1	31/97(31.96)	31/34(91.18)

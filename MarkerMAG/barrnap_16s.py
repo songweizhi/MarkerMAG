@@ -90,9 +90,10 @@ def barrnap_16s(args):
     argument_list_for_barrnap = []
     for genome in genome_file_list_no_extension:
         pwd_genome = '%s/%s.%s'  % (genome_folder, genome, genome_ext)
-        pwd_op_gff = '%s/%s.gff' % (barrnap_op_foler, genome)
         pwd_op_ffn = '%s/%s.ffn' % (barrnap_op_foler, genome)
-        barrnap_cmd = 'barrnap --quiet -o %s %s > %s' % (pwd_op_ffn, pwd_genome, pwd_op_gff)
+        pwd_op_gff = '%s/%s.gff' % (barrnap_op_foler, genome)
+        pwd_op_log = '%s/%s.log' % (barrnap_op_foler, genome)
+        barrnap_cmd = 'barrnap --quiet -o %s %s > %s 2> %s' % (pwd_op_ffn, pwd_genome, pwd_op_gff, pwd_op_log)
         argument_list_for_barrnap.append(barrnap_cmd)
 
     # run barrnap with multiprocessing
@@ -109,7 +110,7 @@ def barrnap_16s(args):
     output_table_handle = open(output_table, 'w')
     output_table_handle.write('Genome\t16S\tLength(bp)\tLocation\tStart\tEnd\n')
     output_table_stats_handle = open(output_table_stats, 'w')
-    output_table_stats_handle.write('Genome\tCopies(16S)\n')
+    output_table_stats_handle.write('Genome\tcopy_number\n')
     for genome in genome_file_list_no_extension:
 
         current_genome_gff          = '%s/%s.gff'       % (barrnap_op_foler, genome)
@@ -150,7 +151,8 @@ def barrnap_16s(args):
             os.system('rm %s' % current_genome_fai_file)
 
         # write out copy number
-        output_table_stats_handle.write('%s\t%s\n' % (genome, len(current_genome_16s_id_dict)))
+        if len(current_genome_16s_id_dict) > 0:
+            output_table_stats_handle.write('%s\t%s\n' % (genome, len(current_genome_16s_id_dict)))
 
     output_table_handle.close()
     output_table_stats_handle.close()
