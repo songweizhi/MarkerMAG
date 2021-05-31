@@ -17,7 +17,7 @@ def get_regions_to_ignore_from_barrnap_output(combined_barrnap_gff, ctg_len_dict
             right_gap = ctg_len - end_pos - 1
 
             # print(each_line_split)
-            print('%s(%sbp)\t%s\t%s\t%s' % (ctg_id, ctg_len, len_16s, left_gap, right_gap))
+            # print('%s\t%s\t%s\t%s\t%s' % (ctg_id, ctg_len, len_16s, left_gap, right_gap))
             # print()
 
             if left_gap <= 50:

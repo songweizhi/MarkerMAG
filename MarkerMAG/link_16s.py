@@ -2447,11 +2447,12 @@ def linkage_vis_worker(arguments_list):
 
 
 def parse_sam_gnm_worker(arguments_list):
-    rd1_unlinked_mags_sam_bowtie_reformat_sorted = arguments_list[0]
-    free_living_ctg_ref_file = arguments_list[1]
-    min_M_len_ctg = arguments_list[2]
-    mismatch_cutoff = arguments_list[3]
-    round_2_ctg_end_seq_len_dict = arguments_list[4]
+
+    rd1_unlinked_mags_sam_bowtie_reformat_sorted    = arguments_list[0]
+    free_living_ctg_ref_file                        = arguments_list[1]
+    min_M_len_ctg                                   = arguments_list[2]
+    mismatch_cutoff                                 = arguments_list[3]
+    round_2_ctg_end_seq_len_dict                    = arguments_list[4]
 
     free_living_ctg_ref_file_handle = open(free_living_ctg_ref_file, 'w')
     to_extract_read_base_rd2_ctg = set()
@@ -2606,26 +2607,22 @@ def parse_sam_gnm_worker(arguments_list):
 
                     ####################################################################################################
 
-                    r1_ctg_refs_rd2_no_ignored = {key: value for key, value in r1_ctg_refs_passed_qc.items() if
-                                                  key not in ctg_refs_to_ignore_rd2}
-                    r2_ctg_refs_rd2_no_ignored = {key: value for key, value in r2_ctg_refs_passed_qc.items() if
-                                                  key not in ctg_refs_to_ignore_rd2}
+                    r1_ctg_refs_rd2_no_ignored = {key: value for key, value in r1_ctg_refs_passed_qc.items() if key not in ctg_refs_to_ignore_rd2}
+                    r2_ctg_refs_rd2_no_ignored = {key: value for key, value in r2_ctg_refs_passed_qc.items() if key not in ctg_refs_to_ignore_rd2}
 
                     # only r1 has no_ignored alignments
                     if (len(r1_ctg_refs_rd2_no_ignored) > 0) and (len(r2_ctg_refs_rd2_no_ignored) == 0):
                         current_read_base___qualified_reads_rd2 = True
                         current_read_base___r1_ctg_ref_dict_rd2 = current_read_base_r1_ctg_ref_dict_rd2
                         to_extract_read_base_rd2_ctg.add(current_read_base)
-                        free_living_ctg_ref_file_handle.write(
-                            '%s\t%s\n' % (current_read_base, ','.join(r1_ctg_refs_rd2_no_ignored)))
+                        free_living_ctg_ref_file_handle.write('%s\t%s\n' % (current_read_base, ','.join(r1_ctg_refs_rd2_no_ignored)))
 
                     # only r2 has no_ignored alignments
                     if (len(r1_ctg_refs_rd2_no_ignored) == 0) and (len(r2_ctg_refs_rd2_no_ignored) > 0):
                         current_read_base___qualified_reads_rd2 = True
                         current_read_base___r2_ctg_ref_dict_rd2 = current_read_base_r2_ctg_ref_dict_rd2
                         to_extract_read_base_rd2_ctg.add(current_read_base)
-                        free_living_ctg_ref_file_handle.write(
-                            '%s\t%s\n' % (current_read_base, ','.join(r2_ctg_refs_rd2_no_ignored)))
+                        free_living_ctg_ref_file_handle.write('%s\t%s\n' % (current_read_base, ','.join(r2_ctg_refs_rd2_no_ignored)))
 
                     ########################################### reset values ###########################################
 
@@ -3350,10 +3347,10 @@ def link_16s(args):
                                     r1_ctg_ref_ends_to_ignore = ctg_ignore_region_dict[r1_ctg_ref]
                                     for to_ignore_region in r1_ctg_ref_ends_to_ignore:
                                         if to_ignore_region == 'left_end':
-                                            if r1_ctg_ref_pos <= 100:
+                                            if r1_ctg_ref_pos <= 50:
                                                 matched_to_r1_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos) <= 100:
+                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos) <= 50:
                                                 matched_to_r1_ref_ignored_region = True
 
                                 if matched_to_r1_ref_ignored_region is False:
@@ -3384,10 +3381,10 @@ def link_16s(args):
                                     r2_ctg_ref_ends_to_ignore = ctg_ignore_region_dict[r2_ctg_ref]
                                     for to_ignore_region in r2_ctg_ref_ends_to_ignore:
                                         if to_ignore_region == 'left_end':
-                                            if r2_ctg_ref_pos <= 100:
+                                            if r2_ctg_ref_pos <= 50:
                                                 matched_to_r2_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos) <= 100:
+                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos) <= 50:
                                                 matched_to_r2_ref_ignored_region = True
 
                                 if matched_to_r2_ref_ignored_region is False:
@@ -3994,6 +3991,8 @@ def link_16s(args):
     # get the id of reads to extract
     free_living_16s_ref_file_handle = open(free_living_16s_ref_file, 'w')
     rd2_read_to_extract_flanking_16s = set()
+    rd2_read_to_extract_flanking_16s_r1 = set()
+    rd2_read_to_extract_flanking_16s_r2 = set()
     for each_mp in MappingRecord_dict.copy():
         if each_mp in all_linking_reads_for_rd1_linkages:
             MappingRecord_dict.pop(each_mp)
@@ -4004,10 +4003,15 @@ def link_16s(args):
                 MappingRecord_dict.pop(each_mp)
             elif (len(r1_16s_refs) > 0) or (len(r2_16s_refs) == 0):
                 rd2_read_to_extract_flanking_16s.add(each_mp)
+                rd2_read_to_extract_flanking_16s_r2.add('%s.2' % each_mp)
                 free_living_16s_ref_file_handle.write('%s\t%s\n' % (each_mp, ','.join(r1_16s_refs)))
+                #free_living_16s_ref_file_handle.write('%s.2\t%s\n' % (each_mp, ','.join(r1_16s_refs)))
+
             elif (len(r1_16s_refs) == 0) or (len(r2_16s_refs) > 0):
                 rd2_read_to_extract_flanking_16s.add(each_mp)
+                rd2_read_to_extract_flanking_16s_r1.add('%s.1' % each_mp)
                 free_living_16s_ref_file_handle.write('%s\t%s\n' % (each_mp, ','.join(r2_16s_refs)))
+                #free_living_16s_ref_file_handle.write('%s.1\t%s\n' % (each_mp, ','.join(r2_16s_refs)))
     free_living_16s_ref_file_handle.close()
 
     # write out id of linking reads for extraction
@@ -4179,9 +4183,12 @@ def link_16s(args):
     else:
         report_and_log(('Round 2: running SPAdes on extracted reads'), pwd_log_file, keep_quiet)
         spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
+        spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
         report_and_log((spades_cmd), pwd_log_file, True)
         os.system(spades_cmd)
         mini_assemblies = '%s/scaffolds.fasta' % spades_wd
+
+    ##################################################### mapping reads to mini_assemblies ####################################################
 
     # index miniassembly
     mini_assemblies_no_ext = '.'.join(mini_assemblies.split('.')[:-1])

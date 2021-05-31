@@ -92,12 +92,12 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0528_128_60_60_stats_combined_filtered.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0531_128_60_60_linkages_by_genome.txt'             % wd
 mlen = '45'
 #MarkerMAG_linkages          = '/Users/songweizhi/Desktop/test_filter/GI_0524_128_%s_%s_stats_combined_filtered.txt' % (mlen, mlen)
 
-MarkerMAG_linkages          = '/Users/songweizhi/Desktop/tunning_rd1/stats_combined_filtered.txt'
-linkages_from_rd1           = True
+#MarkerMAG_linkages          = '/Users/songweizhi/Desktop/tunning_rd1/stats_combined_filtered.txt'
+linkages_from_rd1           = False
 
 
 '''
@@ -731,7 +731,7 @@ linkage_num_wrong = 0
 linkage_num_unknown = 0
 linkage_assessment_dict = {}
 for each_linkage in open(MarkerMAG_linkages):
-    if ('MarkerGene\tGenomicSeq\tLinkage\tStep' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
+    if ('MarkerGene\tGenomicSeq\tLinkage\tRound' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
         MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\tAssessment\n')
     else:
         id_16s = ''
@@ -840,7 +840,7 @@ for each_link in open(MarkerMAG_linkages_assessed):
         gnm_id = each_link_split[1]
         linked_rd = each_link_split[3]
         assessment = each_link_split[4]
-        if linked_rd == 'S1':
+        if linked_rd == 'Rd1':
             total_linkage_num_rd1 += 1
 
             if assessment == 'Correct':
@@ -854,7 +854,7 @@ for each_link in open(MarkerMAG_linkages_assessed):
                 linked_mag_dict_rd1[gnm_id] = {assessment}
             else:
                 linked_mag_dict_rd1[gnm_id].add(assessment)
-        if linked_rd == 'S2':
+        if linked_rd == 'Rd2':
             total_linkage_num_rd2 += 1
 
             if assessment == 'Correct':

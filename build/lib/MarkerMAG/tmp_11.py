@@ -11,6 +11,9 @@ def cigar_splitter(cifar):
 def get_cigar_stats():
     pass
 
+aa = 0
+
+
 
 
 def check_cigar_quality(cigar_str, mismatch_cutoff, min_M_len, ref_pos, ref_len):

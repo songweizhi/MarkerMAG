@@ -67,6 +67,7 @@ def barrnap_16s(args):
     barrnap_16s_wd          = '%s_barrnap_16s_wd'               % output_prefix
     barrnap_op_foler        = '%s/%s_barrnap_outputs'           % (barrnap_16s_wd, output_prefix)
     output_seq_16s_folder   = '%s/%s_16S_seq'                   % (barrnap_16s_wd, output_prefix)
+    combined_16s_seqs       = '%s/%s_16S.fasta'                 % (barrnap_16s_wd, output_prefix)
     output_table            = '%s/%s_16S.txt'                   % (barrnap_16s_wd, output_prefix)
     output_table_stats      = '%s/%s_16S_stats.txt'             % (barrnap_16s_wd, output_prefix)
 
@@ -157,7 +158,11 @@ def barrnap_16s(args):
     output_table_handle.close()
     output_table_stats_handle.close()
 
-    # report failed geomes
+    # combine 16S sequences
+    os.system('cat %s/*.ffn > %s' % (output_seq_16s_folder, combined_16s_seqs))
+    os.system('rm -r %s' % output_seq_16s_folder)
+
+    # report failed genomes
     if len(genome_failed_barrnap) > 0:
         print('Failed to run barrnap on the following genomes: %s' % ','.join(genome_failed_barrnap))
 
