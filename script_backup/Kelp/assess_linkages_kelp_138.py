@@ -16,24 +16,34 @@ def sep_path_basename_ext(file_in):
 ###################################################### file in/out #####################################################
 
 wd                  = '/Users/songweizhi/Desktop/MarkerMAG_wd/4_Kelp'
-taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                              % wd
-taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified.txt' % wd
-#taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified_corrected.txt' % wd
-taxonomy_16s_blca   = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999.fasta.blca.out' % wd
-bin_id_file         = '%s/bin_id.txt'                                                   % wd
-barrnap_output      = '%s/BH_ER_050417_16S.txt'                                         % wd
-checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                       % wd
-mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                     % wd
-
+taxonomy_mag        = '%s/BH_ER_050417.bac120.summary.tsv'                                              % wd
+taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified.txt'                 % wd
+taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_vs_GTDB_classifications.txt'    % wd
+#taxonomy_16s        = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999_classified_corrected.txt'      % wd
+taxonomy_16s_blca   = '%s/Kelp_SILVA138_id99_assembled_16S_uclust_0.999.fasta.blca.out'                 % wd
+bin_id_file         = '%s/bin_id.txt'                                                                   % wd
+barrnap_output      = '%s/BH_ER_050417_16S.txt'                                                         % wd
+checkm_output       = '%s/BH_ER_050417_refined_MAG_qualities.txt'                                       % wd
+mean_depth_file     = '%s/BH_ER_050417_refined_bins_mean_depth.txt'                                     % wd
+gtdb_gnm_to_ssu_txt = '%s/GTDB_ssu_all_r95_gnm_to_ssu.txt'                                              % wd
 # Kelp_0406_very_sensitive_identified_linkages_genome_level.txt
 # Kelp_0406_sensitive_identified_linkages_genome_level.txt
 # Kelp_0406_default_identified_linkages_genome_level.txt
 # Kelp_0406_specific_identified_linkages_genome_level.txt
 # Kelp_0406_very_specific_identified_linkages_genome_level.txt
 # Kelp_0406_super_specific_identified_linkages_genome_level.txt
-linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0508_mis2_45_45_identified_linkages_genome_level.txt'
+linkage_file = '/Users/songweizhi/Desktop/new_algorithm_Kelp/Kelp_0602_60_60_linkages_by_genome.txt'
+
 
 '''
+Linkage accuracy: Kelp_0602_60_60_linkages_by_genome
+Rank	All	NA	Correct	Unknown	Total(Accuracy)
+phylum	59	1	58	0	58/58(100.0)
+class	59	1	56	0	56/58(96.55)
+order	59	1	54	0	54/58(93.1)
+family	59	1	49	0	49/58(84.48)
+genus	59	1	32	12	44/58(75.86)
+
 Linkage accuracy: Kelp_0413_very_sensitive_identified_linkages_genome_level
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
 phylum	44	3	41	0	41/41(100.0)
@@ -61,8 +71,6 @@ family	39	2	30	0	30/37(81.08)
 genus	39	2	19	7	26/37(70.27)
 linked MAGs: 29
 
-
-
 Linkage accuracy: Kelp_0413_specific_identified_linkages_genome_level
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
 phylum	35	4	31	0	31/31(100.0)
@@ -71,7 +79,6 @@ order	35	4	27	0	27/31(87.1)
 family	35	4	24	0	24/31(77.42)
 genus	35	4	15	6	21/31(67.74)
 linked MAGs: 25
-
 
 Linkage accuracy: Kelp_0413_very_specific_identified_linkages_genome_level
 Rank	All	NA	Correct	Unknown	Total(Accuracy)
@@ -82,73 +89,8 @@ family	33	2	24	0	24/31(77.42)
 genus	33	2	15	7	22/31(70.97)
 linked MAGs: 24
 
-
-
 '''
 
-
-'''
-=============================
-very_sensitive
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	95	3	92	0	92/92(100.0)
-class	95	3	92	0	92/92(100.0)
-order	95	3	91	0	91/92(98.91)
-family	95	3	88	0	88/92(95.65)
-genus	95	3	59	15	74/92(80.43)
-linked MAGs: 36
-
-=============================
-sensitive
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	93	3	90	0	90/90(100.0)
-class	93	3	90	0	90/90(100.0)
-order	93	3	89	0	89/90(98.89)
-family	93	3	87	0	87/90(96.67)
-genus	93	3	59	14	73/90(81.11)
-linked MAGs: 35
-
-=============================
-default
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	81	4	77	0	77/77(100.0)
-class	81	4	77	0	77/77(100.0)
-order	81	4	77	0	77/77(100.0)
-family	81	4	75	0	75/77(97.4)
-genus	81	4	50	10	60/77(77.92)
-linked MAGs: 35
-
-=============================
-specific
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	72	3	69	0	69/69(100.0)
-class	72	3	69	0	69/69(100.0)
-order	72	3	69	0	69/69(100.0)
-family	72	3	67	0	67/69(97.1)
-genus	72	3	45	6	51/69(73.91)
-linked MAGs: 29
-
-=============================
-very_specific
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	54	1	53	0	53/53(100.0)
-class	54	1	53	0	53/53(100.0)
-order	54	1	53	0	53/53(100.0)
-family	54	1	51	0	51/53(96.23)
-genus	54	1	32	5	37/53(69.81)
-linked MAGs: 23
-
-=============================
-super_specific
-Rank	All	NA	Correct	Unknown	Total(Accuracy)
-phylum	50	1	49	0	49/49(100.0)
-class	50	1	49	0	49/49(100.0)
-order	50	1	49	0	49/49(100.0)
-family	50	1	47	0	47/49(95.92)
-genus	50	1	29	4	33/49(67.35)
-linked MAGs: 20
-
-'''
 
 ################################################### define file name ###################################################
 
@@ -159,16 +101,25 @@ linkage_file_with_assessment_by_mag = '%s/%s_with_assessment_by_MAG%s'  % (linka
 
 ################################################### read in metadata ###################################################
 
+gtdb_gnm_to_ssu_dict = {}
+for each_gnm in open(gtdb_gnm_to_ssu_txt):
+    each_gnm_split = each_gnm.strip().split('\t')
+    gnm_id = each_gnm_split[0]
+    ssu_id_list = each_gnm_split[1].split(',')
+    gtdb_gnm_to_ssu_dict[gnm_id] = ssu_id_list
 
 bin_id_list = []
 for each_bin_id in open(bin_id_file):
     bin_id_list.append(each_bin_id.strip())
 
+bin_closest_ref_dict = {}
 bin_taxon_dict = {}
 for each_bin_taxon in open(taxonomy_mag):
     if not each_bin_taxon.startswith('user_genome	classification'):
         each_bin_taxon_split = each_bin_taxon.strip().split('\t')
+        closest_ref = each_bin_taxon_split[7]
         bin_taxon_dict[each_bin_taxon_split[0]] = each_bin_taxon_split[1]
+        bin_closest_ref_dict[each_bin_taxon_split[0]] = closest_ref
 
 mag_completeness_dict = {}
 for each_mag_quality in open(checkm_output):
@@ -187,16 +138,22 @@ for each_barrnap_op in open(barrnap_output):
         barrnap_op_dict[each_barrnap_op_split[0]] = each_barrnap_op_split[2]
 
 s16_taxon_dict = {}
+s16_iden_dict = {}
+s16_aln_dict = {}
 for each_16s_taxon in open(taxonomy_16s):
     each_16s_taxon_split = each_16s_taxon.strip().split('\t')
-    s16_taxon_dict[each_16s_taxon_split[0]] = each_16s_taxon_split[1].split(' [')[0]
-
+    id_16s = each_16s_taxon_split[0]
+    taxon_best_hit = each_16s_taxon_split[4].split(' [')[0]
+    iden_with_best_match = each_16s_taxon_split[2]
+    aln_with_best_match = each_16s_taxon_split[3]
+    s16_taxon_dict[id_16s] = taxon_best_hit
+    s16_iden_dict[id_16s]  = iden_with_best_match
+    s16_aln_dict[id_16s]   = aln_with_best_match
 
 s16_taxon_blca_dict = {}
 for each_16s_taxon in open(taxonomy_16s_blca):
     each_16s_taxon_split = each_16s_taxon.strip().split('\t')
     s16_taxon_blca_dict[each_16s_taxon_split[0]] = each_16s_taxon_split[1]
-
 
 s16_taxon_blca_dict_formatted = {}
 for each_16s in s16_taxon_blca_dict:
@@ -232,14 +189,18 @@ linkage_with_unknown_s = 0
 unknown_mag_or_16s_taxon = 0
 for each_linkage in open(linkage_file):
     if each_linkage.startswith('MarkerGene	GenomicSeq'):
-        linkage_file_with_assessment_handle.write('%s\tPhylum\tClass\tOrder\tFamily\tGenus\tMAG_taxon\t16S_taxon\t16S_taxon_BLCA\n' % each_linkage.strip())
+        linkage_file_with_assessment_handle.write('%s\tPhylum\tClass\tOrder\tFamily\tGenus\tIdentity\tAln_len\tclosest_ref\tclosest_ref_16s_num\tMAG_taxon\t16S_taxon\t16S_taxon_BLCA\n' % each_linkage.strip())
     else:
         each_linkage_split = each_linkage.strip().split('\t')
         line_to_write = each_linkage.strip()
         s16_id = each_linkage_split[0]
         mag_id = each_linkage_split[1]
         taxon_mag = bin_taxon_dict.get(mag_id, 'NA')
+        closest_ref = bin_closest_ref_dict.get(mag_id, 'NA')
+        closest_ref_16s_num = len(gtdb_gnm_to_ssu_dict.get(closest_ref, []))
         taxon_16s = s16_taxon_dict.get(s16_id, 'NA')
+        iden_16s = s16_iden_dict.get(s16_id, 'NA')
+        aln_len_16s = s16_aln_dict.get(s16_id, 'NA')
         taxon_16s_blca = s16_taxon_blca_dict_formatted.get(s16_id, 'NA')
         taxon_mag_split = taxon_mag.split(';')
         taxon_16s_split = taxon_16s.split(';')
@@ -330,7 +291,7 @@ for each_linkage in open(linkage_file):
             else:
                 line_to_write += '\t0'
 
-        line_to_write += '\t%s\t%s\t%s' % (taxon_mag, taxon_16s, taxon_16s_blca)
+        line_to_write += '\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (iden_16s, aln_len_16s, closest_ref, closest_ref_16s_num, taxon_mag, taxon_16s, taxon_16s_blca)
         linkage_file_with_assessment_handle.write('%s\n' % line_to_write)
 
 

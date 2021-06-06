@@ -26,6 +26,7 @@ MarkerMAG/tmp_15.py
 MarkerMAG/tmp_16.py
 MarkerMAG/tmp_17.py
 MarkerMAG/tmp_18.py
+MarkerMAG/tmp_19.py
 MarkerMAG/tmp_2.py
 MarkerMAG/tmp_3.py
 MarkerMAG/tmp_4.py
@@ -37,6 +38,8 @@ MarkerMAG/tmp_9.py
 MarkerMAG/tunning_rd1.py
 MarkerMAG/tunning_rd1_mp.py
 MarkerMAG/tunning_rd2.py
+MarkerMAG/tunning_rd2_filter.py
+MarkerMAG/tunning_rd2_filter_up.py
 MarkerMAG/tunning_rd2_mp.py
 MarkerMAG/uclust_16s.py
 MarkerMAG/vis_msa.py

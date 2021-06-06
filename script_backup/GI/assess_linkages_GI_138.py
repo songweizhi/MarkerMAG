@@ -91,7 +91,7 @@ cov_q_cutoff_16s            = 70
 '''
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0526_138_60_60_stats_combined_filtered.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0531_138_60_60_stats_combined_filtered.txt'             % wd
 linkages_from_rd1           = True
 
 '''
@@ -460,7 +460,10 @@ print('%s\tBoth\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, to
 
 ########################################################################################################################
 
-print(cluster_to_matam_16s_dict['C90_0'])
+print(cluster_to_matam_16s_dict['C109_0'])
+print(cluster_to_bin_dict['C110_0'])
+
+
 
 # print(matam_16s_to_cluster_dict['3_GI_138_subsample_75_842'])
 # print(matam_16s_to_cluster_dict['3_GI_138_subsample_75_847'])

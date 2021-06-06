@@ -12,7 +12,11 @@ from distutils.spawn import find_executable
 matam_16s_usage = '''
 =================================== matam_16s example commands ===================================
 
-MarkerMAG matam_16s -p Test -r1 R1.fasta -r2 R2.fasta -t 12 -force -d path/to/SILVA_138_SSURef_NR99
+MarkerMAG matam_16s -p Test -r1 R1.fasta -r2 R2.fasta -t 12 -d path/to/SILVA_138_SSURef_NR99
+MarkerMAG matam_16s -p Test -r16s 16S_reads.fasta -t 12 -d path/to/SILVA_138_SSURef_NR99
+
+# please refer to here for the preparation of database files
+https://github.com/songweizhi/MarkerMAG/blob/master/doc/README_matam_16s.md
 
 ==================================================================================================
 '''
@@ -375,10 +379,10 @@ if __name__ == '__main__':
     matam_16s_parser.add_argument('-p',              required=True,                                                     help='output prefix')
     matam_16s_parser.add_argument('-r1',             required=False, default=None,                                      help='forward reads')
     matam_16s_parser.add_argument('-r2',             required=False, default=None,                                      help='reverse reads')
-    matam_16s_parser.add_argument('-r16s',           required=False, default=None,                                      help='extracted 16S reads')
+    matam_16s_parser.add_argument('-r16s',           required=False, default=None,                                      help='extracted 16S reads, specify if you already have 16S reads identified from metagenomic dataset')
     matam_16s_parser.add_argument('-pct',            required=True,  type=str, default='1,5,10,25,50,75,100',           help='subsample percentage, must be integer, between 1-100, deafault: 1,5,10,25,50,75,100')
     matam_16s_parser.add_argument('-d',              required=False, type=str,                                          help='MATAM ref db, same as "-d" in Matam')
-    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.999,                         help='cluster identity cutoff (0-1), default: 0.999')
+    matam_16s_parser.add_argument('-i',              required=False, type=float, default=0.999,                         help='cluster identity cutoff, do not provide value lower than 0.99, default: 0.999')
     matam_16s_parser.add_argument('-t',              required=False, type=int, default=1,                               help='number of threads, default: 1')
     matam_16s_parser.add_argument('-force',          required=False, action="store_true",                               help='force overwrite existing results')
     matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                               help='not report progress')

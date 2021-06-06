@@ -36,7 +36,28 @@ clp_pct_ratio_cutoff = 3.5
 mismatch_ctg_ends = 1
 subsample_rate_for_depth_estimation = 0.1  # between 0 and 1
 min_M_len_mini = min_M_len_ctg
-
+min_M_len_16s = 45
+min_M_len_ctg = 45
+min_M_pct = 35
+mismatch_cutoff = 2
+min_aln_16s = 500
+min_cov_16s = 30
+mean_depth_dict_gnm = {}
+mean_depth_dict_16s = {}
+min_16s_gnm_multiple = 0
+min_iden_16s = 98
+min_link_num = 8
+within_gnm_linkage_num_diff = 80
+time_format = '[%Y-%m-%d %H:%M:%S]'
+num_threads = 4
+pwd_makeblastdb_exe = 'makeblastdb'
+pwd_blastn_exe = 'blastn'
+pwd_bowtie2_build_exe = 'bowtie2-build'
+pwd_bowtie2_exe = 'bowtie2'
+pwd_samtools_exe = 'samtools'
+pwd_bbmap_exe = 'bbmap.sh'
+pwd_spades_exe = 'spades.py'
+seqtk_exe = 'seqtk'
 
 combined_1st_round_unlinked_mags                = '%s/round_1_unlinked_gnm.fa'                      % step_2_wd
 combined_1st_round_unlinked_mag_end_seq         = '%s/round_1_unlinked_gnm_end_%sbp.fa'             % (step_2_wd, end_seq_len)
@@ -86,20 +107,6 @@ round_2_ctg_end_seq_len_dict = {}
 for each_ctg_end_record in SeqIO.parse(combined_1st_round_unlinked_mag_end_seq, 'fasta'):
     round_2_ctg_end_seq_len_dict[each_ctg_end_record.id] = len(each_ctg_end_record.seq)
 
-# get the number of lines per file
-report_and_log(('Round 2: calculating the number of lines per subset'), pwd_log_file, keep_quiet)
-os.system('wc -l %s > %s' % (rd1_unlinked_mags_sam_bowtie_reformat_sorted, rd1_unlinked_mags_sam_line_num))
-rd1_unlinked_mag_sam_line_num = int(open(rd1_unlinked_mags_sam_line_num).readline().strip().split(' ')[0])
-os.remove(rd1_unlinked_mags_sam_line_num)
-line_num_per_file = int(round(rd1_unlinked_mag_sam_line_num/(num_threads*10))) + 10
-
-report_and_log(('Round 2: splitting sam file'), pwd_log_file, keep_quiet)
-os.mkdir(rd1_unlinked_mags_sam_split_folder)
-split_gnm_sam_cmd = 'split -l %s %s %s/splitted_sam_ ' % (line_num_per_file, rd1_unlinked_mags_sam_bowtie_reformat_sorted, rd1_unlinked_mags_sam_split_folder)
-os.system(split_gnm_sam_cmd)
-
-report_and_log(('Round 2: analysing mappping results with %s threads' % num_threads), pwd_log_file, keep_quiet)
-os.mkdir(rd1_unlinked_mags_sam_MappingRecord_folder)
 
 # get splitted sam file list
 splitted_gnm_sam_file_list = [os.path.basename(file_name) for file_name in glob.glob('%s/splitted_sam_*' % rd1_unlinked_mags_sam_split_folder)]
@@ -122,7 +129,6 @@ pool_parse_sam_gnm.map(parse_sam_gnm_worker, list_for_parse_sam_gnm_worker)
 pool_parse_sam_gnm.close()
 pool_parse_sam_gnm.join()
 
-report_and_log(('Round 2: removing splitted subsets from disk'), pwd_log_file, keep_quiet)
 os.system('rm -r %s' % rd1_unlinked_mags_sam_split_folder)
 
 # combine free_living_ctg_ref_files
@@ -181,38 +187,10 @@ rd2_extracted_r2_combined_handle.close()
 ####################################################################################################################
 
 # assemble
-if round_2_mira is True:
-
-    free_living_all_id_r1 = set()
-    free_living_all_id_r2 = set()
-    for each_read in open(free_living_all):
-        if each_read.startswith('>'):
-            read_id = each_read.strip()[1:].split(' ')[0]
-            if read_id[-1] == '1':
-                free_living_all_id_r1.add(read_id)
-            if read_id[-1] == '2':
-                free_living_all_id_r2.add(read_id)
-
-    argument_list_r1 = [reads_file_r1, 'fastq', free_living_all_id_r1, free_living_all_fq_r1]
-    argument_list_r2 = [reads_file_r2, 'fastq', free_living_all_id_r2, free_living_all_fq_r2]
-
-    # extract reads with multiprocessing
-    pool = mp.Pool(processes=2)
-    pool.map(extract_reads_worker, [argument_list_r1, argument_list_r2])
-    pool.close()
-    pool.join()
-
-    os.system('cat %s %s > %s' % (free_living_all_fq_r1, free_living_all_fq_r2, free_living_all_fq))
-    report_and_log(('Round 2: running Mira on extracted reads'), pwd_log_file, keep_quiet)
-    run_mira5(output_prefix, mira_tmp_dir, step_2_wd, mira_manifest, free_living_all_fq, mira_stdout, force_overwrite)
-    mini_assemblies = '%s/%s_mira_est_no_chimera_assembly/%s_mira_est_no_chimera_d_results/%s_mira_est_no_chimera_out.unpadded.fasta' % (step_2_wd, output_prefix, output_prefix, output_prefix)
-else:
-    report_and_log(('Round 2: running SPAdes on extracted reads'), pwd_log_file, keep_quiet)
-    spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
-    spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
-    report_and_log((spades_cmd), pwd_log_file, True)
-    os.system(spades_cmd)
-    mini_assemblies = '%s/scaffolds.fasta' % spades_wd
+spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
+spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
+os.system(spades_cmd)
+mini_assemblies = '%s/scaffolds.fasta' % spades_wd
 
 ##################################################### mapping reads to mini_assemblies ####################################################
 
@@ -231,8 +209,6 @@ os.system(mini_assembly_reformat_cmd)
 
 
 ##################################################### read in sam file ####################################################
-
-report_and_log(('Round 2: read in sam file'), pwd_log_file, keep_quiet)
 
 mini_assembly_len_dict = {}
 mini_assembly_mp_dict = {}
@@ -274,8 +250,6 @@ with open(sam_file_mini_assembly_reformatted) as sam_file_mini_assembly_reformat
 
 
 #################################################### parse sam file ####################################################
-
-report_and_log(('Round 2: parsing sam file'), pwd_log_file, keep_quiet)
 
 # get mini assembly to 16s reads dict
 mini_assembly_to_16s_reads_dict = {}

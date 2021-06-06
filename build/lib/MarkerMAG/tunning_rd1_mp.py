@@ -1108,10 +1108,10 @@ if __name__ ==  '__main__':
                                     r1_ctg_ref_ends_to_ignore = ctg_ignore_region_dict[r1_ctg_ref]
                                     for to_ignore_region in r1_ctg_ref_ends_to_ignore:
                                         if to_ignore_region == 'left_end':
-                                            if r1_ctg_ref_pos <= 100:
+                                            if r1_ctg_ref_pos <= 50:
                                                 matched_to_r1_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos) <= 100:
+                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos) <= 50:
                                                 matched_to_r1_ref_ignored_region = True
 
                                 if matched_to_r1_ref_ignored_region is False:
@@ -1142,10 +1142,10 @@ if __name__ ==  '__main__':
                                     r2_ctg_ref_ends_to_ignore = ctg_ignore_region_dict[r2_ctg_ref]
                                     for to_ignore_region in r2_ctg_ref_ends_to_ignore:
                                         if to_ignore_region == 'left_end':
-                                            if r2_ctg_ref_pos <= 100:
+                                            if r2_ctg_ref_pos <= 50:
                                                 matched_to_r2_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos) <= 100:
+                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos) <= 50:
                                                 matched_to_r2_ref_ignored_region = True
 
                                 if matched_to_r2_ref_ignored_region is False:
