@@ -54,13 +54,13 @@ def gnm_level_asessment(linked_mag_dict_rd1):
 
 ########################################################################################################################
 
-wd = '/Users/songweizhi/Desktop/assess_linkages_GI'
+wd = '/Users/songweizhi/Desktop/assess_linkages_Oral'
 
 ########## reference to cluster ##########
 
 drep_ani_cutoff             = 97
 drep_cdb_file               = '%s/file_in/Cdb_%s.csv'                                       % (wd, drep_ani_cutoff)
-ref_to_strain_file          = '%s/file_in/ref_to_strain.txt'                                % wd
+# ref_to_strain_file          = '%s/file_in/ref_to_strain.txt'                                % wd
 
 ########## bin to reference ##########
 
@@ -70,44 +70,59 @@ iden_cutoff                 = 99.5
 aln_len_cutoff              = 1500
 cov_q_cutoff                = 90
 min_match_length            = 524288  # 100 Kbp  102400
-mag_metadata                = '%s/file_in/MAG_metadata.txt'                                 % wd
-pwd_plot_sankey_R           = '%s/file_in/get_sankey_plot.R' % wd
+# mag_metadata                = '%s/file_in/MAG_metadata.txt'                                 % wd
 
+
+'''
+GI_0414_specific	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
+GI_0414_specific	Rd_2	|	22	22	0	0	22/22(100.0)	|	16	16	0	0	0	16/97(16.49)	16/16(100.0)
+GI_0414_specific	Both	|	72	71	1	0	71/71(100.0)	|	48	48	0	0	0	48/97(49.48)	48/48(100.0)
+
+'''
 ########## 16S to reference ##########
 
 perform_blastn_16s_vs_refs  = False  # True or False
-combined_GI_ref_16S         = '%s/file_in/combined_GI_ref_16S.ffn'           % wd
-matam_16s_seqs              = '%s/file_in/GI_138_16S_0.999.fasta'            % wd
-matam_16s_blastn            = '%s/file_in/GI_138_16S_0.999_vs_ref.tab'       % wd
+combined_GI_ref_16S         = '%s/file_in/combined_Oral_ref_16S.ffn'                     % wd
+matam_16s_seqs              = '%s/file_in/CAMI_Oral_138_16S_0.999.polished.fa'           % wd
+matam_16s_blastn            = '%s/file_in/CAMI_Oral_138_16S_0.999.polished_vs_ref.tab'   % wd
 iden_cutoff_16s             = 99.5  # 99.3 (best), 99.5
 aln_len_cutoff_16s          = 500
 cov_q_cutoff_16s            = 70
-'''
+total_query_mag_num         = 87
 
-
-3_GI_138_subsample_75_842	OTU_97.8962.0_16S_4	99.802	1512	3	0	5	1516	1	1512	0.0	2713	1519	1512
-3_GI_138_subsample_75_847	OTU_97.8962.0_16S_1	99.669	1512	5	0	5	1516	1	1512	0.0	2704	1519	1512
-
-'''
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0531_138_60_60_stats_combined_filtered.txt'             % wd
-linkages_from_rd1           = True
+MarkerMAG_linkages          = '%s/Oral_0622_60_60_polish_linkages_by_genome.txt'             % wd
+linkages_from_rd1           = False
 
 '''
-GI_0524_138_45_45_stats_combined_filtered.txt	Rd_1	|	118	101	10	7	101/108(93.52)	|	36	30	1	3	2	30/35(85.71)
-GI_0524_138_55_55_stats_combined_filtered.txt	Rd_1	|	115	98	11	6	98/104(94.23)	|	35	30	1	3	1	30/34(88.24)
-GI_0524_138_60_60_stats_combined_filtered.txt	Rd_1	|	111	102	7	2	102/104(98.08)	|	29	27	0	2	0	27/29(93.1)
+
+
+
+Oral_0622_60_60_polish_linkages_by_genome.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Accuracy
+Oral_0622_60_60_polish_linkages_by_genome.txt	Rd_1	|	63	52	8	3	52/55(94.55)	|	20	16	1	2	1	16/19(84.21)
+Oral_0622_60_60_polish_linkages_by_genome.txt	Rd_2	|	14	10	0	4	10/14(71.43)	|	6	3	0	3	0	3/6(50.0)
+Oral_0622_60_60_polish_linkages_by_genome.txt	Both	|	77	62	8	7	62/69(89.86)	|	26	19	1	5	1	19/25(76.0)
+
+Oral_0622_60_60_linkages_by_genome.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Accuracy
+Oral_0622_60_60_linkages_by_genome.txt	Rd_1	|	73	63	5	5	63/68(92.65)	|	26	20	1	4	1	20/25(80.0)
+Oral_0622_60_60_linkages_by_genome.txt	Rd_2	|	12	5	5	2	5/7(71.43)	|	6	3	1	2	0	3/5(60.0)
+Oral_0622_60_60_linkages_by_genome.txt	Both	|	85	68	10	7	68/75(90.67)	|	32	23	2	6	1	23/30(76.67)
 
 '''
+
+########## script ##########
+
+pwd_plot_sankey_R = '%s/file_in/get_sankey_plot.R' % wd
+
 ############################################### define file/folder name ################################################
 
 # bin to reference
-bin_vs_ref_txt              = '%s/file_in/bin_vs_ref_imag%s.txt'                    % (wd, iden_cutoff)
-stats_bin_to_ref_txt        = '%s/file_in/stats_bin_to_ref_imag%s.txt'              % (wd, iden_cutoff)
-stats_ref_to_bin_txt        = '%s/file_in/stats_ref_to_bin_imag%s.txt'              % (wd, iden_cutoff)
-stats_bin_to_cluster_txt    = '%s/file_in/stats_bin_to_cluster_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
-stats_cluster_to_bin_txt    = '%s/file_in/stats_cluster_to_bin_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
+bin_vs_ref_txt              = '%s/bin_vs_ref_imag%s.txt'                    % (wd, iden_cutoff)
+stats_bin_to_ref_txt        = '%s/stats_bin_to_ref_imag%s.txt'              % (wd, iden_cutoff)
+stats_ref_to_bin_txt        = '%s/stats_ref_to_bin_imag%s.txt'              % (wd, iden_cutoff)
+stats_bin_to_cluster_txt    = '%s/stats_bin_to_cluster_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
+stats_cluster_to_bin_txt    = '%s/stats_cluster_to_bin_ani%s_imag%s.txt'    % (wd, drep_ani_cutoff, iden_cutoff)
 
 # assessment results
 linkage_file_path, linkage_file_basename, linkage_file_extension = sep_path_basename_ext(MarkerMAG_linkages)
@@ -132,16 +147,17 @@ for each_ref in open(drep_cdb_file):
         else:
             cluster_to_ref_dict[ref_cluster].append(ref_file_name_no_ext)
 
+print('cluster_to_ref_dict: %s' % len(cluster_to_ref_dict) )
 
 ################################################### bin to reference ###################################################
 
-bin_ref_connector = '__|__'
+bin_ref_connector           = '__|__'
 
 # get ref_to_strain_dict
 ref_to_strain_dict = {}
-for ref in open(ref_to_strain_file):
-    ref_split = ref.strip().split('\t')
-    ref_to_strain_dict[ref_split[0]] = ref_split[1]
+# for ref in open(ref_to_strain_file):
+#     ref_split = ref.strip().split('\t')
+#     ref_to_strain_dict[ref_split[0]] = ref_split[1]
 
 if parse_blastn_bin_vs_ref is True:
     bin_vs_ref_dict = {}
@@ -215,7 +231,7 @@ if parse_blastn_bin_vs_ref is True:
 
     ref_to_bin_txt_handle = open(stats_ref_to_bin_txt, 'w')
     for each_ref in ref_to_bin_dict:
-        ref_to_bin_txt_handle.write('%s\t%s\t%s\n' % (each_ref, ','.join(ref_to_bin_dict[each_ref]), ref_to_strain_dict[each_ref]))
+        ref_to_bin_txt_handle.write('%s\t%s\t%s\n' % (each_ref, ','.join(ref_to_bin_dict[each_ref]), ref_to_strain_dict.get(each_ref, 'NA')))
     ref_to_bin_txt_handle.close()
 
     stats_bin_to_cluster_txt_handle = open(stats_bin_to_cluster_txt, 'w')
@@ -232,6 +248,7 @@ bin_to_cluster_dict = {}
 for each_match in open(stats_bin_to_cluster_txt):
     each_match_split = each_match.strip().split('\t')
     bin_to_cluster_dict[each_match_split[0]] = {i for i in each_match_split[1].split(',')}
+
 
 cluster_to_bin_dict = {}
 for each_bin in bin_to_cluster_dict:
@@ -278,6 +295,7 @@ for matam_16s in matam_16s_to_cluster_dict:
         else:
             cluster_to_matam_16s_dict[matched_cluster].add(matam_16s)
 
+
 ###################################################### assessment ######################################################
 
 MarkerMAG_linkages_assessed_handle = open(MarkerMAG_linkages_assessed, 'w')
@@ -288,7 +306,7 @@ linkage_num_wrong = 0
 linkage_num_unknown = 0
 linkage_assessment_dict = {}
 for each_linkage in open(MarkerMAG_linkages):
-    if ('MarkerGene\tGenomicSeq\tLinkage\tStep' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
+    if ('MarkerGene\tGenomicSeq\tLinkage\tRound' in each_linkage) or ('MarkerGene,GenomicSeq,Number' in each_linkage):
         MarkerMAG_linkages_assessed_handle.write('MarkerGene\tGenomicSeq\tLinkage\tStep\tAssessment\n')
     else:
         id_16s = ''
@@ -323,7 +341,7 @@ for each_linkage in open(MarkerMAG_linkages):
                 if linkages_from_rd1 is False:
                     MarkerMAG_linkages_assessed_handle.write('%s\tCorrect\n' % each_linkage.strip())
                 else:
-                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tCorrect\n' % (id_16s, id_mag, link_num))
+                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tRd1\tCorrect\n' % (id_16s, id_mag, link_num))
 
                 if id_mag not in linkage_assessment_dict:
                     linkage_assessment_dict[id_mag] = ['Correct']
@@ -336,7 +354,7 @@ for each_linkage in open(MarkerMAG_linkages):
                 if linkages_from_rd1 is False:
                     MarkerMAG_linkages_assessed_handle.write('%s\tWrong\n' % each_linkage.strip())
                 else:
-                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tWrong\n' % (id_16s, id_mag, link_num))
+                    MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tRd1\tWrong\n' % (id_16s, id_mag, link_num))
 
                 if id_mag not in linkage_assessment_dict:
                     linkage_assessment_dict[id_mag] = ['Wrong']
@@ -346,12 +364,12 @@ for each_linkage in open(MarkerMAG_linkages):
                 for each_16s_cluster in matched_cluster_16s:
                     current_16s_cluster_ref = cluster_to_ref_dict[each_16s_cluster]
                     for each_ref_1 in current_16s_cluster_ref:
-                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict[each_ref_1]))
+                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict.get(each_ref_1, 'NA')))
 
                 for each_mag_cluster in matched_cluster_mag:
                     current_mag_cluster_ref = cluster_to_ref_dict[each_mag_cluster]
                     for each_ref_2 in current_mag_cluster_ref:
-                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict[each_ref_2]))
+                        wrong_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_wrong, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict.get(each_ref_2, 'NA')))
                 wrong_linkages_txt_handle.write('\n')
         else:
             linkage_num_unknown += 1
@@ -359,7 +377,7 @@ for each_linkage in open(MarkerMAG_linkages):
             if linkages_from_rd1 is False:
                 MarkerMAG_linkages_assessed_handle.write('%s\tUnknown\n' % each_linkage.strip())
             else:
-                MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tS1\tUnknown\n' % (id_16s, id_mag, link_num))
+                MarkerMAG_linkages_assessed_handle.write('%s\t%s\t%s\tRd1\tUnknown\n' % (id_16s, id_mag, link_num))
 
             if id_mag not in linkage_assessment_dict:
                 linkage_assessment_dict[id_mag] = ['Unknown']
@@ -369,11 +387,11 @@ for each_linkage in open(MarkerMAG_linkages):
             for each_16s_cluster in matched_cluster_16s:
                 current_16s_cluster_ref = cluster_to_ref_dict[each_16s_cluster]
                 for each_ref_1 in current_16s_cluster_ref:
-                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict[each_ref_1]))
+                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, '16S', each_16s_cluster, each_ref_1, ref_to_strain_dict.get(each_ref_1, 'NA')))
             for each_mag_cluster in matched_cluster_mag:
                 current_mag_cluster_ref = cluster_to_ref_dict[each_mag_cluster]
                 for each_ref_2 in current_mag_cluster_ref:
-                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict[each_ref_2]))
+                    unknown_linkages_txt_handle.write('%s\t%s___%s\t%s\t%s\t%s\t%s\n' % (linkage_num_unknown, id_16s, id_mag, 'MAG', each_mag_cluster, each_ref_2, ref_to_strain_dict.get(each_ref_2, 'NA')))
             unknown_linkages_txt_handle.write('\n')
 wrong_linkages_txt_handle.close()
 unknown_linkages_txt_handle.close()
@@ -397,7 +415,7 @@ for each_link in open(MarkerMAG_linkages_assessed):
         gnm_id = each_link_split[1]
         linked_rd = each_link_split[3]
         assessment = each_link_split[4]
-        if linked_rd == 'S1':
+        if linked_rd == 'Rd1':
             total_linkage_num_rd1 += 1
 
             if assessment == 'Correct':
@@ -411,7 +429,7 @@ for each_link in open(MarkerMAG_linkages_assessed):
                 linked_mag_dict_rd1[gnm_id] = {assessment}
             else:
                 linked_mag_dict_rd1[gnm_id].add(assessment)
-        if linked_rd == 'S2':
+        if linked_rd == 'Rd2':
             total_linkage_num_rd2 += 1
 
             if assessment == 'Correct':
@@ -429,13 +447,18 @@ for each_link in open(MarkerMAG_linkages_assessed):
 
 total_linkage_num_both = total_linkage_num_rd1 + total_linkage_num_rd2
 total_linked_mag_num = len(linked_mag_dict_rd1) + len(linked_mag_dict_rd2)
+
 rd1_correct_num, rd1_unknown_gnm, rd1_wrong_gnm, rd1_ambiguous_gnm = gnm_level_asessment(linked_mag_dict_rd1)
 rd2_correct_num, rd2_unknown_gnm, rd2_wrong_gnm, rd2_ambiguous_gnm = gnm_level_asessment(linked_mag_dict_rd2)
+
 correct_num_both        = rd1_correct_num + rd2_correct_num
 unknown_gnm_both_num    = len(rd1_unknown_gnm) + len(rd2_unknown_gnm)
 wrong_gnm_both_num      = len(rd1_wrong_gnm) + len(rd2_wrong_gnm)
 ambiguous_gnm_both_num  = len(rd1_ambiguous_gnm) + len(rd2_ambiguous_gnm)
 
+recovery_str_rd1   = '%s/%s(%s)' % (rd1_correct_num,  total_query_mag_num, float("{0:.2f}".format(rd1_correct_num*100/total_query_mag_num)))
+recovery_str_rd2   = '%s/%s(%s)' % (rd2_correct_num,  total_query_mag_num, float("{0:.2f}".format(rd2_correct_num*100/total_query_mag_num)))
+recovery_str_both  = '%s/%s(%s)' % (correct_num_both, total_query_mag_num, float("{0:.2f}".format(correct_num_both*100/total_query_mag_num)))
 accuracy_str_rd1   = '%s/%s(%s)' % (rd1_correct_num,  (len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)), float("{0:.2f}".format(rd1_correct_num*100/(len(linked_mag_dict_rd1) - len(rd1_unknown_gnm)))))
 accuracy_str_rd2 = '0/0(0)'
 if (len(linked_mag_dict_rd2) - len(rd2_unknown_gnm)) > 0:
@@ -458,15 +481,58 @@ print('%s\tRd_1\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, to
 print('%s\tRd_2\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_rd2,  correct_link_rd2,  unknown_link_rd2,  wrong_link_rd2,  accuracy_str_rd2_link_level,  len(linked_mag_dict_rd2), rd2_correct_num,  len(rd2_unknown_gnm), len(rd2_wrong_gnm), len(rd2_ambiguous_gnm), accuracy_str_rd2))
 print('%s\tBoth\t|\t%s\t%s\t%s\t%s\t%s\t|\t%s\t%s\t%s\t%s\t%s\t%s' % (prefix, total_linkage_num_both, correct_link_both, unknown_link_both, wrong_link_both, accuracy_str_both_link_level, total_linked_mag_num,      correct_num_both, unknown_gnm_both_num, wrong_gnm_both_num, ambiguous_gnm_both_num, accuracy_str_both))
 
+
 ########################################################################################################################
 
-print(cluster_to_matam_16s_dict['C109_0'])
-print(cluster_to_bin_dict['C110_0'])
+'''
+
+########################################################################################################################
+
+CAMI_Oral_subsample_50_1551	Oral_57	2123	Rd1	Wrong
+
+CAMI_Oral_subsample_50_1551     C125_1,C125_3,C126_1,C126_2,C126_3
+Oral_57                         C126_5
+
+# blast between 16S from Oral_57 ref gnm and Matam assemblies
+OTU_97.23667.1_16S	CAMI_Oral_subsample_50_571	100.000	1542	0	0	1	1542	5	1546	0.0	2848
+
+# blast between CAMI_Oral_subsample_50_1551 and 16S from ref gnms
+
+BioSAK iTOL -ColorRange -lg leaf_group_raw.txt -lt Identity -out leaf_group.txt 
+
+########################################################################################################################
+
+'''
+cluster_id = 'C107_0'
+print('cluster to ref  : %s\t%s\t%s' % (cluster_id, len(cluster_to_ref_dict.get(cluster_id, 'NA')), cluster_to_ref_dict.get(cluster_id, 'NA')))
+print('cluster to MAG  : %s\t%s\t%s' % (cluster_id, len(cluster_to_bin_dict.get(cluster_id, 'NA')), cluster_to_bin_dict.get(cluster_id, 'NA')))
+print('cluster to Matam: %s\t%s\t%s' % (cluster_id, len(cluster_to_matam_16s_dict.get(cluster_id, 'NA')), cluster_to_matam_16s_dict.get(cluster_id, 'NA')))
+#print('cluster to MAG: %s\t%s' % ('C126_5', cluster_to_bin_dict.get('C126_5', 'NA')))
+
+print(bin_to_cluster_dict['Oral_70'])
+
+
+print(matam_16s_to_cluster_dict['CAMI_Oral_subsample_25_317'])
+
+print('cluster to MAG  : %s\t%s\t%s' % ('C126_1', len(cluster_to_bin_dict.get('C126_1', 'NA')), cluster_to_bin_dict.get('C126_1', 'NA')))
+print('cluster to MAG  : %s\t%s\t%s' % ('C126_2', len(cluster_to_bin_dict.get('C126_2', 'NA')), cluster_to_bin_dict.get('C126_2', 'NA')))
+print('cluster to MAG  : %s\t%s\t%s' % ('C126_3', len(cluster_to_bin_dict.get('C126_3', 'NA')), cluster_to_bin_dict.get('C126_3', 'NA')))
+print('cluster to MAG  : %s\t%s\t%s' % ('C126_4', len(cluster_to_bin_dict.get('C126_4', 'NA')), cluster_to_bin_dict.get('C126_4', 'NA')))
+
+'''
+CAMI_Oral_subsample_50_677	Oral_72	115	Rd1	Correct
+CAMI_Oral_subsample_25_488	Oral_72	115	Rd1	Correct
+CAMI_Oral_subsample_50_70	Oral_70	11	Rd1	Wrong
+CAMI_Oral_subsample_25_51	Oral_70	11	Rd1	Wrong
+CAMI_Oral_subsample_10_42	Oral_70	11	Rd1	Wrong
+CAMI_Oral_subsample_25_317	Oral_70	11	Rd1	Wrong
 
 
 
-# print(matam_16s_to_cluster_dict['3_GI_138_subsample_75_842'])
-# print(matam_16s_to_cluster_dict['3_GI_138_subsample_75_847'])
-# print(bin_to_cluster_dict['Refined_52'])
-# print(cluster_to_bin_dict['C47_1'])
-# print(cluster_to_bin_dict['C48_0'])
+
+
+
+
+
+
+'''

@@ -92,7 +92,7 @@ total_query_mag_num         = 97
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/GI_0602_128_60_60_linkages_by_genome.txt'             % wd
+MarkerMAG_linkages          = '%s/GI_0602_128_60_60_good_linkages_by_genome.txt'             % wd
 mlen = '45'
 #MarkerMAG_linkages          = '/Users/songweizhi/Desktop/test_filter/GI_0524_128_%s_%s_stats_combined_filtered.txt' % (mlen, mlen)
 
@@ -101,6 +101,11 @@ linkages_from_rd1           = False
 
 
 '''
+
+GI_0602_128_60_60_good_linkages_by_genome.txt	Rd_1	|	80	74	6	0	74/74(100.0)	|	23	23	0	0	0	23/97(23.71)	23/23(100.0)
+GI_0602_128_60_60_good_linkages_by_genome.txt	Rd_2	|	14	13	1	0	13/13(100.0)	|	6	5	1	0	0	5/97(5.15)	5/5(100.0)
+GI_0602_128_60_60_good_linkages_by_genome.txt	Both	|	94	87	7	0	87/87(100.0)	|	29	28	1	0	0	28/97(28.87)	28/28(100.0)
+
 
 GI_0602_128_60_60_linkages_by_genome.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Recovery	    Accuracy
 GI_0602_128_60_60_linkages_by_genome.txt	Rd_1	|	101	95	6	0	95/95(100.0)	|	30	30	0	0	0	30/97(30.93)	30/30(100.0)

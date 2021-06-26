@@ -69,6 +69,8 @@ How to install:
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
++ If you clone the repository directly off GitHub you might end up with a version that is still under development.
+
 
 Notes 
 ---

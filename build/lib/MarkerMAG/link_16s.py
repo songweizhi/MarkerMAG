@@ -2655,10 +2655,6 @@ def get_regions_to_ignore_from_barrnap_output(combined_barrnap_gff, ctg_len_dict
             left_gap = start_pos - 1
             right_gap = ctg_len - end_pos - 1
 
-            # print(each_line_split)
-            # print('%s\t%s\t%s\t%s\t%s' % (ctg_id, ctg_len, len_16s, left_gap, right_gap))
-            # print()
-
             if left_gap <= 50:
                 if ctg_id not in ctg_ignore_region_dict:
                     ctg_ignore_region_dict[ctg_id] = {'left_end'}
@@ -2702,12 +2698,10 @@ def link_16s(args):
     min_M_len_ctg                       = args['min_M_len_ctg']
     reads_vs_16s_sam                    = args['sorted_sam16s']
     no_polish                           = args['no_polish']
-
     # depth related
     min_16s_gnm_multiple                = args['depth_ratio']
     depth_file_16s                      = args['depth_16s']
     depth_file_mag                      = args['depth_mag']
-
     # by assembly
     round_2_mira                        = args['mira']
     mira_tmp_dir                        = args['mira_tmp']
@@ -4842,10 +4836,7 @@ def link_16s(args):
 
     ################################################### remove tmp files ###################################################
 
-    report_and_log(('Removing temporary files'), pwd_log_file, keep_quiet)
-
-    if keep_temp is False:
-        os.remove(input_reads_to_16s_sam)
+    # report_and_log(('Removing temporary files'), pwd_log_file, keep_quiet)
 
     # Final report
     report_and_log(('Done!'), pwd_log_file, keep_quiet)
@@ -4947,8 +4938,8 @@ if __name__ == '__main__':
 9. remove short mini-assemblies?
 
 split -l 50000 rd1_extracted_to_gnm_reformatted.sam sam_split_ --additional-suffix=.sam
-
 split -n 36 GI_0522_input_reads_to_16S_reformatted_sorted.sam GI_0522_input_reads_to_16S_reformatted_sorted_ --additional-suffix=.sam
 
+--xeq              Use '='/'X', instead of 'M,' to specify matches/mismatches in SAM record.
 
 '''
