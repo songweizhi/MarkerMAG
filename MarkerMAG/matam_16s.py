@@ -32,18 +32,6 @@ def report_and_log(message_for_report, log_file, keep_quiet):
         print('%s %s' % ((datetime.now().strftime(time_format)), message_for_report))
 
 
-def force_create_folder(folder_to_create):
-    if os.path.isdir(folder_to_create):
-        shutil.rmtree(folder_to_create, ignore_errors=True)
-        if os.path.isdir(folder_to_create):
-            shutil.rmtree(folder_to_create, ignore_errors=True)
-            if os.path.isdir(folder_to_create):
-                shutil.rmtree(folder_to_create, ignore_errors=True)
-                if os.path.isdir(folder_to_create):
-                    shutil.rmtree(folder_to_create, ignore_errors=True)
-    os.mkdir(folder_to_create)
-
-
 def sep_path_basename_ext(file_in):
 
     # separate path and file name
@@ -288,30 +276,34 @@ def matam_16s(args):
         print('please either provide paired-end reads (-r1 and -r2) or 16S reads (-r16s) extracted from the paired-end reads as input, program exited!')
         exit()
 
-    input_reads_fmt = ''
+    input_reads_ext = ''
     if extract_16s_reads is True:
-        input_reads_fmt = os.path.splitext(input_16S_reads)
+        input_reads_ext = os.path.splitext(reads_file_r1)[1]
     else:
-        input_reads_fmt = os.path.splitext(reads_file_r1)
+        input_reads_ext = os.path.splitext(input_16S_reads)[1]
 
 
     ####################################################################################################################
 
     matam16s_wd                             = '%s_Matam16S_wd'                          % output_prefix
     log_file                                = '%s/%s_matam_16s.log'                     % (matam16s_wd, output_prefix)
-    combined_r1_r2                          = '%s/%s_combined_R1_R2%s'                  % (matam16s_wd, output_prefix, input_reads_fmt)
-    extracted_16S_reads                     = '%s/%s_16S_reads%s'                       % (matam16s_wd, output_prefix, input_reads_fmt)
+    combined_r1_r2                          = '%s/%s_combined_R1_R2%s'                  % (matam16s_wd, output_prefix, input_reads_ext)
+    extracted_16S_reads                     = '%s/%s_16S_reads%s'                       % (matam16s_wd, output_prefix, input_reads_ext)
     combined_all_depth_matam_assemblies     = '%s/%s_assembled_16S_unclustered.fasta'   % (matam16s_wd, output_prefix)
     uclust_output_uc                        = '%s/%s_assembled_16S_uclust_%s.uc'        % (matam16s_wd, output_prefix, uclust_iden_cutoff)
     uclust_output_txt                       = '%s/%s_assembled_16S_uclust_%s.txt'       % (matam16s_wd, output_prefix, uclust_iden_cutoff)
     uclust_output_fasta                     = '%s/%s_assembled_16S_uclust_%s.fasta'     % (matam16s_wd, output_prefix, uclust_iden_cutoff)
 
     # create folder
-    if (os.path.isdir(matam16s_wd) is True) and (force_overwrite is False):
-        print('Output folder detected, program exited: %s' % matam16s_wd)
-        exit()
-    else:
+    if os.path.isdir(matam16s_wd) is False:
         os.mkdir(matam16s_wd)
+    else:
+        if force_overwrite is False:
+            print('Output folder detected, program exited: %s' % matam16s_wd)
+            exit()
+        else:
+            os.system('rm -r %s' % matam16s_wd)
+            os.mkdir(matam16s_wd)
 
     if extract_16s_reads is True:
 
@@ -328,7 +320,8 @@ def matam_16s(args):
         os.system(matam_filter_cmd)
 
         # get file name of extracted 16S reads
-        matam_16S_reads_re = '%s/%s_get_16S_reads_wd/workdir/*.fasta' % (matam16s_wd, output_prefix)
+
+        matam_16S_reads_re = '%s/%s_get_16S_reads_wd/workdir/*%s' % (matam16s_wd, output_prefix, input_reads_ext)
         matam_16S_reads_list = glob.glob(matam_16S_reads_re)
         if len(matam_16S_reads_list) == 0:
             print('16S reads not found, please check if 16S reads extraction step finished successfully.')
@@ -346,7 +339,7 @@ def matam_16s(args):
 
         report_and_log(('Subsample RNA reads at %s percent' % subsample_pct), log_file, keep_quiet)
 
-        subsample_reads_file = '%s/%s_16S_reads_subset_%s%s'    % (matam16s_wd, output_prefix, subsample_pct, input_reads_fmt)
+        subsample_reads_file = '%s/%s_16S_reads_subset_%s%s'    % (matam16s_wd, output_prefix, subsample_pct, input_reads_ext)
         matam_output_folder  = '%s/%s_16S_reads_subset_%s_Matam_wd' % (matam16s_wd, output_prefix, subsample_pct)
 
         # subsample
@@ -402,10 +395,10 @@ if __name__ == '__main__':
     matam_16s_parser.add_argument('-r2',             required=False, metavar='', default=None,                              help='reverse reads')
     matam_16s_parser.add_argument('-r16s',           required=False, metavar='', default=None,                              help='extracted 16S reads, specify if you already have 16S reads identified from metagenomic dataset')
     matam_16s_parser.add_argument('-pct',            required=True,  metavar='', type=str, default='1,5,10,25,50,75,100',   help='subsample percentage, must be integer, between 1-100, deafault: 1,5,10,25,50,75,100')
-    matam_16s_parser.add_argument('-d',              required=False, metavar='', type=str,                                  help='MATAM ref db, same as "-d" in Matam')
+    matam_16s_parser.add_argument('-d',              required=False, metavar='', type=str,                                  help='Matam ref db, controls "-d" in Matam')
     matam_16s_parser.add_argument('-i',              required=False, metavar='', type=float, default=0.999,                 help='cluster identity cutoff, do not provide value lower than 0.99, default: 0.999')
     matam_16s_parser.add_argument('-t',              required=False, metavar='', type=int, default=1,                       help='number of threads, default: 1')
-    matam_16s_parser.add_argument('-mem',            required=False, metavar='', type=int, default=10240,                   help='Maximum memory to be allocated to Matam (in MB), default: 10240')
+    matam_16s_parser.add_argument('-mem',            required=False, metavar='', type=int, default=10240,                   help='maximum memory to be allocated to Matam (in MB), controls "--max_memory" in Matam, default: 10240')
     matam_16s_parser.add_argument('-force',          required=False, action="store_true",                                   help='force overwrite existing results')
     matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                                   help='not report progress')
     matam_16s_parser.add_argument('-matam',          required=False, metavar='', type=str, default='matam_assembly.py',     help='path to matam_assembly.py, default: matam_assembly.py')
