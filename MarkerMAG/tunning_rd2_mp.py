@@ -1,414 +1,319 @@
 import os
-import glob
-import shutil
-import argparse
-import numpy as np
 import pandas as pd
-import seaborn as sns
-from Bio import SeqIO
-from Bio.Seq import Seq
-import multiprocessing as mp
-from datetime import datetime
-import plotly.graph_objects as go
-from Bio.SeqRecord import SeqRecord
-from distutils.spawn import find_executable
 
 
-####################################################################################################################
-############################################### second round linking ###############################################
-####################################################################################################################
+def blast_results_to_pairwise_16s_iden_dict(blastn_output, align_len_cutoff, cov_cutoff):
+    pairwise_iden_dict = {}
+    for match in open(blastn_output):
+        match_split = match.strip().split('\t')
+        query = match_split[0]
+        subject = match_split[1]
+        iden = float(match_split[2])
+        align_len = int(match_split[3])
+        query_len = int(match_split[12])
+        subject_len = int(match_split[13])
+        coverage_q = float(align_len) * 100 / float(query_len)
+        coverage_s = float(align_len) * 100 / float(subject_len)
 
-step_2_wd = '/Users/songweizhi/Desktop/tunning_rd2'
-min_M_len_ctg = 60
-end_seq_len = 500
-marker_to_ctg_gnm_Key_connector = '___M___'
-gnm_to_ctg_connector = '___C___'
-mini_assembly_to_16s_ctg_connector = '___Mini___'
-read_to_marker_connector = '___r___'
-ctg_level_min_link = 3
-end_ctg_len_for_mafft = 1000
-keep_short_M = True
-gap_N_num = 50
-report_interval = 25000
-clp_pct_ctg_side_max_num = 65
-clp_pct_ratio_cutoff = 3.5
-# mismatch cutoff for filtering matches between unmapped mates and clipping reads against contig end
-mismatch_ctg_ends = 1
-subsample_rate_for_depth_estimation = 0.1  # between 0 and 1
-min_M_len_mini = min_M_len_ctg
-min_M_len_16s = 45
-min_M_len_ctg = 45
-min_M_pct = 35
-mismatch_cutoff = 2
-min_aln_16s = 500
-min_cov_16s = 30
-mean_depth_dict_gnm = {}
-mean_depth_dict_16s = {}
-min_16s_gnm_multiple = 0
-min_iden_16s = 98
-min_link_num = 8
-within_gnm_linkage_num_diff = 80
-time_format = '[%Y-%m-%d %H:%M:%S]'
-num_threads = 4
-pwd_makeblastdb_exe = 'makeblastdb'
-pwd_blastn_exe = 'blastn'
-pwd_bowtie2_build_exe = 'bowtie2-build'
-pwd_bowtie2_exe = 'bowtie2'
-pwd_samtools_exe = 'samtools'
-pwd_bbmap_exe = 'bbmap.sh'
-pwd_spades_exe = 'spades.py'
-seqtk_exe = 'seqtk'
-
-combined_1st_round_unlinked_mags                = '%s/round_1_unlinked_gnm.fa'                      % step_2_wd
-combined_1st_round_unlinked_mag_end_seq         = '%s/round_1_unlinked_gnm_end_%sbp.fa'             % (step_2_wd, end_seq_len)
-rd1_unlinked_mag_end_seq_no_ext                 = '%s/round_1_unlinked_gnm_end_%sbp'                % (step_2_wd, end_seq_len)
-rd1_unlinked_mags_sam_bowtie_log                = '%s/round_1_unlinked_gnm_bowtie.log'              % step_2_wd
-rd1_unlinked_mags_sam_bowtie                    = '%s/round_1_unlinked_gnm_bowtie.sam'              % step_2_wd
-rd1_unlinked_mags_sam_bowtie_reformat           = '%s/round_1_unlinked_gnm_bowtie_reformatted.sam'  % step_2_wd
-rd1_unlinked_mags_sam_bowtie_reformat_log       = '%s/round_1_unlinked_gnm_bowtie_reformat.log'     % step_2_wd
-rd1_unlinked_mags_sam_bowtie_reformat_sorted    = '%s/round_1_unlinked_gnm_bowtie_reformatted_sorted.sam'  % step_2_wd
-rd1_unlinked_mags_sam_line_num                  = '%s/round_1_unlinked_gnm_line_num.txt'            % step_2_wd
-rd1_unlinked_mags_sam_split_folder              = '%s/round_1_unlinked_gnm_split'                   % step_2_wd
-rd1_unlinked_mags_sam_MappingRecord_folder      = '%s/round_1_unlinked_gnm_MappingRecord'           % step_2_wd
-stats_GapFilling_file                           = '%s/stats_GapFilling_gnm.txt'                     % step_2_wd
-stats_GapFilling_file_filtered                  = '%s/stats_GapFilling_gnm_filtered.txt'            % step_2_wd
-free_living_16s_ref_file                        = '%s/round2_free_living_16s_refs.txt'              % step_2_wd
-free_living_ctg_ref_file                        = '%s/round2_free_living_ctg_refs.txt'              % step_2_wd
-free_living_all                                 = '%s/round2_free_living_all.fa'                    % step_2_wd
-free_living_all_fq_r1                           = '%s/round2_free_living_all_R1.fastq'              % step_2_wd
-free_living_all_fq_r2                           = '%s/round2_free_living_all_R2.fastq'              % step_2_wd
-free_living_all_fq                              = '%s/round2_free_living_all.fastq'                 % step_2_wd
-spades_wd                                       = '%s/mini_assembly_SPAdes_wd'                      % step_2_wd
-spades_log                                      = '%s/SPAdes_stdout.txt'                            % step_2_wd
-mira_manifest                                   = '%s/mira_manifest.txt'                            % step_2_wd
-mira_stdout                                     = '%s/mira_stdout.txt'                              % step_2_wd
-mini_assembly_to_16s_reads                      = '%s/mini_assembly_to_16s_reads.txt'               % step_2_wd
-mini_assembly_to_ctg_reads                      = '%s/mini_assembly_to_ctg_reads.txt'               % step_2_wd
-stats_GapFilling_ctg                            = '%s/stats_GapFilling_ctg.txt'                     % step_2_wd
-sam_file_mini_assembly                          = '%s/scaffolds_bowtie.sam'                         % step_2_wd
-sam_file_mini_assembly_log                      = '%s/scaffolds_bowtie.log'                         % step_2_wd
-sam_file_mini_assembly_reformatted              = '%s/scaffolds_bowtie_reformatted.sam'             % step_2_wd
-sam_file_mini_assembly_reformatted_log          = '%s/scaffolds_bowtie_reformatted.log'             % step_2_wd
-rd2_to_extract_flking_16s_r1_id                 = '%s/rd2_to_extract_flking_16s_r1_id.txt'          % step_2_wd
-rd2_to_extract_flking_16s_r2_id                 = '%s/rd2_to_extract_flking_16s_r2_id.txt'          % step_2_wd
-rd2_extracted_flking_16s_r1_seq_tmp             = '%s/rd2_extracted_flking_16s_r1_tmp.fa'           % step_2_wd
-rd2_extracted_flking_16s_r2_seq_tmp             = '%s/rd2_extracted_flking_16s_r2_tmp.fa'           % step_2_wd
-rd2_to_extract_flking_ctg_r1_id                 = '%s/rd2_to_extract_flking_ctg_r1_id.txt'          % step_2_wd
-rd2_to_extract_flking_ctg_r2_id                 = '%s/rd2_to_extract_flking_ctg_r2_id.txt'          % step_2_wd
-rd2_extracted_flking_ctg_r1_seq_tmp             = '%s/rd2_extracted_flking_ctg_r1_tmp.fa'           % step_2_wd
-rd2_extracted_flking_ctg_r2_seq_tmp             = '%s/rd2_extracted_flking_ctg_r2_tmp.fa'           % step_2_wd
-rd2_extracted_r1_combined                       = '%s/rd2_extracted_r1_combined.fa'                 % step_2_wd
-rd2_extracted_r2_combined                       = '%s/rd2_extracted_r2_combined.fa'                 % step_2_wd
-
-
-##################################################### read in sam file ####################################################
-
-round_2_ctg_end_seq_len_dict = {}
-for each_ctg_end_record in SeqIO.parse(combined_1st_round_unlinked_mag_end_seq, 'fasta'):
-    round_2_ctg_end_seq_len_dict[each_ctg_end_record.id] = len(each_ctg_end_record.seq)
-
-
-# get splitted sam file list
-splitted_gnm_sam_file_list = [os.path.basename(file_name) for file_name in glob.glob('%s/splitted_sam_*' % rd1_unlinked_mags_sam_split_folder)]
-
-# prepare lol for mp worker
-list_for_parse_sam_gnm_worker = []
-splitted_sam_mp_file_set = set()
-for splitted_gnm_sam_file in splitted_gnm_sam_file_list:
-    pwd_splitted_gnm_sam_file                       = '%s/%s'                           % (rd1_unlinked_mags_sam_split_folder, splitted_gnm_sam_file)
-    pwd_splitted_gnm_sam_free_living_ctg_ref_file   = '%s/%s_free_living_ctg_refs.txt'  % (rd1_unlinked_mags_sam_MappingRecord_folder, splitted_gnm_sam_file)
-    splitted_sam_mp_file_set.add(pwd_splitted_gnm_sam_free_living_ctg_ref_file)
-    list_for_parse_sam_gnm_worker.append([pwd_splitted_gnm_sam_file,
-                                         pwd_splitted_gnm_sam_free_living_ctg_ref_file,
-                                         min_M_len_ctg,
-                                         mismatch_cutoff,
-                                         round_2_ctg_end_seq_len_dict])
-
-pool_parse_sam_gnm = mp.Pool(processes=num_threads)
-pool_parse_sam_gnm.map(parse_sam_gnm_worker, list_for_parse_sam_gnm_worker)
-pool_parse_sam_gnm.close()
-pool_parse_sam_gnm.join()
-
-os.system('rm -r %s' % rd1_unlinked_mags_sam_split_folder)
-
-# combine free_living_ctg_ref_files
-os.system('cat %s > %s' % (' '.join(splitted_sam_mp_file_set), free_living_ctg_ref_file))
-
-##################################################### extract reads flanking contig ends ####################################################
-
-to_extract_read_base_rd2_ctg = set()
-for each_read_base in open(free_living_ctg_ref_file):
-    to_extract_read_base_rd2_ctg.add(each_read_base.strip().split('\t')[0])
-
-# write out id of linking reads for extraction
-with open(rd2_to_extract_flking_ctg_r1_id, 'w') as rd2_to_extract_flking_ctg_r1_id_handle:
-    rd2_to_extract_flking_ctg_r1_id_handle.write('%s\n' % '\n'.join(sorted([('%s.1' % i) for i in to_extract_read_base_rd2_ctg])))
-with open(rd2_to_extract_flking_ctg_r2_id, 'w') as rd2_to_extract_flking_ctg_r2_id_handle:
-    rd2_to_extract_flking_ctg_r2_id_handle.write('%s\n' % '\n'.join(sorted([('%s.2' % i) for i in to_extract_read_base_rd2_ctg])))
-
-# extract reads with seqtk
-seqtk_extract_cmd_rd2_flk_ctg_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd2_to_extract_flking_ctg_r1_id, rd2_extracted_flking_ctg_r1_seq_tmp)
-seqtk_extract_cmd_rd2_flk_ctg_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, rd2_to_extract_flking_ctg_r2_id, rd2_extracted_flking_ctg_r2_seq_tmp)
-os.system(seqtk_extract_cmd_rd2_flk_ctg_r1)
-os.system(seqtk_extract_cmd_rd2_flk_ctg_r2)
-
-
-##################################################### combine reads for assembly ####################################################
-
-# read extracted read sequences into dict
-extract_rd2_read_seq_dict = {}
-for extracted_r1 in SeqIO.parse(rd2_extracted_flking_16s_r1_seq_tmp, 'fasta'):
-    extract_rd2_read_seq_dict[extracted_r1.id] = str(extracted_r1.seq)
-for extracted_r2 in SeqIO.parse(rd2_extracted_flking_16s_r2_seq_tmp, 'fasta'):
-    extract_rd2_read_seq_dict[extracted_r2.id] = str(extracted_r2.seq)
-for extracted_r1 in SeqIO.parse(rd2_extracted_flking_ctg_r1_seq_tmp, 'fasta'):
-    extract_rd2_read_seq_dict[extracted_r1.id] = str(extracted_r1.seq)
-for extracted_r2 in SeqIO.parse(rd2_extracted_flking_ctg_r2_seq_tmp, 'fasta'):
-    extract_rd2_read_seq_dict[extracted_r2.id] = str(extracted_r2.seq)
-
-# write out paired in the same order
-rd2_extracted_r1_combined_handle = open(rd2_extracted_r1_combined, 'w')
-rd2_extracted_r2_combined_handle = open(rd2_extracted_r2_combined, 'w')
-for each_read_base in set.union(rd2_read_to_extract_flanking_16s, to_extract_read_base_rd2_ctg):
-    current_r1 = '%s.1' % each_read_base
-    current_r2 = '%s.2' % each_read_base
-    current_r1_seq = extract_rd2_read_seq_dict.get(current_r1, '')
-    current_r2_seq = extract_rd2_read_seq_dict.get(current_r2, '')
-    rd2_extracted_r1_combined_handle.write('>%s\n' % current_r1)
-    rd2_extracted_r1_combined_handle.write('%s\n' % current_r1_seq)
-    rd2_extracted_r2_combined_handle.write('>%s\n' % current_r2)
-    rd2_extracted_r2_combined_handle.write('%s\n' % current_r2_seq)
-rd2_extracted_r1_combined_handle.close()
-rd2_extracted_r2_combined_handle.close()
-
-
-####################################################################################################################
-######################################### second round linking by assembly #########################################
-####################################################################################################################
-
-# assemble
-spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
-spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
-os.system(spades_cmd)
-mini_assemblies = '%s/scaffolds.fasta' % spades_wd
-
-##################################################### mapping reads to mini_assemblies ####################################################
-
-# index miniassembly
-mini_assemblies_no_ext = '.'.join(mini_assemblies.split('.')[:-1])
-bowtie_build_mini_assemblies_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, mini_assemblies, mini_assemblies_no_ext)
-os.system(bowtie_build_mini_assemblies_cmd)
-
-# mapping with bowtie
-bowtie_cmd_miniassembly = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s'    % (mini_assemblies_no_ext, rd2_extracted_r1_combined, rd2_extracted_r2_combined, sam_file_mini_assembly, num_threads, bowtie_parameter_mini_assembly, sam_file_mini_assembly_log)
-os.system(bowtie_cmd_miniassembly)
-
-# reformat cigar string
-mini_assembly_reformat_cmd = 'reformat.sh in=%s out=%s sam=1.4 2> %s' % (sam_file_mini_assembly, sam_file_mini_assembly_reformatted, sam_file_mini_assembly_reformatted_log)
-os.system(mini_assembly_reformat_cmd)
-
-
-##################################################### read in sam file ####################################################
-
-mini_assembly_len_dict = {}
-mini_assembly_mp_dict = {}
-with open(sam_file_mini_assembly_reformatted) as sam_file_mini_assembly_reformatted_opened:
-    for each_read in sam_file_mini_assembly_reformatted_opened:
-        each_read_split = each_read.strip().split('\t')
-        if each_read.startswith('@'):
-            mini_assembly_id = ''
-            mini_assembly_len = 0
-            for each_element in each_read_split:
-                if each_element.startswith('SN:'):
-                    mini_assembly_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    mini_assembly_len = int(each_element[3:])
-            mini_assembly_len_dict[mini_assembly_id] = mini_assembly_len
-        else:
-            cigar = each_read_split[5]
-            if cigar != '*':
-                read_id = each_read_split[0]
-                read_id_base = '.'.join(read_id.split('.')[:-1])
-                read_strand = read_id.split('.')[-1]
-                ref_id = each_read_split[2]
-                ref_pos = int(each_read_split[3])
-
-                if read_id_base not in mini_assembly_mp_dict:
-                    mini_assembly_mp_dict[read_id_base] = MappingRecord()
-
-                if read_strand == '1':
-                    if ref_id not in mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict:
-                        mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        mini_assembly_mp_dict[read_id_base].r1_mini_ref_dict[ref_id][ref_pos] = cigar
-
-                if read_strand == '2':
-                    if ref_id not in mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict:
-                        mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id] = {ref_pos: cigar}
-                    else:
-                        mini_assembly_mp_dict[read_id_base].r2_mini_ref_dict[ref_id][ref_pos] = cigar
-
-
-#################################################### parse sam file ####################################################
-
-# get mini assembly to 16s reads dict
-mini_assembly_to_16s_reads_dict = {}
-mini_assembly_to_ctg_reads_dict = {}
-for each_mp in mini_assembly_mp_dict:
-
-    current_mp_record = mini_assembly_mp_dict[each_mp]
-    mini_refs_to_ignore = set()
-
-    ########## get lowest mismatch for r1/r2 16s refs ##########
-
-    # get r1_ref_cigar_set
-    r1_ref_cigar_set = set()
-    for each_pos_dict in current_mp_record.r1_mini_ref_dict.values():
-        each_pos_dict_values = {each_pos_dict[i] for i in each_pos_dict}
-        r1_ref_cigar_set.update(each_pos_dict_values)
-
-    # get r2_ref_cigar_set
-    r2_ref_cigar_set = set()
-    for each_pos_dict in current_mp_record.r2_mini_ref_dict.values():
-        each_pos_dict_values = {each_pos_dict[i] for i in each_pos_dict}
-        r2_ref_cigar_set.update(each_pos_dict_values)
-
-    r1_ref_min_mismatch = get_min_mismatch_from_cigar_list(r1_ref_cigar_set, min_M_len_mini)
-    r2_ref_min_mismatch = get_min_mismatch_from_cigar_list(r2_ref_cigar_set, min_M_len_mini)
-    mini_assembly_mp_dict[each_mp].r1_mini_refs_lowest_mismatch = r1_ref_min_mismatch
-    mini_assembly_mp_dict[each_mp].r2_mini_refs_lowest_mismatch = r2_ref_min_mismatch
-
-    ########## filter r1 mini refs ##########
-
-    r1_mini_refs_passed_qc = {}
-    for r1_mini_ref in current_mp_record.r1_mini_ref_dict:
-        r1_matched_pos_dict = current_mp_record.r1_mini_ref_dict[r1_mini_ref]
-
-        # one read need to mapped to one 16S only for one time
-        if len(r1_matched_pos_dict) > 1:
-            mini_refs_to_ignore.add(r1_mini_ref)
-        else:
-            r1_mini_ref_pos = list(r1_matched_pos_dict.keys())[0]
-            r1_mini_ref_cigar = r1_matched_pos_dict[r1_mini_ref_pos]
-            r1_mini_ref_cigar_splitted = cigar_splitter(r1_mini_ref_cigar)
-
-            # check both end clip
-            both_end_clp = check_both_ends_clipping(r1_mini_ref_cigar_splitted)
-            if both_end_clp is True:
-                mini_refs_to_ignore.add(r1_mini_ref)
+        if (align_len >= align_len_cutoff) and (query != subject) and (coverage_q >= cov_cutoff) and (
+                coverage_s >= cov_cutoff):
+            query_to_subject_key = '__|__'.join(sorted([query, subject]))
+            if query_to_subject_key not in pairwise_iden_dict:
+                pairwise_iden_dict[query_to_subject_key] = iden
             else:
-                # check mismatch
-                r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(
-                    r1_mini_ref_cigar_splitted)
-                if r1_ref_min_mismatch == 'NA':
-                    mini_refs_to_ignore.add(r1_mini_ref)
-                elif (r1_mismatch_pct > r1_ref_min_mismatch) or (r1_mismatch_pct > mismatch_cutoff):
-                    mini_refs_to_ignore.add(r1_mini_ref)
+                if iden > pairwise_iden_dict[query_to_subject_key]:
+                    pairwise_iden_dict[query_to_subject_key] = iden
+
+    return pairwise_iden_dict
+
+
+def sep_path_basename_ext(file_in):
+    # separate path and file name
+    file_path, file_name = os.path.split(file_in)
+    if file_path == '':
+        file_path = ''
+
+    # separate file basename and extension
+    file_basename, file_extension = os.path.splitext(file_name)
+
+    return file_path, file_basename, file_extension
+
+
+def sort_csv_by_col(file_in, file_out, col_header):
+    df_in = pd.read_csv(file_in)
+    df_in_sorted = df_in.sort_values(by=[col_header], ascending=False)
+    df_in_sorted.to_csv(file_out, index=False)
+
+
+def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_dict, genomic_seq_depth_dict, marker_gene_depth_dict, min_16s_gnm_multiple, within_genome_16s_divergence_cutoff, min_linkages, min_linkages_for_uniq_linked_16s, within_gnm_linkage_num_diff, file_out):
+
+    # get MarkerGene_to_GenomicSeq_dict
+    MarkerGene_to_GenomicSeq_dict = {}
+    for each_linkage in open(file_in):
+        if not each_linkage.startswith('MarkerGene,GenomicSeq,Number'):
+            each_linkage_split = each_linkage.strip().split(',')
+            MarkerGene_id = each_linkage_split[0][12:]
+            GenomicSeq_id = each_linkage_split[1][12:]
+            linkage_num = int(each_linkage_split[2])
+            if linkage_num > 1:
+                if MarkerGene_id not in MarkerGene_to_GenomicSeq_dict:
+                    MarkerGene_to_GenomicSeq_dict[MarkerGene_id] = {GenomicSeq_id}
                 else:
-                    # check aligned length
-                    if r1_aligned_len < min_M_len_mini:
-                        mini_refs_to_ignore.add(r1_mini_ref)
-                    else:
-                        # check if clp in the middle
-                        clip_in_middle = False
-                        if ('S' in r1_mini_ref_cigar) or ('s' in r1_mini_ref_cigar):
-                            clip_in_middle = True
-                            if (r1_mini_ref_cigar_splitted[0][-1] in ['S', 's']) and (r1_mini_ref_pos == 1):
-                                clip_in_middle = False
-                            if (r1_mini_ref_cigar_splitted[-1][-1] in ['S', 's']):
-                                if (r1_mini_ref_pos + r1_aligned_len - 1) == mini_assembly_len_dict[r1_mini_ref]:
-                                    clip_in_middle = False
+                    MarkerGene_to_GenomicSeq_dict[MarkerGene_id].add(GenomicSeq_id)
 
-                        # exclude the ref if clp in the middle is True
-                        if clip_in_middle is True:
-                            mini_refs_to_ignore.add(r1_mini_ref)
-                        else:
-                            r1_mini_refs_passed_qc[r1_mini_ref] = [r1_mini_ref_cigar]
+    file_in_path, file_in_basename, file_in_extension = sep_path_basename_ext(file_in)
+    file_in_sorted = '%s/%s_sorted%s' % (file_in_path, file_in_basename, file_in_extension)
 
-    ########## filter r2 mini refs ##########
+    # sort file in
+    sort_csv_by_col(file_in, file_in_sorted, sort_by_col_header)
 
-    r2_mini_refs_passed_qc = {}
-    for r2_mini_ref in current_mp_record.r2_mini_ref_dict:
-        r2_matched_pos_dict = current_mp_record.r2_mini_ref_dict[r2_mini_ref]
-
-        # one read need to mapped to one 16S only once
-        if len(r2_matched_pos_dict) > 1:
-            mini_refs_to_ignore.add(r2_mini_ref)
+    # fileter linkage
+    gnm_max_link_num_dict = {}
+    file_out_handle = open(file_out, 'w')
+    MarkerGene_with_assignment = set()
+    GenomicSeq_best_marker_dict = {}
+    for each_match in open(file_in_sorted):
+        if each_match.startswith('MarkerGene,GenomicSeq,Number'):
+            file_out_handle.write(each_match)
         else:
-            r2_mini_ref_pos = list(r2_matched_pos_dict.keys())[0]
-            r2_mini_ref_cigar = r2_matched_pos_dict[r2_mini_ref_pos]
-            r2_mini_ref_cigar_splitted = cigar_splitter(r2_mini_ref_cigar)
+            match_split = each_match.strip().split(',')
+            MarkerGene = match_split[0][12:]
+            GenomicSeq = match_split[1][12:]
+            linkage_num = int(match_split[2])
 
-            # check both end clip
-            both_end_clp = check_both_ends_clipping(r2_mini_ref_cigar_splitted)
-            if both_end_clp is True:
-                mini_refs_to_ignore.add(r2_mini_ref)
-            else:
-                # check mismatch
-                r2_aligned_len, r2_aligned_pct, r2_clipping_len, r2_clipping_pct, r2_mismatch_pct = get_cigar_stats(
-                    r2_mini_ref_cigar_splitted)
-                if r2_ref_min_mismatch == 'NA':
-                    mini_refs_to_ignore.add(r2_mini_ref)
-                elif (r2_mismatch_pct > r2_ref_min_mismatch) or (r2_mismatch_pct > mismatch_cutoff):
-                    mini_refs_to_ignore.add(r2_mini_ref)
-                else:
-                    # check aligned length
-                    if r2_aligned_len < min_M_len_mini:
-                        mini_refs_to_ignore.add(r2_mini_ref)
+            current_min_linkage = min_linkages_for_uniq_linked_16s
+            if MarkerGene in MarkerGene_to_GenomicSeq_dict:
+                if len(MarkerGene_to_GenomicSeq_dict[MarkerGene]) > 1:
+                    current_min_linkage = min_linkages
+
+            if linkage_num >= current_min_linkage:
+                if MarkerGene not in MarkerGene_with_assignment:
+
+                    # consider depth
+                    if min_16s_gnm_multiple > 0:
+
+                        # get marker and genome depth
+                        MarkerGene_depth = marker_gene_depth_dict.get(MarkerGene, 'na')
+                        GenomicSeq_depth = genomic_seq_depth_dict.get(GenomicSeq, 'na')
+                        marker_genome_depth_ratio = 'na'
+                        if (MarkerGene_depth != 'na') and (GenomicSeq_depth != 'na'):
+                            if GenomicSeq_depth > 0:
+                                marker_genome_depth_ratio = MarkerGene_depth / GenomicSeq_depth
+
+                        if marker_genome_depth_ratio >= min_16s_gnm_multiple:
+                            if GenomicSeq not in GenomicSeq_best_marker_dict:
+                                GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
+                                gnm_max_link_num_dict[GenomicSeq] = linkage_num
+                                file_out_handle.write(each_match)
+                                MarkerGene_with_assignment.add(MarkerGene)
+                            else:
+                                # get identity with best marker
+                                current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                                key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+                                iden_with_best_marker = pairwise_16s_iden_dict.get(key_str, 0)
+                                if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                                    gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
+                                    if (linkage_num * 100 / gnm_max_link_num) >= within_gnm_linkage_num_diff:
+                                        file_out_handle.write(each_match)
+                                        MarkerGene_with_assignment.add(MarkerGene)
+                                    else:
+                                        MarkerGene_with_assignment.add(MarkerGene)
+                    # ignore depth
                     else:
-                        # check if clp in the middle
-                        clip_in_middle = False
-                        if ('S' in r2_mini_ref_cigar) or ('s' in r2_mini_ref_cigar):
-                            clip_in_middle = True
-                            if (r2_mini_ref_cigar_splitted[0][-1] in ['S', 's']) and (r2_mini_ref_pos == 1):
-                                clip_in_middle = False
-                            if (r2_mini_ref_cigar_splitted[-1][-1] in ['S', 's']):
-                                if (r2_mini_ref_pos + r2_aligned_len - 1) == mini_assembly_len_dict[r2_mini_ref]:
-                                    clip_in_middle = False
-
-                        # exclude the ref if clp in the middle is True
-                        if clip_in_middle is True:
-                            mini_refs_to_ignore.add(r2_mini_ref)
+                        if GenomicSeq not in GenomicSeq_best_marker_dict:
+                            GenomicSeq_best_marker_dict[GenomicSeq] = MarkerGene
+                            gnm_max_link_num_dict[GenomicSeq] = linkage_num
+                            file_out_handle.write(each_match)
+                            MarkerGene_with_assignment.add(MarkerGene)
                         else:
-                            r2_mini_refs_passed_qc[r2_mini_ref] = [r2_mini_ref_cigar]
+                            # get identity with best marker
+                            current_GenomicSeq_best_marker = GenomicSeq_best_marker_dict[GenomicSeq]
+                            key_str = '__|__'.join(sorted([MarkerGene, current_GenomicSeq_best_marker]))
+                            iden_with_best_marker = pairwise_16s_iden_dict.get(key_str, 0)
+                            if iden_with_best_marker >= within_genome_16s_divergence_cutoff:
+                                gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
+                                if (linkage_num*100/gnm_max_link_num) >= within_gnm_linkage_num_diff:
+                                    file_out_handle.write(each_match)
+                                    MarkerGene_with_assignment.add(MarkerGene)
+                                else:
+                                    MarkerGene_with_assignment.add(MarkerGene)
+    file_out_handle.close()
 
-    ####################################################################################################
 
-    r1_mini_refs_no_ignored = {key: value for key, value in r1_mini_refs_passed_qc.items() if key not in mini_refs_to_ignore}
-    r2_mini_refs_no_ignored = {key: value for key, value in r2_mini_refs_passed_qc.items() if key not in mini_refs_to_ignore}
-    shared_mini_ref_dict = {key: [r1_mini_refs_no_ignored[key][0], r2_mini_refs_no_ignored[key][0]] for key in set(r1_mini_refs_no_ignored).intersection(set(r2_mini_refs_no_ignored))}
+def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
+                                     free_living_ctg_ref_file,
+                                     mini_assembly_to_16s_reads,
+                                     mini_assembly_to_ctg_reads,
+                                     ctg_level_min_link,
+                                     mini_assembly_to_16s_ctg_connector,
+                                     gnm_to_ctg_connector,
+                                     marker_to_ctg_gnm_Key_connector,
+                                     max_within_cate_diff_pct,
+                                     max_between_cate_diff_pct,
+                                     stats_GapFilling_ctg,
+                                     stats_GapFilling_gnm):
 
-    # both r1 and r2 mapped to the same mini assembly
-    if len(shared_mini_ref_dict) > 0:
+    round2_free_living_16s_ref_dict = {}
+    for free_living_read_16s in open(free_living_16s_ref_file):
+        free_living_read_16s_split = free_living_read_16s.strip().split('\t')
+        if len(free_living_read_16s_split) > 1:
+            read_16s_id = free_living_read_16s_split[0]
+            read_16s_refs = free_living_read_16s_split[1].split(',')
+            round2_free_living_16s_ref_dict[read_16s_id] = read_16s_refs
 
-        if (each_mp in rd2_read_to_extract_flanking_16s) and (each_mp not in to_extract_read_base_rd2_ctg):
-            for each_mini_assembly in shared_mini_ref_dict:
-                if each_mini_assembly not in mini_assembly_to_16s_reads_dict:
-                    mini_assembly_to_16s_reads_dict[each_mini_assembly] = {each_mp}
+    round2_free_living_ctg_ref_dict = {}
+    for free_living_read_ctg in open(free_living_ctg_ref_file):
+        free_living_read_ctg_split = free_living_read_ctg.strip().split('\t')
+        read_ctg_id = free_living_read_ctg_split[0]
+        read_ctg_refs = free_living_read_ctg_split[1].split(',')
+        read_ctg_refs_no_suffix = []
+        for each_read_ctg_ref in read_ctg_refs:
+            if each_read_ctg_ref[-2:] in ['_l', '_r']:
+                each_read_ctg_ref_no_suffix = each_read_ctg_ref[:-2]
+                read_ctg_refs_no_suffix.append(each_read_ctg_ref_no_suffix)
+        round2_free_living_ctg_ref_dict[read_ctg_id] = read_ctg_refs_no_suffix
+
+    mini_assembly_to_16s_dict = {}
+    for each_mini_assembly in open(mini_assembly_to_16s_reads):
+        mini_assembly_split = each_mini_assembly.strip().split('\t')
+        mini_assembly_id = mini_assembly_split[0]
+        mini_assembly_mapped_reads = mini_assembly_split[1].split(',')
+        for each_mapped_read in mini_assembly_mapped_reads:
+            mapped_read_16s_refs = round2_free_living_16s_ref_dict.get(each_mapped_read, [])
+            for each_mapped_read_16s_ref in mapped_read_16s_refs:
+                mini_assembly_to_16s_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_16s_ref)
+                if mini_assembly_to_16s_key not in mini_assembly_to_16s_dict:
+                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] = 1
                 else:
-                    mini_assembly_to_16s_reads_dict[each_mini_assembly].add(each_mp)
+                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] += 1
 
-        elif (each_mp not in rd2_read_to_extract_flanking_16s) and (each_mp in to_extract_read_base_rd2_ctg):
-            for each_mini_assembly in shared_mini_ref_dict:
-                if each_mini_assembly not in mini_assembly_to_ctg_reads_dict:
-                    mini_assembly_to_ctg_reads_dict[each_mini_assembly] = {each_mp}
+    mini_assembly_to_ctg_dict = {}
+    for each_mini_assembly in open(mini_assembly_to_ctg_reads):
+        mini_assembly_split = each_mini_assembly.strip().split('\t')
+        mini_assembly_id = mini_assembly_split[0]
+        mini_assembly_mapped_reads = mini_assembly_split[1].split(',')
+        for each_mapped_read in mini_assembly_mapped_reads:
+            mapped_read_ctg_refs = round2_free_living_ctg_ref_dict.get(each_mapped_read, [])
+            for each_mapped_read_ctg_ref in mapped_read_ctg_refs:
+                mini_assembly_to_ctg_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_ctg_ref)
+                if mini_assembly_to_ctg_key not in mini_assembly_to_ctg_dict:
+                    mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] = 1
                 else:
-                    mini_assembly_to_ctg_reads_dict[each_mini_assembly].add(each_mp)
+                    mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] += 1
 
-# write out mini_assembly_to_16s_reads
-mini_assembly_to_16s_reads_handle = open(mini_assembly_to_16s_reads, 'w')
-for each_mini_assembly in mini_assembly_to_16s_reads_dict:
-    mini_assembly_to_16s_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(mini_assembly_to_16s_reads_dict[each_mini_assembly])))
-mini_assembly_to_16s_reads_handle.close()
+    mini_assembly_to_16s_dict_reformatted = {}
+    max_link_nun_dict_16s = {}
+    for each in mini_assembly_to_16s_dict:
+        mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
+        seq_16s_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
+        linkage_num = mini_assembly_to_16s_dict[each]
+        seq_16s_with_num = '%s__num__%s' % (seq_16s_id, linkage_num)
+        if linkage_num >= ctg_level_min_link:
 
-# write out mini_assembly_to_ctg_reads
-mini_assembly_to_ctg_reads_handle = open(mini_assembly_to_ctg_reads, 'w')
-for each_mini_assembly in mini_assembly_to_ctg_reads_dict:
-    mini_assembly_to_ctg_reads_handle.write('%s\t%s\n' % (each_mini_assembly, ','.join(mini_assembly_to_ctg_reads_dict[each_mini_assembly])))
-mini_assembly_to_ctg_reads_handle.close()
+            # add to mini_assembly_to_16s_dict_reformatted
+            if mini_assembly_id not in mini_assembly_to_16s_dict_reformatted:
+                mini_assembly_to_16s_dict_reformatted[mini_assembly_id] = {seq_16s_with_num}
+            else:
+                mini_assembly_to_16s_dict_reformatted[mini_assembly_id].add(seq_16s_with_num)
+
+            # add to max_link_nun_dict_16s
+            if seq_16s_id not in max_link_nun_dict_16s:
+                max_link_nun_dict_16s[seq_16s_id] = linkage_num
+            else:
+                if linkage_num > max_link_nun_dict_16s[seq_16s_id]:
+                    max_link_nun_dict_16s[seq_16s_id] = linkage_num
+
+    mini_assembly_to_ctg_dict_reformatted = {}
+    max_link_nun_dict_ctg = {}
+    for each in mini_assembly_to_ctg_dict:
+        mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
+        ctg_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
+        linkage_num = mini_assembly_to_ctg_dict[each]
+        ctg_with_num = '%s__num__%s' % (ctg_id, linkage_num)
+        if linkage_num >= ctg_level_min_link:
+
+            # add to mini_assembly_to_ctg_dict_reformatted
+            if mini_assembly_id not in mini_assembly_to_ctg_dict_reformatted:
+                mini_assembly_to_ctg_dict_reformatted[mini_assembly_id] = {ctg_with_num}
+            else:
+                mini_assembly_to_ctg_dict_reformatted[mini_assembly_id].add(ctg_with_num)
+
+            # add to max_link_nun_dict_ctg
+            if ctg_id not in max_link_nun_dict_ctg:
+                max_link_nun_dict_ctg[ctg_id] = linkage_num
+            else:
+                if linkage_num > max_link_nun_dict_ctg[ctg_id]:
+                    max_link_nun_dict_ctg[ctg_id] = linkage_num
+
+    mini_assembly_linked_both = set(mini_assembly_to_16s_dict_reformatted).intersection(mini_assembly_to_ctg_dict_reformatted)
+
+    stats_GapFilling_ctg_handle = open(stats_GapFilling_ctg, 'w')
+    stats_GapFilling_gnm_dict = {}
+    for each_mini_assembly in mini_assembly_linked_both:
+        linked_16s = mini_assembly_to_16s_dict_reformatted[each_mini_assembly]
+        linked_ctg = mini_assembly_to_ctg_dict_reformatted[each_mini_assembly]
+        linked_16s_num_list = [int(i.split('__num__')[1]) for i in linked_16s]
+        linked_ctg_num_list = [int(i.split('__num__')[1]) for i in linked_ctg]
+        linked_16s_num_max = max(linked_16s_num_list)
+        linked_ctg_num_max = max(linked_ctg_num_list)
+
+        if (min(linked_16s_num_max, linked_ctg_num_max) * 100 / max(linked_16s_num_max, linked_ctg_num_max)) >= max_between_cate_diff_pct:
+
+            linked_16s_filtered = [i for i in linked_16s if int(i.split('__num__')[1])*100/linked_16s_num_max >= max_within_cate_diff_pct]
+            linked_ctg_filtered = [i for i in linked_ctg if int(i.split('__num__')[1])*100/linked_ctg_num_max >= max_within_cate_diff_pct]
+
+            for each_linked_16s in linked_16s_filtered:
+                linked_16s_id = each_linked_16s.split('__num__')[0]
+                linked_16s_num = int(each_linked_16s.split('__num__')[1])
+                linked_16s_num_pct_by_max = linked_16s_num * 100 / max_link_nun_dict_16s[linked_16s_id]
+
+                for each_linked_ctg in linked_ctg_filtered:
+                    linked_ctg_id = each_linked_ctg.split('__num__')[0]
+                    linked_gnm_id = linked_ctg_id.split(gnm_to_ctg_connector)[0]
+                    linked_ctg_num = int(each_linked_ctg.split('__num__')[1])
+                    linked_ctg_num_pct_by_max = linked_ctg_num*100/max_link_nun_dict_ctg[linked_ctg_id]
+
+                    if (linked_16s_num_pct_by_max >= 50) and (linked_ctg_num_pct_by_max >= 50):
+                        stats_GapFilling_ctg_handle.write('%s\t%s\t%s\n' % (linked_16s_id, linked_ctg_id, (linked_16s_num + linked_ctg_num)))
+                        marker_to_gnm_key = '%s%s%s' % (linked_16s_id, marker_to_ctg_gnm_Key_connector, linked_gnm_id)
+                        if marker_to_gnm_key not in stats_GapFilling_gnm_dict:
+                            stats_GapFilling_gnm_dict[marker_to_gnm_key] = (linked_16s_num + linked_ctg_num)
+                        else:
+                            stats_GapFilling_gnm_dict[marker_to_gnm_key] += (linked_16s_num + linked_ctg_num)
+    stats_GapFilling_ctg_handle.close()
+
+    stats_GapFilling_gnm_handle = open(stats_GapFilling_gnm, 'w')
+    stats_GapFilling_gnm_handle.write('MarkerGene,GenomicSeq,Number\n')
+    for each_16s_to_gnm in stats_GapFilling_gnm_dict:
+        each_16s_to_gnm_split = each_16s_to_gnm.split(marker_to_ctg_gnm_Key_connector)
+        id_16s = each_16s_to_gnm_split[0]
+        id_gnm = each_16s_to_gnm_split[1]
+        linkage_num = stats_GapFilling_gnm_dict[each_16s_to_gnm]
+        stats_GapFilling_gnm_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
+    stats_GapFilling_gnm_handle.close()
 
 
-############################################# get_GapFilling_stats #############################################
+step_2_wd                                       = '/Users/songweizhi/Desktop/tunning_rd2'
+free_living_16s_ref_file                        = '%s/file_in/round2_free_living_16s_refs.txt'                          % step_2_wd
+free_living_ctg_ref_file                        = '%s/file_in/round2_free_living_ctg_refs.txt'                          % step_2_wd
+mini_assembly_to_16s_reads                      = '%s/file_in/mini_assembly_to_16s_reads.txt'                           % step_2_wd
+mini_assembly_to_ctg_reads                      = '%s/file_in/mini_assembly_to_ctg_reads.txt'                           % step_2_wd
+blast_results_all_vs_all_16s                    = '%s/file_in/Oral_0622_60_60_polish_new_16S_all_vs_all_blastn.tab'     % step_2_wd
+stats_GapFilling_ctg                            = '%s/file_in/stats_GapFilling_ctg.txt'                                 % step_2_wd
+stats_GapFilling_file                           = '%s/file_in/stats_GapFilling_gnm.txt'                                 % step_2_wd
+stats_GapFilling_file_filtered                  = '%s/stats_GapFilling_gnm_filtered.txt'                        % step_2_wd
+ctg_level_min_link                              = 3
+within_gnm_linkage_num_diff                     = 80
+max_mini_assembly_link_num_diff_between_ctg_16s = 10
+min_aln_16s                                     = 500
+min_cov_16s                                     = 30
+min_iden_16s                                    = 98
+min_link_num                                    = 8
+marker_to_ctg_gnm_Key_connector                 = '___M___'
+gnm_to_ctg_connector                            = '___C___'
+mini_assembly_to_16s_ctg_connector              = '___Mini___'
+read_to_marker_connector                        = '___r___'
+
 
 get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                                  free_living_ctg_ref_file,
@@ -423,14 +328,16 @@ get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                                  stats_GapFilling_ctg,
                                  stats_GapFilling_file)
 
-filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm, mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, min_link_num, min_link_num, within_gnm_linkage_num_diff, stats_GapFilling_file_filtered)
+pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
 
-free_living_16s_to_ctg_linkage_dict_to_use = {}
-for each_ctg_level_link in open(stats_GapFilling_ctg):
-    each_ctg_level_link_split = each_ctg_level_link.split('\t')
-    marker_id = each_ctg_level_link_split[0]
-    ctg_id = each_ctg_level_link_split[1]
-    link_num = int(each_ctg_level_link_split[2])
-    current_key = '%s%s%s' % (marker_id, marker_to_ctg_gnm_Key_connector, ctg_id)
-    free_living_16s_to_ctg_linkage_dict_to_use[current_key] = link_num
+mean_depth_dict_gnm = {}
+mean_depth_dict_16s = {}
+min_16s_gnm_multiple = 0
+filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm,
+                            mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, min_link_num, min_link_num,
+                            within_gnm_linkage_num_diff, stats_GapFilling_file_filtered)
+
+
+os.system('python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/d7_Oral/assess_linkages_Oral.py')
+
 

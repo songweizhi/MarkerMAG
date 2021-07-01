@@ -92,22 +92,35 @@ total_query_mag_num         = 87
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/Oral_0622_60_60_polish_linkages_by_genome.txt'             % wd
-linkages_from_rd1           = False
+MarkerMAG_linkages          = '%s/Oral_0622_60_60_polish_new_linkages_by_genome.txt'             % wd
+MarkerMAG_linkages          = '/Users/songweizhi/Desktop/tunning_rd2/stats_GapFilling_gnm_filtered.txt'
+linkages_from_rd1           = True
 
 '''
 
+Oral_0622_60_60_polish_new_linkages_by_genome.txt	Rd_1	|	46	44	1	1	44/45(97.78)	|	16	15	0	1	0	15/16(93.75)
+Oral_0622_60_60_polish_new_linkages_by_genome.txt	Rd_2	|	23	9	0	14	9/23(39.13)	|	4	2	0	2	0	2/4(50.0)
+Oral_0622_60_60_polish_new_linkages_by_genome.txt	Both	|	69	53	1	15	53/68(77.94)	|	20	17	0	3	0	17/20(85.0)
 
+Oral_0622_60_60_polish_min1200_75_127_linkages_by_genome.txt	Rd_1	|	45	43	1	1	43/44(97.73)	|	16	15	0	1	0	15/16(93.75)
+Oral_0622_60_60_polish_min1200_75_127_linkages_by_genome.txt	Rd_2	|	23	7	0	16	7/23(30.43)	    |	4	1	0	3	0	1/4(25.0)
+Oral_0622_60_60_polish_min1200_75_127_linkages_by_genome.txt	Both	|	68	50	1	17	50/67(74.63)	|	20	16	0	4	0	16/20(80.0)
 
-Oral_0622_60_60_polish_linkages_by_genome.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Accuracy
+Oral_0622_60_60_polish_min1200_linkages_by_genome.txt	Rd_1	|	50	44	1	5	44/49(89.8)	    |	16	15	0	1	0	15/16(93.75)
+Oral_0622_60_60_polish_min1200_linkages_by_genome.txt	Rd_2	|	14	11	0	3	11/14(78.57)	|	3	1	0	2	0	1/3(33.33)
+Oral_0622_60_60_polish_min1200_linkages_by_genome.txt	Both	|	64	55	1	8	55/63(87.3)	    |	19	16	0	3	0	16/19(84.21)
+
+Oral_0622_60_60_polish_min1000_linkages_by_genome.txt	Rd_1	|	48	42	1	5	42/47(89.36)	|	16	15	0	1	0	15/16(93.75)
+Oral_0622_60_60_polish_min1000_linkages_by_genome.txt	Rd_2	|	25	8	0	17	8/25(32.0)	    |	5	2	0	3	0	2/5(40.0)
+Oral_0622_60_60_polish_min1000_linkages_by_genome.txt	Both	|	73	50	1	22	50/72(69.44)	|	21	17	0	4	0	17/21(80.95)
+
+Oral_0622_60_60_polish_min900_linkages_by_genome.txt	Rd_1	|	48	45	1	2	45/47(95.74)	|	16	14	0	1	1	14/16(87.5)
+Oral_0622_60_60_polish_min900_linkages_by_genome.txt	Rd_2	|	33	14	0	19	14/33(42.42)	|	7	3	0	4	0	3/7(42.86)
+Oral_0622_60_60_polish_min900_linkages_by_genome.txt	Both	|	81	59	1	21	59/80(73.75)	|	23	17	0	5	1	17/23(73.91)
+
 Oral_0622_60_60_polish_linkages_by_genome.txt	Rd_1	|	63	52	8	3	52/55(94.55)	|	20	16	1	2	1	16/19(84.21)
 Oral_0622_60_60_polish_linkages_by_genome.txt	Rd_2	|	14	10	0	4	10/14(71.43)	|	6	3	0	3	0	3/6(50.0)
 Oral_0622_60_60_polish_linkages_by_genome.txt	Both	|	77	62	8	7	62/69(89.86)	|	26	19	1	5	1	19/25(76.0)
-
-Oral_0622_60_60_linkages_by_genome.txt	Round	|	Link	Yes	NA	No	Accuracy	|	MAG	Yes	NA	No	Y/N	Accuracy
-Oral_0622_60_60_linkages_by_genome.txt	Rd_1	|	73	63	5	5	63/68(92.65)	|	26	20	1	4	1	20/25(80.0)
-Oral_0622_60_60_linkages_by_genome.txt	Rd_2	|	12	5	5	2	5/7(71.43)	|	6	3	1	2	0	3/5(60.0)
-Oral_0622_60_60_linkages_by_genome.txt	Both	|	85	68	10	7	68/75(90.67)	|	32	23	2	6	1	23/30(76.67)
 
 '''
 
@@ -147,7 +160,6 @@ for each_ref in open(drep_cdb_file):
         else:
             cluster_to_ref_dict[ref_cluster].append(ref_file_name_no_ext)
 
-print('cluster_to_ref_dict: %s' % len(cluster_to_ref_dict) )
 
 ################################################### bin to reference ###################################################
 
@@ -503,36 +515,29 @@ BioSAK iTOL -ColorRange -lg leaf_group_raw.txt -lt Identity -out leaf_group.txt
 ########################################################################################################################
 
 '''
-cluster_id = 'C107_0'
-print('cluster to ref  : %s\t%s\t%s' % (cluster_id, len(cluster_to_ref_dict.get(cluster_id, 'NA')), cluster_to_ref_dict.get(cluster_id, 'NA')))
-print('cluster to MAG  : %s\t%s\t%s' % (cluster_id, len(cluster_to_bin_dict.get(cluster_id, 'NA')), cluster_to_bin_dict.get(cluster_id, 'NA')))
-print('cluster to Matam: %s\t%s\t%s' % (cluster_id, len(cluster_to_matam_16s_dict.get(cluster_id, 'NA')), cluster_to_matam_16s_dict.get(cluster_id, 'NA')))
-#print('cluster to MAG: %s\t%s' % ('C126_5', cluster_to_bin_dict.get('C126_5', 'NA')))
+# cluster_id = 'C162_1'
+# print('cluster to ref  : %s\t%s\t%s' % (cluster_id, len(cluster_to_ref_dict.get(cluster_id, 'NA')), cluster_to_ref_dict.get(cluster_id, 'NA')))
+# print('cluster to MAG  : %s\t%s\t%s' % (cluster_id, len(cluster_to_bin_dict.get(cluster_id, 'NA')), cluster_to_bin_dict.get(cluster_id, 'NA')))
+# print('cluster to Matam: %s\t%s\t%s' % (cluster_id, len(cluster_to_matam_16s_dict.get(cluster_id, 'NA')), cluster_to_matam_16s_dict.get(cluster_id, 'NA')))
+# #print('cluster to MAG: %s\t%s' % ('C126_5', cluster_to_bin_dict.get('C126_5', 'NA')))
+#
+# print(bin_to_cluster_dict['Oral_70'])
+#
+# print('cluster to MAG  : %s\t%s\t%s' % ('C126_1', len(cluster_to_bin_dict.get('C126_1', 'NA')), cluster_to_bin_dict.get('C126_1', 'NA')))
+# print('cluster to MAG  : %s\t%s\t%s' % ('C126_2', len(cluster_to_bin_dict.get('C126_2', 'NA')), cluster_to_bin_dict.get('C126_2', 'NA')))
+# print('cluster to MAG  : %s\t%s\t%s' % ('C126_3', len(cluster_to_bin_dict.get('C126_3', 'NA')), cluster_to_bin_dict.get('C126_3', 'NA')))
+# print('cluster to MAG  : %s\t%s\t%s' % ('C126_4', len(cluster_to_bin_dict.get('C126_4', 'NA')), cluster_to_bin_dict.get('C126_4', 'NA')))
+#
+# print(matam_16s_to_cluster_dict['CAMI_Oral_subsample_50_767'])
+# print(cluster_to_matam_16s_dict['C118_4'])
 
-print(bin_to_cluster_dict['Oral_70'])
-
-
-print(matam_16s_to_cluster_dict['CAMI_Oral_subsample_25_317'])
-
-print('cluster to MAG  : %s\t%s\t%s' % ('C126_1', len(cluster_to_bin_dict.get('C126_1', 'NA')), cluster_to_bin_dict.get('C126_1', 'NA')))
-print('cluster to MAG  : %s\t%s\t%s' % ('C126_2', len(cluster_to_bin_dict.get('C126_2', 'NA')), cluster_to_bin_dict.get('C126_2', 'NA')))
-print('cluster to MAG  : %s\t%s\t%s' % ('C126_3', len(cluster_to_bin_dict.get('C126_3', 'NA')), cluster_to_bin_dict.get('C126_3', 'NA')))
-print('cluster to MAG  : %s\t%s\t%s' % ('C126_4', len(cluster_to_bin_dict.get('C126_4', 'NA')), cluster_to_bin_dict.get('C126_4', 'NA')))
 
 '''
-CAMI_Oral_subsample_50_677	Oral_72	115	Rd1	Correct
-CAMI_Oral_subsample_25_488	Oral_72	115	Rd1	Correct
-CAMI_Oral_subsample_50_70	Oral_70	11	Rd1	Wrong
-CAMI_Oral_subsample_25_51	Oral_70	11	Rd1	Wrong
-CAMI_Oral_subsample_10_42	Oral_70	11	Rd1	Wrong
-CAMI_Oral_subsample_25_317	Oral_70	11	Rd1	Wrong
+Oral_35	C162_1	1	OTU_97.26155.0    OTU_97.42844.0    OTU_97.43495.1    OTU_97.5254.0
 
-
-
-
-
-
-
+16S	    C167_1	2	OTU_97.45050.0, OTU_97.5114.0
+16S	    C167_2	15	OTU_97.17854.0, OTU_97.19638.0, OTU_97.24239.0, OTU_97.28688.0, OTU_97.33033.1, OTU_97.41546.0, OTU_97.42206.0, OTU_97.42261.0, 
+			        OTU_97.42504.0, OTU_97.42691.0, OTU_97.42844.1, OTU_97.42989.0, OTU_97.44935.0, OTU_97.45053.0, OTU_97.5757.0
 
 
 '''

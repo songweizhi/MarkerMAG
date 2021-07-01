@@ -300,7 +300,7 @@ def sep_path_basename_ext(file_in):
     # separate path and file name
     file_path, file_name = os.path.split(file_in)
     if file_path == '':
-        file_path = '.'
+        file_path = ''
 
     # separate file basename and extension
     file_basename, file_extension = os.path.splitext(file_name)
@@ -935,14 +935,15 @@ if __name__ ==  '__main__':
     ##################################################### file in ####################################################
 
     step_1_wd                                   = '/Users/songweizhi/Desktop/tunning_rd1'
-    input_16s_polished                          = '%s/file_in/GI_128_16S_0.999.fasta'                              % step_1_wd
-    combined_input_gnms                         = '%s/file_in/GI_refined_bins_combined.fa'                         % step_1_wd
-    input_reads_to_16s_sam_MappingRecord_folder = '%s/file_in/GI_0527_128_60_60_input_reads_to_16S_MappingRecord'  % step_1_wd
-    blast_results_all_vs_all_16s                = '%s/file_in/GI_0527_128_60_60_16S_all_vs_all_blastn.tab'         % step_1_wd
-    rd1_extracted_to_gnm_sam_reformatted_sorted = '%s/file_in/rd1_extracted_to_gnm_reformatted_sorted.sam'         % step_1_wd
-    combined_barrnap_gff = '/Users/songweizhi/Desktop/combined.gff'
-    min_M_len_16s = 45
-    min_M_len_ctg = 45
+    input_16s_polished                          = '%s/file_in/CAMI_Oral_138_16S_0.999.polished.fa'                      % step_1_wd
+    combined_input_gnms                         = '%s/file_in/3_Oral_refined_MAGs_combined.fa'                          % step_1_wd
+    input_reads_to_16s_sam_MappingRecord_folder = '%s/file_in/Oral_0622_60_60_polish_input_reads_to_16S_MappingRecord'  % step_1_wd
+    blast_results_all_vs_all_16s                = '%s/file_in/Oral_0622_60_60_polish_16S_all_vs_all_blastn.tab'         % step_1_wd
+    rd1_extracted_to_gnm_sam_reformatted_sorted = '%s/file_in/rd1_extracted_to_gnm_reformatted_sorted.sam'              % step_1_wd
+    combined_barrnap_gff                        = '%s/file_in/combined_barrnap.gff'                                     % step_1_wd
+
+    min_M_len_16s = 60
+    min_M_len_ctg = 60
     min_M_pct = 35
     mismatch_cutoff = 2
     marker_to_ctg_gnm_Key_connector = '___M___'
@@ -1111,7 +1112,8 @@ if __name__ ==  '__main__':
                                             if r1_ctg_ref_pos <= 50:
                                                 matched_to_r1_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos) <= 50:
+                                            aln_len, aln_pct, clp_len, clp_pct, mis_pct = get_cigar_stats(cigar_splitter(r1_ctg_ref_cigar))
+                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos - aln_len) <= 50:
                                                 matched_to_r1_ref_ignored_region = True
 
                                 if matched_to_r1_ref_ignored_region is False:
@@ -1136,6 +1138,12 @@ if __name__ ==  '__main__':
 
                             if qualified_cigar is True:
 
+                                # if ('Oral_41___C___NODE_17772_length_3290_cov_0.065128' in current_read_base_r1_ctg_ref_dict) or ('Oral_41___C___NODE_17772_length_3290_cov_0.065128' in current_read_base_r2_ctg_ref_dict):
+                                #     print('\n------------\n')
+                                #     print('r2_ctg_ref\t%s' % r2_ctg_ref)
+                                #     print('r2_ctg_ref_cigar\t%s' % r2_ctg_ref_cigar)
+                                #
+
                                 # check if matched to regions need to be ignored
                                 matched_to_r2_ref_ignored_region = False
                                 if r2_ctg_ref in ctg_ignore_region_dict:
@@ -1145,7 +1153,8 @@ if __name__ ==  '__main__':
                                             if r2_ctg_ref_pos <= 50:
                                                 matched_to_r2_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos) <= 50:
+                                            aln_len, aln_pct, clp_len, clp_pct, mis_pct = get_cigar_stats(cigar_splitter(r2_ctg_ref_cigar))
+                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos - aln_len) <= 50:
                                                 matched_to_r2_ref_ignored_region = True
 
                                 if matched_to_r2_ref_ignored_region is False:

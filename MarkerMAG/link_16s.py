@@ -917,7 +917,8 @@ def combine_paired_and_clipping_linkages(paired_linkages, clipping_linkages, fil
     file_out_intersect_linkages_handle.close()
 
 
-def get_unlinked_mag_end_seq(ref_in, ref_in_end_seq, end_seq_len):
+def get_unlinked_mag_end_seq(ref_in, ref_in_end_seq, end_seq_len, ctg_ignore_region_dict_rd1):
+    ctg_ignore_region_dict_rd2 = dict()
 
     # get ref seqs subset
     ref_subset_handle = open(ref_in_end_seq, 'w')
@@ -929,6 +930,10 @@ def get_unlinked_mag_end_seq(ref_in, ref_in_end_seq, end_seq_len):
         if ref_seq_len < end_seq_len * 2:
             ref_subset_handle.write('>%s\n' % ref_seq_id)
             ref_subset_handle.write('%s\n' % ref_seq.seq)
+
+            # add to ctg_ignore_region_dict_rd2
+            if ref_seq_id in ctg_ignore_region_dict_rd1:
+                ctg_ignore_region_dict_rd2[ref_seq_id] = ctg_ignore_region_dict_rd1[ref_seq_id]
         else:
             ref_seq_left_end_id = '%s_l' % ref_seq_id
             ref_seq_right_end_id = '%s_r' % ref_seq_id
@@ -942,7 +947,18 @@ def get_unlinked_mag_end_seq(ref_in, ref_in_end_seq, end_seq_len):
             # write out right end
             ref_subset_handle.write('>%s\n' % ref_seq_right_end_id)
             ref_subset_handle.write('%s\n' % ref_seq_right_end)
+
+            # add to ctg_ignore_region_dict_rd2
+            if ref_seq_id in ctg_ignore_region_dict_rd1:
+                current_seq_to_ignore_ends = ctg_ignore_region_dict_rd1[ref_seq_id]
+                for end_to_ignore in current_seq_to_ignore_ends:
+                    if end_to_ignore == 'left_end':
+                        ctg_ignore_region_dict_rd2[ref_seq_left_end_id] = {'left_end'}
+                    if end_to_ignore == 'right_end':
+                        ctg_ignore_region_dict_rd2[ref_seq_right_end_id] = {'right_end'}
     ref_subset_handle.close()
+
+    return ctg_ignore_region_dict_rd2
 
 
 def get_free_living_mate(ref_in, sam_file, reads_r1, reads_r2, end_seq_len, num_threads, pwd_bbmap_exe, bbmap_memory):
@@ -1804,37 +1820,48 @@ def get_unmapped_mates_seq(sam_file, input_r1_fasta, input_r2_fasta, extracted_s
     os.system('rm %s' % reads_to_extract_r2_fa)
 
 
-def polish_16s(file_in, file_out_ffn):
+def qc_16s(file_in, file_out_ffn, no_16s_polish, min_16s_len):
 
     file_out_path, file_out_base, file_out_ext = sep_path_basename_ext(file_out_ffn)
-
     barrnap_stdout   = '%s/%s.log'    % (file_out_path, file_out_base)
+    file_out_ffn_tmp = '%s/%s_tmp%s'  % (file_out_path, file_out_base, file_out_ext)
     file_out_gff     = '%s/%s.gff'    % (file_out_path, file_out_base)
-    file_out_ffn_tmp = '%s/%s_tmp%s' % (file_out_path, file_out_base, file_out_ext)
 
-    barrnap_cmd = 'barrnap --quiet -o %s %s 2> %s > %s' % (file_out_ffn_tmp, file_in, barrnap_stdout, file_out_gff)
-    os.system(barrnap_cmd)
+    # remove non-16S sequences, then filter by length
+    if no_16s_polish is False:
 
-    wrote_id = []
-    file_out_ffn_handle = open(file_out_ffn, 'w')
-    for each_16s in SeqIO.parse(file_out_ffn_tmp, 'fasta'):
-        seq_id = each_16s.id
-        if seq_id.startswith('16S_rRNA::'):
-            seq_id_polished = seq_id[10:].split(':')[0]
+        barrnap_cmd = 'barrnap --quiet -o %s %s 2> %s > %s' % (file_out_ffn_tmp, file_in, barrnap_stdout, file_out_gff)
+        os.system(barrnap_cmd)
 
-            if seq_id_polished not in wrote_id:
-                file_out_ffn_handle.write('>%s\n' % seq_id_polished)
+        wrote_id = []
+        file_out_ffn_handle = open(file_out_ffn, 'w')
+        for each_16s in SeqIO.parse(file_out_ffn_tmp, 'fasta'):
+            seq_id = each_16s.id
+            if seq_id.startswith('16S_rRNA::'):
+                seq_id_polished = seq_id[10:].split(':')[0]
+                if len(each_16s.seq) >= min_16s_len:
+                    if seq_id_polished not in wrote_id:
+                        file_out_ffn_handle.write('>%s\n' % seq_id_polished)
+                        file_out_ffn_handle.write('%s\n' % str(each_16s.seq))
+                        wrote_id.append(seq_id_polished)
+                    else:
+                        file_out_ffn_handle.write('>%s_%s\n' % (seq_id_polished, (wrote_id.count(seq_id_polished) + 1)))
+                        file_out_ffn_handle.write('%s\n' % str(each_16s.seq))
+                        wrote_id.append(seq_id_polished)
+        file_out_ffn_handle.close()
+
+        # remove tmp files
+        os.system('rm %s' % file_out_ffn_tmp)
+        os.system('rm %s.fai' % file_in)
+
+    # only filter input 16S by length
+    else:
+        file_out_ffn_handle = open(file_out_ffn, 'w')
+        for each_16s in SeqIO.parse(file_in, 'fasta'):
+            if len(each_16s.seq) >= min_16s_len:
+                file_out_ffn_handle.write('>%s\n' % each_16s.id)
                 file_out_ffn_handle.write('%s\n' % str(each_16s.seq))
-                wrote_id.append(seq_id_polished)
-            else:
-                file_out_ffn_handle.write('>%s_%s\n' % (seq_id_polished, (wrote_id.count(seq_id_polished) + 1)))
-                file_out_ffn_handle.write('%s\n' % str(each_16s.seq))
-                wrote_id.append(seq_id_polished)
-
-    file_out_ffn_handle.close()
-
-    #os.system('rm %s' % file_out_ffn_tmp)
-    #os.system('rm %s.fai' % file_in)
+        file_out_ffn_handle.close()
 
 
 def get_min_max_cigar_S(cigar_list):
@@ -2454,6 +2481,7 @@ def parse_sam_gnm_worker(arguments_list):
     mismatch_cutoff                                 = arguments_list[3]
     round_2_ctg_end_seq_len_dict                    = arguments_list[4]
     rd2_with_both_mates                             = arguments_list[5]
+    ctg_ignore_region_dict_2rd                      = arguments_list[6]
 
     free_living_ctg_ref_file_handle = open(free_living_ctg_ref_file, 'w')
     current_read_base = ''
@@ -2531,8 +2559,7 @@ def parse_sam_gnm_worker(arguments_list):
                                 ctg_refs_to_ignore_rd2.add(r1_ctg_ref_rd2)
                             else:
                                 # check mismatch
-                                r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(
-                                    r1_ctg_ref_cigar_splitted)
+                                r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(r1_ctg_ref_cigar_splitted)
                                 if r1_ref_min_mismatch == 'NA':
                                     ctg_refs_to_ignore_rd2.add(r1_ctg_ref_rd2)
                                 elif (r1_mismatch_pct > r1_ref_min_mismatch) or (r1_mismatch_pct > mismatch_cutoff):
@@ -2546,19 +2573,33 @@ def parse_sam_gnm_worker(arguments_list):
                                         clip_in_middle = False
                                         if ('S' in r1_ctg_ref_cigar) or ('s' in r1_ctg_ref_cigar):
                                             clip_in_middle = True
-                                            if (r1_ctg_ref_cigar_splitted[0][-1] in ['S', 's']) and (
-                                                    r1_ctg_ref_pos == 1):
+                                            if (r1_ctg_ref_cigar_splitted[0][-1] in ['S', 's']) and (r1_ctg_ref_pos == 1):
                                                 clip_in_middle = False
                                             if (r1_ctg_ref_cigar_splitted[-1][-1] in ['S', 's']):
-                                                if (r1_ctg_ref_pos + r1_aligned_len - 1) == \
-                                                        round_2_ctg_end_seq_len_dict[
-                                                            r1_ctg_ref_rd2]:
+                                                if (r1_ctg_ref_pos + r1_aligned_len - 1) == round_2_ctg_end_seq_len_dict[r1_ctg_ref_rd2]:
                                                     clip_in_middle = False
 
                                         if clip_in_middle is True:
                                             ctg_refs_to_ignore_rd2.add(r1_ctg_ref_rd2)
                                         else:
-                                            r1_ctg_refs_passed_qc[r1_ctg_ref_rd2] = [r1_ctg_ref_cigar]
+                                            # check if matched to regions need to be ignored
+                                            matched_to_r1_ref_ignored_region_rd2 = False
+
+                                            if r1_ctg_ref_rd2 in ctg_ignore_region_dict_2rd:
+                                                r1_ctg_ref_ends_to_ignore_rd2 = ctg_ignore_region_dict_2rd[r1_ctg_ref_rd2]
+                                                for to_ignore_region_rd2 in r1_ctg_ref_ends_to_ignore_rd2:
+                                                    if to_ignore_region_rd2 == 'left_end':
+                                                        if r1_ctg_ref_pos <= 50:
+                                                            matched_to_r1_ref_ignored_region_rd2 = True
+                                                    if to_ignore_region_rd2 == 'right_end':
+                                                        aln_len, aln_pct, clp_len, clp_pct, mis_pct = get_cigar_stats(cigar_splitter(r1_ctg_ref_cigar))
+                                                        if (round_2_ctg_end_seq_len_dict[r1_ctg_ref_rd2] - r1_ctg_ref_pos - aln_len) <= 50:
+                                                            matched_to_r1_ref_ignored_region_rd2 = True
+
+                                            if matched_to_r1_ref_ignored_region_rd2 is False:
+                                                r1_ctg_refs_passed_qc[r1_ctg_ref_rd2] = [r1_ctg_ref_cigar]
+                                            else:
+                                                ctg_refs_to_ignore_rd2.add(r1_ctg_ref_rd2)
 
                     ########## filter r2 ctg refs ##########
                     r2_ctg_refs_passed_qc = {}
@@ -2577,8 +2618,7 @@ def parse_sam_gnm_worker(arguments_list):
                                 ctg_refs_to_ignore_rd2.add(r2_ctg_ref_rd2)
                             else:
                                 # check mismatch
-                                r2_aligned_len, r2_aligned_pct, r2_clipping_len, r2_clipping_pct, r2_mismatch_pct = get_cigar_stats(
-                                    r2_ctg_ref_cigar_splitted)
+                                r2_aligned_len, r2_aligned_pct, r2_clipping_len, r2_clipping_pct, r2_mismatch_pct = get_cigar_stats(r2_ctg_ref_cigar_splitted)
                                 if r2_ref_min_mismatch == 'NA':
                                     ctg_refs_to_ignore_rd2.add(r2_ctg_ref_rd2)
                                 elif (r2_mismatch_pct > r2_ref_min_mismatch) or (r2_mismatch_pct > mismatch_cutoff):
@@ -2592,18 +2632,33 @@ def parse_sam_gnm_worker(arguments_list):
                                         clip_in_middle = False
                                         if ('S' in r2_ctg_ref_cigar) or ('s' in r2_ctg_ref_cigar):
                                             clip_in_middle = True
-                                            if (r2_ctg_ref_cigar_splitted[0][-1] in ['S', 's']) and (
-                                                    r2_ctg_ref_pos == 1):
+                                            if (r2_ctg_ref_cigar_splitted[0][-1] in ['S', 's']) and (r2_ctg_ref_pos == 1):
                                                 clip_in_middle = False
                                             if (r2_ctg_ref_cigar_splitted[-1][-1] in ['S', 's']):
-                                                if (r2_ctg_ref_pos + r2_aligned_len - 1) == \
-                                                        round_2_ctg_end_seq_len_dict[r2_ctg_ref_rd2]:
+                                                if (r2_ctg_ref_pos + r2_aligned_len - 1) == round_2_ctg_end_seq_len_dict[r2_ctg_ref_rd2]:
                                                     clip_in_middle = False
 
                                         if clip_in_middle is True:
                                             ctg_refs_to_ignore_rd2.add(r2_ctg_ref_rd2)
                                         else:
-                                            r2_ctg_refs_passed_qc[r2_ctg_ref_rd2] = [r2_ctg_ref_cigar]
+                                            # check if matched to regions need to be ignored
+                                            matched_to_r2_ref_ignored_region_rd2 = False
+
+                                            if r2_ctg_ref_rd2 in ctg_ignore_region_dict_2rd:
+                                                r2_ctg_ref_ends_to_ignore_rd2 = ctg_ignore_region_dict_2rd[r2_ctg_ref_rd2]
+                                                for to_ignore_region_rd2 in r2_ctg_ref_ends_to_ignore_rd2:
+                                                    if to_ignore_region_rd2 == 'left_end':
+                                                        if r2_ctg_ref_pos <= 50:
+                                                            matched_to_r2_ref_ignored_region_rd2 = True
+                                                    if to_ignore_region_rd2 == 'right_end':
+                                                        aln_len, aln_pct, clp_len, clp_pct, mis_pct = get_cigar_stats(cigar_splitter(r2_ctg_ref_cigar))
+                                                        if (round_2_ctg_end_seq_len_dict[r2_ctg_ref_rd2] - r2_ctg_ref_pos - aln_len) <= 50:
+                                                            matched_to_r2_ref_ignored_region_rd2 = True
+
+                                            if matched_to_r2_ref_ignored_region_rd2 is False:
+                                                r2_ctg_refs_passed_qc[r2_ctg_ref_rd2] = [r2_ctg_ref_cigar]
+                                            else:
+                                                ctg_refs_to_ignore_rd2.add(r2_ctg_ref_rd2)
 
                     ####################################################################################################
 
@@ -2694,6 +2749,7 @@ def link_16s(args):
     mismatch_cutoff                     = args['mismatch']
     min_M_pct                           = args['min_M_pct']
     within_gnm_linkage_num_diff         = args['link_num_diff']
+    min_len_16s                         = args['min_len_16s']
     min_M_len_16s                       = args['min_M_len_16s']
     min_M_len_ctg                       = args['min_M_len_ctg']
     reads_vs_16s_sam                    = args['sorted_sam16s']
@@ -3029,20 +3085,15 @@ def link_16s(args):
 
     # polish input 16S by default
     marker_path, marker_base, marker_ext = sep_path_basename_ext(marker_gene_seqs)
-    input_16s_in_wd              = '%s/%s%s'             % (input_16s_folder_in_wd, marker_base, marker_ext)
-    input_16s_in_wd_no_ext       = '%s/%s'               % (input_16s_folder_in_wd, marker_base)
-    input_16s_polished           = '%s/%s.polished%s'    % (input_16s_folder_in_wd, marker_base, marker_ext)
-    input_16s_polished_gff       = '%s/%s.polished.gff'  % (input_16s_folder_in_wd, marker_base)
-    input_16s_polished_no_ext    = '%s/%s.polished'      % (input_16s_folder_in_wd, marker_base)
+    input_16s_in_wd        = '%s/%s%s'       % (input_16s_folder_in_wd, marker_base, marker_ext)
+    input_16s_qc           = '%s/%s.QC%s'    % (input_16s_folder_in_wd, marker_base, marker_ext)
+    input_16s_qc_no_ext    = '%s/%s.QC'      % (input_16s_folder_in_wd, marker_base)
 
-    if no_polish is False:
-        report_and_log(('Round 1: polishing input 16S rRNA genes'), pwd_log_file, keep_quiet)
-        polish_16s(input_16s_in_wd, input_16s_polished)
-        os.system('cp %s %s/' % (input_16s_polished, working_directory))
-        os.system('cp %s %s/' % (input_16s_polished_gff, working_directory))
-    else:
-        input_16s_polished        = input_16s_in_wd
-        input_16s_polished_no_ext = input_16s_in_wd_no_ext
+    # QC 16S
+    report_and_log(('Round 1: QC input 16S rRNA genes'), pwd_log_file, keep_quiet)
+    qc_16s(input_16s_in_wd, input_16s_qc, no_polish, min_len_16s)
+    os.system('cp %s %s/' % (input_16s_qc, working_directory))
+    os.system('rm %s' % input_16s_in_wd)
 
     # calculate depth for input 16S
     mean_depth_dict_16s = {}
@@ -3053,7 +3104,7 @@ def link_16s(args):
             report_and_log(('Round 1: calculating depth for 16S'), pwd_log_file, keep_quiet)
 
             # get mean depth for 16S sequences
-            mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage_global(True, input_16s_polished, reads_file_r1_subset, reads_file_r2_subset, '', subsample_rate_for_depth_estimation, num_threads)
+            mean_depth_dict_16s, s16_len_dict = get_ctg_mean_depth_by_samtools_coverage_global(True, input_16s_qc, reads_file_r1_subset, reads_file_r2_subset, '', subsample_rate_for_depth_estimation, num_threads)
 
             # write out 16s depth
             depth_file_16s_handle = open(depth_file_16s_calculated, 'w')
@@ -3083,14 +3134,14 @@ def link_16s(args):
     #report_and_log((bbmap_index_and_mapping_cmd), pwd_log_file, True)
     #os.system(bbmap_index_and_mapping_cmd)
 
-    bowtie_build_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, input_16s_polished, input_16s_polished_no_ext)
+    bowtie_build_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, input_16s_qc, input_16s_qc_no_ext)
     os.system(bowtie_build_cmd)
     report_and_log((bowtie_build_cmd), pwd_log_file, True)
 
     if reads_vs_16s_sam is None:
         report_and_log(('Round 1: Mapping input reads to marker genes'), pwd_log_file, keep_quiet)
 
-        bowtie_read_to_16s_cmd = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s' % (input_16s_polished_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, input_reads_to_16s_sam_bowtie, num_threads, bowtie_parameter, input_reads_to_16s_sam_bowtie_log)
+        bowtie_read_to_16s_cmd = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f %s 2> %s' % (input_16s_qc_no_ext, reads_file_r1_fasta, reads_file_r2_fasta, input_reads_to_16s_sam_bowtie, num_threads, bowtie_parameter, input_reads_to_16s_sam_bowtie_log)
         report_and_log((bowtie_read_to_16s_cmd), pwd_log_file, True)
         os.system(bowtie_read_to_16s_cmd)
 
@@ -3114,7 +3165,7 @@ def link_16s(args):
 
     # get marker len dict
     marker_len_dict = {}
-    for each_marker_record in SeqIO.parse(input_16s_polished, 'fasta'):
+    for each_marker_record in SeqIO.parse(input_16s_qc, 'fasta'):
         marker_len_dict[each_marker_record.id] = len(each_marker_record.seq)
 
     # get the number of lines per file
@@ -3346,7 +3397,8 @@ def link_16s(args):
                                             if r1_ctg_ref_pos <= 50:
                                                 matched_to_r1_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos) <= 50:
+                                            aln_len, aln_pct, clp_len, clp_pct, mis_pct = get_cigar_stats(cigar_splitter(r1_ctg_ref_cigar))
+                                            if (ctg_len_dict[r1_ctg_ref] - r1_ctg_ref_pos - aln_len) <= 50:
                                                 matched_to_r1_ref_ignored_region = True
 
                                 if matched_to_r1_ref_ignored_region is False:
@@ -3367,8 +3419,7 @@ def link_16s(args):
                             r2_ctg_ref_pos = list(r2_ctg_ref_matched_pos_dict.keys())[0]
                             r2_ctg_ref_cigar = r2_ctg_ref_matched_pos_dict[r2_ctg_ref_pos]
                             r2_ctg_ref_len = ctg_len_dict.get(r2_ctg_ref, 0)
-                            qualified_cigar = check_cigar_quality(r2_ctg_ref_cigar, mismatch_cutoff, min_M_len_ctg,
-                                                                  r2_ctg_ref_pos, r2_ctg_ref_len)
+                            qualified_cigar = check_cigar_quality(r2_ctg_ref_cigar, mismatch_cutoff, min_M_len_ctg, r2_ctg_ref_pos, r2_ctg_ref_len)
                             if qualified_cigar is True:
 
                                 # check if matched to regions need to be ignored
@@ -3380,7 +3431,8 @@ def link_16s(args):
                                             if r2_ctg_ref_pos <= 50:
                                                 matched_to_r2_ref_ignored_region = True
                                         if to_ignore_region == 'right_end':
-                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos) <= 50:
+                                            aln_len, aln_pct, clp_len, clp_pct, mis_pct = get_cigar_stats(cigar_splitter(r2_ctg_ref_cigar))
+                                            if (ctg_len_dict[r2_ctg_ref] - r2_ctg_ref_pos - aln_len) <= 50:
                                                 matched_to_r2_ref_ignored_region = True
 
                                 if matched_to_r2_ref_ignored_region is False:
@@ -3745,10 +3797,10 @@ def link_16s(args):
     report_and_log(('Round 1: Get pairwise 16S rRNA gene identities'), pwd_log_file, keep_quiet)
 
     # makeblastdn with marker gene sequences
-    makeblastdb_16s_cmd = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, input_16s_polished)
+    makeblastdb_16s_cmd = '%s -in %s -dbtype nucl -parse_seqids -logfile /dev/null' % (pwd_makeblastdb_exe, input_16s_qc)
     os.system(makeblastdb_16s_cmd)
 
-    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, input_16s_polished, input_16s_polished, blast_results_all_vs_all_16s, blast_parameters)
+    all_vs_all_16s_blastn_cmd = '%s -query %s -db %s -out %s %s' % (pwd_blastn_exe, input_16s_qc, input_16s_qc, blast_results_all_vs_all_16s, blast_parameters)
     os.system(all_vs_all_16s_blastn_cmd)
 
     pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
@@ -4058,7 +4110,7 @@ def link_16s(args):
 
     report_and_log(('Round 2: Mapping input reads to the ends of contigs in round 1 unlinked genomes'), pwd_log_file, keep_quiet)
 
-    get_unlinked_mag_end_seq(combined_1st_round_unlinked_mags, combined_1st_round_unlinked_mag_end_seq, end_seq_len)
+    ctg_ignore_region_dict_rd2 = get_unlinked_mag_end_seq(combined_1st_round_unlinked_mags, combined_1st_round_unlinked_mag_end_seq, end_seq_len, ctg_ignore_region_dict)
 
     # index reference
     bowtie_build_unlinked_ctg_cmd = 'bowtie2-build --quiet --threads %s -f %s %s' % (num_threads, combined_1st_round_unlinked_mag_end_seq, rd1_unlinked_mag_end_seq_no_ext)
@@ -4117,7 +4169,8 @@ def link_16s(args):
                                               min_M_len_ctg,
                                               mismatch_cutoff,
                                               round_2_ctg_end_seq_len_dict,
-                                              rd2_with_both_mates])
+                                              rd2_with_both_mates,
+                                              ctg_ignore_region_dict_rd2])
 
     pool_parse_sam_gnm = mp.Pool(processes=num_threads)
     pool_parse_sam_gnm.map(parse_sam_gnm_worker, list_for_parse_sam_gnm_worker)
@@ -4257,8 +4310,10 @@ def link_16s(args):
         if rd2_with_both_mates is True:
             #spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
             spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
+            #spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
         else:
             spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_read_extracted_flanking_both_r12_up_seq, spades_wd, num_threads, spades_log)
+            #spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 75,99,127 > %s' % (pwd_spades_exe, rd2_read_extracted_flanking_both_r12_up_seq, spades_wd, num_threads, spades_log)
 
         report_and_log((spades_cmd), pwd_log_file, True)
         os.system(spades_cmd)
@@ -4394,8 +4449,7 @@ def link_16s(args):
                         mini_refs_to_ignore.add(r1_mini_ref)
                     else:
                         # check mismatch
-                        r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(
-                            r1_mini_ref_cigar_splitted)
+                        r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(r1_mini_ref_cigar_splitted)
                         if r1_ref_min_mismatch == 'NA':
                             mini_refs_to_ignore.add(r1_mini_ref)
                         elif (r1_mismatch_pct > r1_ref_min_mismatch) or (r1_mismatch_pct > mismatch_cutoff):
@@ -4874,6 +4928,7 @@ if __name__ == '__main__':
     link_16s_parser_input_files.add_argument('-depth_mag',  required=False, metavar='',             default=None,           help='depth info for MAGs')
 
     # 16S rRNA gene related parameters
+    link_16s_parser_16s.add_argument('-min_len_16s',        required=False, metavar='', type=int,   default=1200,           help='minimum length of 16S (in bp) for linking, (default: %(default)s)')
     link_16s_parser_16s.add_argument('-no_polish',          required=False, action="store_true",                            help='skip polishing 16S before linking')
     link_16s_parser_16s.add_argument('-min_iden_16s',       required=False, metavar='', type=float, default=98,             help='minimum similarity for 16S sequences to be assigned to the same genome, (default: %(default)s)')
     link_16s_parser_16s.add_argument('-min_cov_16s',        required=False, metavar='', type=float, default=30,             help='coverage cutoff for calculating pairwise 16S similarity, (default: %(default)s)')
