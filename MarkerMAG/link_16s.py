@@ -4311,9 +4311,11 @@ def link_16s(args):
             #spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
             spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 55,75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
             #spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 75,99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
+            spades_cmd = '%s --only-assembler --meta -1 %s -2 %s -o %s -t %s -k 99 > %s' % (pwd_spades_exe, rd2_extracted_r1_combined, rd2_extracted_r2_combined, spades_wd, num_threads, spades_log)
         else:
             spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 55,75,99,127 > %s' % (pwd_spades_exe, rd2_read_extracted_flanking_both_r12_up_seq, spades_wd, num_threads, spades_log)
             #spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 75,99,127 > %s' % (pwd_spades_exe, rd2_read_extracted_flanking_both_r12_up_seq, spades_wd, num_threads, spades_log)
+            spades_cmd = '%s --only-assembler -s %s -o %s -t %s -k 99,127 > %s' % (pwd_spades_exe, rd2_read_extracted_flanking_both_r12_up_seq, spades_wd, num_threads, spades_log)
 
         report_and_log((spades_cmd), pwd_log_file, True)
         os.system(spades_cmd)

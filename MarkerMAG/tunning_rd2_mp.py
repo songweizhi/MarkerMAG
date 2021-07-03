@@ -28,6 +28,7 @@ def blast_results_to_pairwise_16s_iden_dict(blastn_output, align_len_cutoff, cov
 
 
 def sep_path_basename_ext(file_in):
+
     # separate path and file name
     file_path, file_name = os.path.split(file_in)
     if file_path == '':
@@ -50,7 +51,7 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
     # get MarkerGene_to_GenomicSeq_dict
     MarkerGene_to_GenomicSeq_dict = {}
     for each_linkage in open(file_in):
-        if not each_linkage.startswith('MarkerGene,GenomicSeq,Number'):
+        if not ((each_linkage.startswith('MarkerGene,GenomicSeq,Number')) or (each_linkage.startswith('MarkerGene,MiniAssembly,Number'))):
             each_linkage_split = each_linkage.strip().split(',')
             MarkerGene_id = each_linkage_split[0][12:]
             GenomicSeq_id = each_linkage_split[1][12:]
@@ -73,7 +74,7 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
     MarkerGene_with_assignment = set()
     GenomicSeq_best_marker_dict = {}
     for each_match in open(file_in_sorted):
-        if each_match.startswith('MarkerGene,GenomicSeq,Number'):
+        if (each_match.startswith('MarkerGene,GenomicSeq,Number')) or (each_match.startswith('MarkerGene,MiniAssembly,Number')):
             file_out_handle.write(each_match)
         else:
             match_split = each_match.strip().split(',')
@@ -140,26 +141,50 @@ def filter_linkages_iteratively(file_in, sort_by_col_header, pairwise_16s_iden_d
     file_out_handle.close()
 
 
-def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
-                                     free_living_ctg_ref_file,
-                                     mini_assembly_to_16s_reads,
-                                     mini_assembly_to_ctg_reads,
-                                     ctg_level_min_link,
-                                     mini_assembly_to_16s_ctg_connector,
-                                     gnm_to_ctg_connector,
-                                     marker_to_ctg_gnm_Key_connector,
-                                     max_within_cate_diff_pct,
-                                     max_between_cate_diff_pct,
-                                     stats_GapFilling_ctg,
-                                     stats_GapFilling_gnm):
+def filter_linkages_iteratively_mini_assembly_to_ctg(file_in_sorted, min_linkages, file_out):
 
-    round2_free_living_16s_ref_dict = {}
-    for free_living_read_16s in open(free_living_16s_ref_file):
-        free_living_read_16s_split = free_living_read_16s.strip().split('\t')
-        if len(free_living_read_16s_split) > 1:
-            read_16s_id = free_living_read_16s_split[0]
-            read_16s_refs = free_living_read_16s_split[1].split(',')
-            round2_free_living_16s_ref_dict[read_16s_id] = read_16s_refs
+    # do mini-assemblies assigned to the same mag need to have roughly the same number of linkages? think about this later
+    mag_ctg_max_link_num_dict = {}
+    mini_assembly_to_mag_dict = {}
+    file_out_handle = open(file_out, 'w')
+    mini_assembly_with_assignment = set()
+    for each_match in open(file_in_sorted):
+        if each_match.startswith('MiniAssembly,GenomicSeq,Number'):
+            file_out_handle.write(each_match)
+        else:
+            match_split = each_match.strip().split(',')
+            mini_assembly = match_split[0]
+            mag_ctg_id = match_split[1]
+            mag_id = mag_ctg_id.split('___C___')[0]
+
+            linkage_num = int(match_split[2])
+            if linkage_num >= min_linkages:
+                if mini_assembly not in mini_assembly_with_assignment:
+                    if mag_ctg_id not in mag_ctg_max_link_num_dict:
+                        mag_ctg_max_link_num_dict[mag_ctg_id] = linkage_num
+                        file_out_handle.write(each_match)
+                        mini_assembly_to_mag_dict[mini_assembly] = mag_id
+                        mini_assembly_with_assignment.add(mini_assembly)
+                    else:
+                        ratio_with_best_assignment = linkage_num/(mag_ctg_max_link_num_dict[mag_ctg_id])
+                        if ratio_with_best_assignment >= 0.8:
+                            file_out_handle.write(each_match)
+                            mini_assembly_to_mag_dict[mini_assembly] = mag_id
+                            mini_assembly_with_assignment.add(mini_assembly)
+                        else:
+                            mini_assembly_with_assignment.add(mini_assembly)
+    file_out_handle.close()
+
+    return mini_assembly_to_mag_dict
+
+
+def get_GapFilling_stats_by_assembly_separately(free_living_16s_ref_file, free_living_ctg_ref_file,
+                                                mini_assembly_to_16s_reads, mini_assembly_to_ctg_reads, ctg_level_min_link,
+                                                mini_assembly_to_16s_ctg_connector, gnm_to_ctg_connector, marker_to_ctg_gnm_Key_connector,
+                                                stats_mini_assembly_to_ctg, stats_mini_assembly_to_ctg_sorted, stats_mini_assembly_to_ctg_filtered,
+                                                stats_GapFilling_ctg, stats_GapFilling_gnm):
+
+    ########## link mini-assembly to MAGs ##########
 
     round2_free_living_ctg_ref_dict = {}
     for free_living_read_ctg in open(free_living_ctg_ref_file):
@@ -172,20 +197,6 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                 each_read_ctg_ref_no_suffix = each_read_ctg_ref[:-2]
                 read_ctg_refs_no_suffix.append(each_read_ctg_ref_no_suffix)
         round2_free_living_ctg_ref_dict[read_ctg_id] = read_ctg_refs_no_suffix
-
-    mini_assembly_to_16s_dict = {}
-    for each_mini_assembly in open(mini_assembly_to_16s_reads):
-        mini_assembly_split = each_mini_assembly.strip().split('\t')
-        mini_assembly_id = mini_assembly_split[0]
-        mini_assembly_mapped_reads = mini_assembly_split[1].split(',')
-        for each_mapped_read in mini_assembly_mapped_reads:
-            mapped_read_16s_refs = round2_free_living_16s_ref_dict.get(each_mapped_read, [])
-            for each_mapped_read_16s_ref in mapped_read_16s_refs:
-                mini_assembly_to_16s_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_16s_ref)
-                if mini_assembly_to_16s_key not in mini_assembly_to_16s_dict:
-                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] = 1
-                else:
-                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] += 1
 
     mini_assembly_to_ctg_dict = {}
     for each_mini_assembly in open(mini_assembly_to_ctg_reads):
@@ -201,97 +212,77 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                 else:
                     mini_assembly_to_ctg_dict[mini_assembly_to_ctg_key] += 1
 
-    mini_assembly_to_16s_dict_reformatted = {}
-    max_link_nun_dict_16s = {}
-    for each in mini_assembly_to_16s_dict:
-        mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
-        seq_16s_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
-        linkage_num = mini_assembly_to_16s_dict[each]
-        seq_16s_with_num = '%s__num__%s' % (seq_16s_id, linkage_num)
-        if linkage_num >= ctg_level_min_link:
+    stats_mini_assembly_to_ctg_handle = open(stats_mini_assembly_to_ctg, 'w')
+    stats_mini_assembly_to_ctg_handle.write('MiniAssembly,GenomicSeq,Number\n')
+    for each_mini_assembly_to_ctg in mini_assembly_to_ctg_dict:
+        link_num = mini_assembly_to_ctg_dict[each_mini_assembly_to_ctg]
+        id_mini_assembly = each_mini_assembly_to_ctg.split(mini_assembly_to_16s_ctg_connector)[0]
+        id_ctg = each_mini_assembly_to_ctg.split(mini_assembly_to_16s_ctg_connector)[1]
+        stats_mini_assembly_to_ctg_handle.write('%s,%s,%s\n' % (id_mini_assembly, id_ctg, link_num))
+    stats_mini_assembly_to_ctg_handle.close()
 
-            # add to mini_assembly_to_16s_dict_reformatted
-            if mini_assembly_id not in mini_assembly_to_16s_dict_reformatted:
-                mini_assembly_to_16s_dict_reformatted[mini_assembly_id] = {seq_16s_with_num}
-            else:
-                mini_assembly_to_16s_dict_reformatted[mini_assembly_id].add(seq_16s_with_num)
+    # sort  and filter
+    sort_csv_by_col(stats_mini_assembly_to_ctg, stats_mini_assembly_to_ctg_sorted, 'Number')
+    os.remove(stats_mini_assembly_to_ctg)
+    mini_assembly_to_mag_dict = filter_linkages_iteratively_mini_assembly_to_ctg(stats_mini_assembly_to_ctg_sorted, 3, stats_mini_assembly_to_ctg_filtered)
 
-            # add to max_link_nun_dict_16s
-            if seq_16s_id not in max_link_nun_dict_16s:
-                max_link_nun_dict_16s[seq_16s_id] = linkage_num
-            else:
-                if linkage_num > max_link_nun_dict_16s[seq_16s_id]:
-                    max_link_nun_dict_16s[seq_16s_id] = linkage_num
+    # visualize linkages
 
-    mini_assembly_to_ctg_dict_reformatted = {}
-    max_link_nun_dict_ctg = {}
-    for each in mini_assembly_to_ctg_dict:
-        mini_assembly_id = each.split(mini_assembly_to_16s_ctg_connector)[0]
-        ctg_id = each.split(mini_assembly_to_16s_ctg_connector)[1]
-        linkage_num = mini_assembly_to_ctg_dict[each]
-        ctg_with_num = '%s__num__%s' % (ctg_id, linkage_num)
-        if linkage_num >= ctg_level_min_link:
 
-            # add to mini_assembly_to_ctg_dict_reformatted
-            if mini_assembly_id not in mini_assembly_to_ctg_dict_reformatted:
-                mini_assembly_to_ctg_dict_reformatted[mini_assembly_id] = {ctg_with_num}
-            else:
-                mini_assembly_to_ctg_dict_reformatted[mini_assembly_id].add(ctg_with_num)
+    ########## link 16S to mini-assemblies with MAG assignment ##########
 
-            # add to max_link_nun_dict_ctg
-            if ctg_id not in max_link_nun_dict_ctg:
-                max_link_nun_dict_ctg[ctg_id] = linkage_num
-            else:
-                if linkage_num > max_link_nun_dict_ctg[ctg_id]:
-                    max_link_nun_dict_ctg[ctg_id] = linkage_num
+    round2_free_living_16s_ref_dict = {}
+    for free_living_read_16s in open(free_living_16s_ref_file):
+        free_living_read_16s_split = free_living_read_16s.strip().split('\t')
+        if len(free_living_read_16s_split) > 1:
+            read_16s_id = free_living_read_16s_split[0]
+            read_16s_refs = free_living_read_16s_split[1].split(',')
+            round2_free_living_16s_ref_dict[read_16s_id] = read_16s_refs
 
-    mini_assembly_linked_both = set(mini_assembly_to_16s_dict_reformatted).intersection(mini_assembly_to_ctg_dict_reformatted)
+    mini_assembly_to_16s_dict = {}
+    for each_mini_assembly in open(mini_assembly_to_16s_reads):
+        mini_assembly_split = each_mini_assembly.strip().split('\t')
+        mini_assembly_id = mini_assembly_split[0]
+        mini_assembly_mapped_reads = mini_assembly_split[1].split(',')
+        for each_mapped_read in mini_assembly_mapped_reads:
+            mapped_read_16s_refs = round2_free_living_16s_ref_dict.get(each_mapped_read, [])
+            for each_mapped_read_16s_ref in mapped_read_16s_refs:
+                mini_assembly_to_16s_key = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_16s_ref)
+                if mini_assembly_to_16s_key not in mini_assembly_to_16s_dict:
+                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] = 1
+                else:
+                    mini_assembly_to_16s_dict[mini_assembly_to_16s_key] += 1
 
-    stats_GapFilling_ctg_handle = open(stats_GapFilling_ctg, 'w')
-    stats_GapFilling_gnm_dict = {}
-    for each_mini_assembly in mini_assembly_linked_both:
-        linked_16s = mini_assembly_to_16s_dict_reformatted[each_mini_assembly]
-        linked_ctg = mini_assembly_to_ctg_dict_reformatted[each_mini_assembly]
-        linked_16s_num_list = [int(i.split('__num__')[1]) for i in linked_16s]
-        linked_ctg_num_list = [int(i.split('__num__')[1]) for i in linked_ctg]
-        linked_16s_num_max = max(linked_16s_num_list)
-        linked_ctg_num_max = max(linked_ctg_num_list)
+    stats_mini_assembly_to_16s_handle = open(stats_GapFilling_ctg, 'w')
+    stats_mini_assembly_to_16s_handle.write('MarkerGene,MiniAssembly,Number\n')
+    marker_to_gnm_link_num_dict_rd2 = {}
+    for each_mini_assembly_to_16s in mini_assembly_to_16s_dict:
+        link_num = mini_assembly_to_16s_dict[each_mini_assembly_to_16s]
+        id_mini_assembly = each_mini_assembly_to_16s.split(mini_assembly_to_16s_ctg_connector)[0]
+        id_16s = each_mini_assembly_to_16s.split(mini_assembly_to_16s_ctg_connector)[1]
+        mini_assembly_mag = mini_assembly_to_mag_dict.get(id_mini_assembly, None)
+        if link_num >= ctg_level_min_link:
+            if mini_assembly_mag != None:
+                stats_mini_assembly_to_16s_handle.write('%s,%s%s%s,%s\n' % (id_16s, mini_assembly_mag, gnm_to_ctg_connector, id_mini_assembly, link_num))
+                marker_to_gnm_key_rd2 = '%s%s%s' % (id_16s, marker_to_ctg_gnm_Key_connector, mini_assembly_mag)
+                if marker_to_gnm_key_rd2 not in marker_to_gnm_link_num_dict_rd2:
+                    marker_to_gnm_link_num_dict_rd2[marker_to_gnm_key_rd2] = link_num
+                else:
+                    marker_to_gnm_link_num_dict_rd2[marker_to_gnm_key_rd2] += link_num
+    stats_mini_assembly_to_16s_handle.close()
 
-        if (min(linked_16s_num_max, linked_ctg_num_max) * 100 / max(linked_16s_num_max, linked_ctg_num_max)) >= max_between_cate_diff_pct:
-
-            linked_16s_filtered = [i for i in linked_16s if int(i.split('__num__')[1])*100/linked_16s_num_max >= max_within_cate_diff_pct]
-            linked_ctg_filtered = [i for i in linked_ctg if int(i.split('__num__')[1])*100/linked_ctg_num_max >= max_within_cate_diff_pct]
-
-            for each_linked_16s in linked_16s_filtered:
-                linked_16s_id = each_linked_16s.split('__num__')[0]
-                linked_16s_num = int(each_linked_16s.split('__num__')[1])
-                linked_16s_num_pct_by_max = linked_16s_num * 100 / max_link_nun_dict_16s[linked_16s_id]
-
-                for each_linked_ctg in linked_ctg_filtered:
-                    linked_ctg_id = each_linked_ctg.split('__num__')[0]
-                    linked_gnm_id = linked_ctg_id.split(gnm_to_ctg_connector)[0]
-                    linked_ctg_num = int(each_linked_ctg.split('__num__')[1])
-                    linked_ctg_num_pct_by_max = linked_ctg_num*100/max_link_nun_dict_ctg[linked_ctg_id]
-
-                    if (linked_16s_num_pct_by_max >= 50) and (linked_ctg_num_pct_by_max >= 50):
-                        stats_GapFilling_ctg_handle.write('%s\t%s\t%s\n' % (linked_16s_id, linked_ctg_id, (linked_16s_num + linked_ctg_num)))
-                        marker_to_gnm_key = '%s%s%s' % (linked_16s_id, marker_to_ctg_gnm_Key_connector, linked_gnm_id)
-                        if marker_to_gnm_key not in stats_GapFilling_gnm_dict:
-                            stats_GapFilling_gnm_dict[marker_to_gnm_key] = (linked_16s_num + linked_ctg_num)
-                        else:
-                            stats_GapFilling_gnm_dict[marker_to_gnm_key] += (linked_16s_num + linked_ctg_num)
-    stats_GapFilling_ctg_handle.close()
-
+    # write out linkages at genome level
     stats_GapFilling_gnm_handle = open(stats_GapFilling_gnm, 'w')
     stats_GapFilling_gnm_handle.write('MarkerGene,GenomicSeq,Number\n')
-    for each_16s_to_gnm in stats_GapFilling_gnm_dict:
-        each_16s_to_gnm_split = each_16s_to_gnm.split(marker_to_ctg_gnm_Key_connector)
-        id_16s = each_16s_to_gnm_split[0]
-        id_gnm = each_16s_to_gnm_split[1]
-        linkage_num = stats_GapFilling_gnm_dict[each_16s_to_gnm]
-        stats_GapFilling_gnm_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (id_16s, id_gnm, linkage_num))
+    for each_linkage in marker_to_gnm_link_num_dict_rd2:
+        stats_GapFilling_gnm_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (
+            each_linkage.split(marker_to_ctg_gnm_Key_connector)[0],
+            each_linkage.split(marker_to_ctg_gnm_Key_connector)[1],
+            marker_to_gnm_link_num_dict_rd2[each_linkage]))
     stats_GapFilling_gnm_handle.close()
 
+
+####################################################### file in ########################################################
 
 step_2_wd                                       = '/Users/songweizhi/Desktop/tunning_rd2'
 free_living_16s_ref_file                        = '%s/file_in/round2_free_living_16s_refs.txt'                          % step_2_wd
@@ -299,9 +290,6 @@ free_living_ctg_ref_file                        = '%s/file_in/round2_free_living
 mini_assembly_to_16s_reads                      = '%s/file_in/mini_assembly_to_16s_reads.txt'                           % step_2_wd
 mini_assembly_to_ctg_reads                      = '%s/file_in/mini_assembly_to_ctg_reads.txt'                           % step_2_wd
 blast_results_all_vs_all_16s                    = '%s/file_in/Oral_0622_60_60_polish_new_16S_all_vs_all_blastn.tab'     % step_2_wd
-stats_GapFilling_ctg                            = '%s/file_in/stats_GapFilling_ctg.txt'                                 % step_2_wd
-stats_GapFilling_file                           = '%s/file_in/stats_GapFilling_gnm.txt'                                 % step_2_wd
-stats_GapFilling_file_filtered                  = '%s/stats_GapFilling_gnm_filtered.txt'                        % step_2_wd
 ctg_level_min_link                              = 3
 within_gnm_linkage_num_diff                     = 80
 max_mini_assembly_link_num_diff_between_ctg_16s = 10
@@ -313,9 +301,24 @@ marker_to_ctg_gnm_Key_connector                 = '___M___'
 gnm_to_ctg_connector                            = '___C___'
 mini_assembly_to_16s_ctg_connector              = '___Mini___'
 read_to_marker_connector                        = '___r___'
+mean_depth_dict_gnm                             = {}
+mean_depth_dict_16s                             = {}
+min_16s_gnm_multiple                            = 0
 
+####################################################### file out #######################################################
 
-get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
+stats_mini_assembly_to_ctg                      = '%s/stats_mini_assembly_to_ctg.txt'                                   % step_2_wd
+stats_mini_assembly_to_ctg_sorted               = '%s/stats_mini_assembly_to_ctg_sorted.txt'                            % step_2_wd
+stats_mini_assembly_to_ctg_filtered             = '%s/stats_mini_assembly_to_ctg_filtered.txt'                          % step_2_wd
+stats_GapFilling_ctg                            = '%s/stats_GapFilling_ctg.txt'                                         % step_2_wd
+stats_GapFilling_file                           = '%s/stats_GapFilling_gnm.txt'                                         % step_2_wd
+stats_GapFilling_file_filtered                  = '%s/stats_GapFilling_gnm_filtered.txt'                                % step_2_wd
+
+########################################################################################################################
+
+pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
+
+get_GapFilling_stats_by_assembly_separately(free_living_16s_ref_file,
                                  free_living_ctg_ref_file,
                                  mini_assembly_to_16s_reads,
                                  mini_assembly_to_ctg_reads,
@@ -323,16 +326,12 @@ get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
                                  mini_assembly_to_16s_ctg_connector,
                                  gnm_to_ctg_connector,
                                  marker_to_ctg_gnm_Key_connector,
-                                 within_gnm_linkage_num_diff,
-                                 max_mini_assembly_link_num_diff_between_ctg_16s,
+                                 stats_mini_assembly_to_ctg,
+                                 stats_mini_assembly_to_ctg_sorted,
+                                 stats_mini_assembly_to_ctg_filtered,
                                  stats_GapFilling_ctg,
                                  stats_GapFilling_file)
 
-pairwise_16s_iden_dict = blast_results_to_pairwise_16s_iden_dict(blast_results_all_vs_all_16s, min_aln_16s, min_cov_16s)
-
-mean_depth_dict_gnm = {}
-mean_depth_dict_16s = {}
-min_16s_gnm_multiple = 0
 filter_linkages_iteratively(stats_GapFilling_file, 'Number', pairwise_16s_iden_dict, mean_depth_dict_gnm,
                             mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, min_link_num, min_link_num,
                             within_gnm_linkage_num_diff, stats_GapFilling_file_filtered)

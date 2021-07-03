@@ -72,13 +72,6 @@ cov_q_cutoff                = 90
 min_match_length            = 524288  # 100 Kbp  102400
 # mag_metadata                = '%s/file_in/MAG_metadata.txt'                                 % wd
 
-
-'''
-GI_0414_specific	Rd_1	|	50	49	1	0	49/49(100.0)	|	32	32	0	0	0	32/97(32.99)	32/32(100.0)
-GI_0414_specific	Rd_2	|	22	22	0	0	22/22(100.0)	|	16	16	0	0	0	16/97(16.49)	16/16(100.0)
-GI_0414_specific	Both	|	72	71	1	0	71/71(100.0)	|	48	48	0	0	0	48/97(49.48)	48/48(100.0)
-
-'''
 ########## 16S to reference ##########
 
 perform_blastn_16s_vs_refs  = False  # True or False
@@ -92,14 +85,18 @@ total_query_mag_num         = 87
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/Oral_0622_60_60_polish_new_linkages_by_genome.txt'             % wd
+MarkerMAG_linkages          = '%s/Oral_0622_60_60_polish_min1200_99_127_linkages_by_genome.txt'             % wd
 MarkerMAG_linkages          = '/Users/songweizhi/Desktop/tunning_rd2/stats_GapFilling_gnm_filtered.txt'
 linkages_from_rd1           = True
+#linkages_from_rd1           = False
 
 '''
+Oral_0622_60_60_polish_min1200_99_127_linkages_by_genome.txt	Rd_1	|	44	39	1	4	39/43(90.7)	    |	16	15	0	1	0	15/16(93.75)
+Oral_0622_60_60_polish_min1200_99_127_linkages_by_genome.txt	Rd_2	|	20	6	0	14	6/20(30.0)	    |	3	1	0	2	0	1/3(33.33)
+Oral_0622_60_60_polish_min1200_99_127_linkages_by_genome.txt	Both	|	64	45	1	18	45/63(71.43)	|	19	16	0	3	0	16/19(84.21)
 
 Oral_0622_60_60_polish_new_linkages_by_genome.txt	Rd_1	|	46	44	1	1	44/45(97.78)	|	16	15	0	1	0	15/16(93.75)
-Oral_0622_60_60_polish_new_linkages_by_genome.txt	Rd_2	|	23	9	0	14	9/23(39.13)	|	4	2	0	2	0	2/4(50.0)
+Oral_0622_60_60_polish_new_linkages_by_genome.txt	Rd_2	|	23	9	0	14	9/23(39.13)	    |	4	2	0	2	0	2/4(50.0)
 Oral_0622_60_60_polish_new_linkages_by_genome.txt	Both	|	69	53	1	15	53/68(77.94)	|	20	17	0	3	0	17/20(85.0)
 
 Oral_0622_60_60_polish_min1200_75_127_linkages_by_genome.txt	Rd_1	|	45	43	1	1	43/44(97.73)	|	16	15	0	1	0	15/16(93.75)
@@ -515,12 +512,12 @@ BioSAK iTOL -ColorRange -lg leaf_group_raw.txt -lt Identity -out leaf_group.txt
 ########################################################################################################################
 
 '''
-# cluster_id = 'C162_1'
+# cluster_id = 'C159_1'
 # print('cluster to ref  : %s\t%s\t%s' % (cluster_id, len(cluster_to_ref_dict.get(cluster_id, 'NA')), cluster_to_ref_dict.get(cluster_id, 'NA')))
 # print('cluster to MAG  : %s\t%s\t%s' % (cluster_id, len(cluster_to_bin_dict.get(cluster_id, 'NA')), cluster_to_bin_dict.get(cluster_id, 'NA')))
 # print('cluster to Matam: %s\t%s\t%s' % (cluster_id, len(cluster_to_matam_16s_dict.get(cluster_id, 'NA')), cluster_to_matam_16s_dict.get(cluster_id, 'NA')))
 # #print('cluster to MAG: %s\t%s' % ('C126_5', cluster_to_bin_dict.get('C126_5', 'NA')))
-#
+
 # print(bin_to_cluster_dict['Oral_70'])
 #
 # print('cluster to MAG  : %s\t%s\t%s' % ('C126_1', len(cluster_to_bin_dict.get('C126_1', 'NA')), cluster_to_bin_dict.get('C126_1', 'NA')))
@@ -533,11 +530,20 @@ BioSAK iTOL -ColorRange -lg leaf_group_raw.txt -lt Identity -out leaf_group.txt
 
 
 '''
-Oral_35	C162_1	1	OTU_97.26155.0    OTU_97.42844.0    OTU_97.43495.1    OTU_97.5254.0
+OTU_97.16455.0
+OTU_97.18445.1
+OTU_97.30379.0
+OTU_97.3393.0
+OTU_97.41293.0
+OTU_97.41776.0
+OTU_97.42505.0
+OTU_97.43450.0
+OTU_97.44958.0
+OTU_97.45053.1
+OTU_97.45058.0
+OTU_97.4910.0
 
-16S	    C167_1	2	OTU_97.45050.0, OTU_97.5114.0
-16S	    C167_2	15	OTU_97.17854.0, OTU_97.19638.0, OTU_97.24239.0, OTU_97.28688.0, OTU_97.33033.1, OTU_97.41546.0, OTU_97.42206.0, OTU_97.42261.0, 
-			        OTU_97.42504.0, OTU_97.42691.0, OTU_97.42844.1, OTU_97.42989.0, OTU_97.44935.0, OTU_97.45053.0, OTU_97.5757.0
+
 
 
 '''
