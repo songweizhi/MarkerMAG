@@ -1767,7 +1767,7 @@ def get_GapFilling_stats_by_assembly(free_living_16s_ref_file,
     stats_GapFilling_gnm_handle.close()
 
 
-def get_unmapped_mates_seq(sam_file, input_r1_fasta, input_r2_fasta, extracted_seq_file):
+def get_unmapped_mates_seq(sam_file, input_r1_fasta, input_r2_fasta, extracted_seq_file, seqtk_exe):
 
     sam_path, sam_basename, sam_ext = sep_path_basename_ext(sam_file)
     reads_to_extract_r1_txt = '%s/%s_unmapped_mates_R1.txt' % (sam_path, sam_basename)
@@ -1804,9 +1804,9 @@ def get_unmapped_mates_seq(sam_file, input_r1_fasta, input_r2_fasta, extracted_s
     reads_to_extract_r2_txt_handle.write('%s\n' % '\n'.join(reads_to_extract_r2))
     reads_to_extract_r2_txt_handle.close()
 
-    seqtk_extract_r1_read_cmd = 'seqtk subseq %s %s > %s' % (
+    seqtk_extract_r1_read_cmd = '%s subseq %s %s > %s' % (seqtk_exe,
     input_r1_fasta, reads_to_extract_r1_txt, reads_to_extract_r1_fa)
-    seqtk_extract_r2_read_cmd = 'seqtk subseq %s %s > %s' % (
+    seqtk_extract_r2_read_cmd = '%s subseq %s %s > %s' % (seqtk_exe,
     input_r2_fasta, reads_to_extract_r2_txt, reads_to_extract_r2_fa)
     os.system(seqtk_extract_r1_read_cmd)
     os.system(seqtk_extract_r2_read_cmd)
@@ -3022,8 +3022,8 @@ def link_16s(args):
             to_extract_reads_num = round(paired_r1_num * subsample_rate_for_depth_estimation)
 
             # remember to use the same random seed to keep pairing
-            subsample_r1_cmd = 'seqtk sample -s100 %s %s > %s' % (reads_file_r1, to_extract_reads_num, reads_file_r1_subset)
-            subsample_r2_cmd = 'seqtk sample -s100 %s %s > %s' % (reads_file_r2, to_extract_reads_num, reads_file_r2_subset)
+            subsample_r1_cmd = '%s sample -s100 %s %s > %s' % (seqtk_exe, reads_file_r1, to_extract_reads_num, reads_file_r1_subset)
+            subsample_r2_cmd = '%s sample -s100 %s %s > %s' % (seqtk_exe, reads_file_r2, to_extract_reads_num, reads_file_r2_subset)
 
             # subsample with multiprocessing
             pool = mp.Pool(processes=2)
@@ -3266,8 +3266,8 @@ def link_16s(args):
         rd1_r2_to_extract_handle.write('%s\n' % '\n'.join([('%s.2' % i) for i in to_extract_read_base_list]))
 
     # extract reads with seqtk
-    seqtk_extract_cmd_rd1_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd1_r1_to_extract, rd1_extracted_all_r1)
-    seqtk_extract_cmd_rd1_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, rd1_r2_to_extract, rd1_extracted_all_r2)
+    seqtk_extract_cmd_rd1_r1 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r1_fasta, rd1_r1_to_extract, rd1_extracted_all_r1)
+    seqtk_extract_cmd_rd1_r2 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r2_fasta, rd1_r2_to_extract, rd1_extracted_all_r2)
     report_and_log((seqtk_extract_cmd_rd1_r1), pwd_log_file, True)
     report_and_log((seqtk_extract_cmd_rd1_r2), pwd_log_file, True)
     os.system(seqtk_extract_cmd_rd1_r1)
@@ -3852,8 +3852,8 @@ def link_16s(args):
         linking_reads_r2_txt_handle.write('%s\n' % '\n'.join(sorted([('%s.2' % i) for i in all_linking_reads_base_set])))
 
     # extract linking reads with seqtk
-    seqtk_extract_cmd_rd1_linking_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, linking_reads_r1_txt, linking_reads_r1_fasta)
-    seqtk_extract_cmd_rd1_linking_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, linking_reads_r2_txt, linking_reads_r2_fasta)
+    seqtk_extract_cmd_rd1_linking_r1 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r1_fasta, linking_reads_r1_txt, linking_reads_r1_fasta)
+    seqtk_extract_cmd_rd1_linking_r2 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r2_fasta, linking_reads_r2_txt, linking_reads_r2_fasta)
     os.system(seqtk_extract_cmd_rd1_linking_r1)
     os.system(seqtk_extract_cmd_rd1_linking_r2)
 
@@ -3861,7 +3861,7 @@ def link_16s(args):
     linked_contigs_txt_handle = open(linked_contigs_txt, 'w')
     linked_contigs_txt_handle.write('\n'.join(ctgs_to_extract) + '\n')
     linked_contigs_txt_handle.close()
-    subset_linked_ctgs_cmd = 'seqtk subseq %s %s > %s' % (combined_input_gnms, linked_contigs_txt, linked_contigs_fasta)
+    subset_linked_ctgs_cmd = '%s subseq %s %s > %s' % (seqtk_exe, combined_input_gnms, linked_contigs_txt, linked_contigs_fasta)
     os.system(subset_linked_ctgs_cmd)
 
     # read sequence of linked contigs into dict
@@ -4100,8 +4100,8 @@ def link_16s(args):
             rd2_to_extract_flking_16s_r2_id_handle.write('%s\n' % '\n'.join(sorted([('%s.2' % i) for i in rd2_read_to_extract_flanking_16s])))
 
         # extract reads with seqtk
-        seqtk_extract_cmd_rd2_flk_16s_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd2_to_extract_flking_16s_r1_id, rd2_extracted_flking_16s_r1_seq_tmp)
-        seqtk_extract_cmd_rd2_flk_16s_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, rd2_to_extract_flking_16s_r2_id, rd2_extracted_flking_16s_r2_seq_tmp)
+        seqtk_extract_cmd_rd2_flk_16s_r1 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r1_fasta, rd2_to_extract_flking_16s_r1_id, rd2_extracted_flking_16s_r1_seq_tmp)
+        seqtk_extract_cmd_rd2_flk_16s_r2 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r2_fasta, rd2_to_extract_flking_16s_r2_id, rd2_extracted_flking_16s_r2_seq_tmp)
         os.system(seqtk_extract_cmd_rd2_flk_16s_r1)
         os.system(seqtk_extract_cmd_rd2_flk_16s_r2)
 
@@ -4197,8 +4197,8 @@ def link_16s(args):
             rd2_to_extract_flking_ctg_r2_id_handle.write('%s\n' % '\n'.join(sorted([('%s.2' % i) for i in to_extract_read_base_rd2_ctg])))
 
         # extract reads with seqtk
-        seqtk_extract_cmd_rd2_flk_ctg_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd2_to_extract_flking_ctg_r1_id, rd2_extracted_flking_ctg_r1_seq_tmp)
-        seqtk_extract_cmd_rd2_flk_ctg_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, rd2_to_extract_flking_ctg_r2_id, rd2_extracted_flking_ctg_r2_seq_tmp)
+        seqtk_extract_cmd_rd2_flk_ctg_r1 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r1_fasta, rd2_to_extract_flking_ctg_r1_id, rd2_extracted_flking_ctg_r1_seq_tmp)
+        seqtk_extract_cmd_rd2_flk_ctg_r2 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r2_fasta, rd2_to_extract_flking_ctg_r2_id, rd2_extracted_flking_ctg_r2_seq_tmp)
         os.system(seqtk_extract_cmd_rd2_flk_ctg_r1)
         os.system(seqtk_extract_cmd_rd2_flk_ctg_r2)
 
@@ -4247,8 +4247,8 @@ def link_16s(args):
             rd2_read_to_extract_flanking_both_r2_up_id_file_handle.write('%s\n' % '\n'.join(sorted([i for i in rd2_read_to_extract_flanking_both_r2_up])))
 
         # extract reads with seqtk
-        seqtk_extract_cmd_rd2_flk_both_up_r1 = 'seqtk subseq %s %s > %s' % (reads_file_r1_fasta, rd2_read_to_extract_flanking_both_r1_up_id_file, rd2_read_extracted_flanking_both_r1_up_seq)
-        seqtk_extract_cmd_rd2_flk_both_up_r2 = 'seqtk subseq %s %s > %s' % (reads_file_r2_fasta, rd2_read_to_extract_flanking_both_r2_up_id_file, rd2_read_extracted_flanking_both_r2_up_seq)
+        seqtk_extract_cmd_rd2_flk_both_up_r1 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r1_fasta, rd2_read_to_extract_flanking_both_r1_up_id_file, rd2_read_extracted_flanking_both_r1_up_seq)
+        seqtk_extract_cmd_rd2_flk_both_up_r2 = '%s subseq %s %s > %s' % (seqtk_exe, reads_file_r2_fasta, rd2_read_to_extract_flanking_both_r2_up_id_file, rd2_read_extracted_flanking_both_r2_up_seq)
         os.system(seqtk_extract_cmd_rd2_flk_both_up_r1)
         os.system(seqtk_extract_cmd_rd2_flk_both_up_r2)
 
