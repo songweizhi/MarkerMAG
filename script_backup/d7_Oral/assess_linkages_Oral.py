@@ -85,14 +85,22 @@ total_query_mag_num         = 87
 
 ########## assessment results ##########
 
-MarkerMAG_linkages          = '%s/Oral_0705_45_45_min1500_linkages_by_genome.txt'             % wd
+MarkerMAG_linkages          = '%s/Oral_0708_60_60_min1200_mask_linkages_by_genome.txt'             % wd
 linkages_from_rd1           = False
 
 
-MarkerMAG_linkages          = '/Users/songweizhi/Desktop/tunning_rd2/stats_GapFilling_gnm_filtered.txt'
-linkages_from_rd1           = True
+# MarkerMAG_linkages          = '/Users/songweizhi/Desktop/tunning_rd2/stats_GapFilling_gnm_filtered.txt'
+# linkages_from_rd1           = True
 
 '''
+
+Oral_0708_60_60_min1200_mask_linkages_by_genome.txt	Rd_1	|	50	43	1	6	43/49(87.76)	|	16	14	0	2	0	14/16(87.5)
+Oral_0708_60_60_min1200_mask_linkages_by_genome.txt	Rd_2	|	16	12	0	4	12/16(75.0)	    |	4	2	0	2	0	2/4(50.0)
+Oral_0708_60_60_min1200_mask_linkages_by_genome.txt	Both	|	66	55	1	10	55/65(84.62)	|	20	16	0	4	0	16/20(80.0)
+
+Oral_0708_60_60_min1500_mask_linkages_by_genome.txt	Rd_1	|	46	40	0	6	40/46(86.96)	|	16	14	0	2	0	14/16(87.5)
+Oral_0708_60_60_min1500_mask_linkages_by_genome.txt	Rd_2	|	9	1	0	8	1/9(11.11)	    |	2	1	0	1	0	1/2(50.0)
+Oral_0708_60_60_min1500_mask_linkages_by_genome.txt	Both	|	55	41	0	14	41/55(74.55)	|	18	15	0	3	0	15/18(83.33)
 
 
 Oral_0705_60_60_min1500_linkages_by_genome.txt	Rd_1	|	45	42	0	3	42/45(93.33)	|	16	15	0	1	0	15/16(93.75)

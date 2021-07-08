@@ -331,23 +331,247 @@ def get_mean_iden_list(linked_16s_list, pairwise_16s_iden_dict):
     return mean_iden_list
 
 
-def filter_linkages_iteratively_new(sorted_file_in, pairwise_16s_iden_dict, within_genome_16s_divergence_cutoff, marker_len_dict,
+# def filter_linkages_iteratively_new(sorted_file_in, pairwise_16s_iden_dict, within_genome_16s_divergence_cutoff, marker_len_dict,
+#                                     min_linkages, within_gnm_linkage_num_diff, file_out,
+#                                     marker_to_gnm_linking_cigar_dict_16s_side,
+#                                     marker_to_gnm_linking_cigar_dict_ctg_side,
+#                                     marker_to_ctg_gnm_Key_connector):
+#
+#     # filter linkage
+#     gnm_max_link_num_dict = {}
+#     file_out_handle = open(file_out, 'w')
+#     MarkerGene_with_assignment = set()
+#     MarkerGene_to_be_ignored = set()
+#     current_gnm = ''
+#     current_gnm_best_16s_list = []
+#     current_gnm_highest_link_num = 0
+#     gnm_with_assignment = set()
+#     gnm_to_assignmed_16s_dict = dict()
+#     best_16s_processed_gnm_list = set()
+#     for each_match in open(sorted_file_in):
+#         if each_match.startswith('MarkerGene,GenomicSeq,Number'):
+#             file_out_handle.write(each_match)
+#         else:
+#             match_split = each_match.strip().split(',')
+#             MarkerGene = match_split[0][12:]
+#             MarkerGene_len = marker_len_dict[MarkerGene]
+#             GenomicSeq = match_split[1][12:]
+#             linkage_num = int(match_split[2])
+#             MarkerGene_to_GenomicSeq_key = '%s%s%s' % (MarkerGene, marker_to_ctg_gnm_Key_connector, GenomicSeq)
+#
+#             if linkage_num >= min_linkages:
+#
+#                 ########### quality pre-check (I guess) ###########
+#                 # failed linkage will be added to MarkerGene_to_be_ignored
+#
+#                 # first check if linked to conserved regions ???
+#                 already_assigned_16s_list = []
+#                 iden_with_already_assigned_16s_list = []
+#                 for already_assigned_16s in MarkerGene_with_assignment:
+#                     current_key = '__|__'.join(sorted([already_assigned_16s, MarkerGene]))
+#                     current_key_value = pairwise_16s_iden_dict.get(current_key, 0)
+#                     already_assigned_16s_list.append(already_assigned_16s)
+#                     iden_with_already_assigned_16s_list.append(current_key_value)
+#
+#                 if len(already_assigned_16s_list) > 0:
+#                     sorted_best_matched_16s_list = [[seq_id, mean_iden] for mean_iden, seq_id in sorted(zip(iden_with_already_assigned_16s_list, already_assigned_16s_list), reverse=True)]
+#                     best_matched_marker      = sorted_best_matched_16s_list[0][0]
+#                     best_matched_marker_iden = sorted_best_matched_16s_list[0][1]
+#                     best_matched_marker_len  = marker_len_dict[best_matched_marker]
+#                     if ((best_matched_marker_len - MarkerGene_len) >= 200) and (best_matched_marker_iden >= 99):
+#
+#                         # get clp pct at gnm level
+#                         linking_cigar_16s_side = marker_to_gnm_linking_cigar_dict_16s_side[MarkerGene_to_GenomicSeq_key]
+#                         linking_cigar_ctg_side = marker_to_gnm_linking_cigar_dict_ctg_side[MarkerGene_to_GenomicSeq_key]
+#                         linking_cigar_16s_side_clp = [i for i in linking_cigar_16s_side if (('S' in i) or ('s' in i))]
+#                         linking_cigar_ctg_side_clp = [i for i in linking_cigar_ctg_side if (('S' in i) or ('s' in i))]
+#                         linking_cigar_16s_side_clp_pct = len(linking_cigar_16s_side_clp) * 100 / len(linking_cigar_16s_side)
+#                         linking_cigar_ctg_side_clp_pct = len(linking_cigar_ctg_side_clp) * 100 / len(linking_cigar_ctg_side)
+#
+#                         if (linking_cigar_16s_side_clp_pct >= 60) and (linking_cigar_ctg_side_clp_pct >= 60):
+#                             MarkerGene_to_be_ignored.add(MarkerGene)
+#
+#                 ###################### process here ######################
+#
+#                 if (MarkerGene not in MarkerGene_with_assignment) and (MarkerGene not in MarkerGene_to_be_ignored):
+#
+#                     if current_gnm == '':
+#                         current_gnm = GenomicSeq
+#                         current_gnm_best_16s_list.append(MarkerGene)
+#                         current_gnm_highest_link_num = linkage_num
+#
+#                     elif current_gnm == GenomicSeq:
+#
+#                         if linkage_num == current_gnm_highest_link_num:
+#                             current_gnm_best_16s_list.append(MarkerGene)
+#                         else:
+#                             # process markers with highest number of linking reads
+#                             if current_gnm not in best_16s_processed_gnm_list:
+#
+#                                 gnm_max_link_num_dict[current_gnm] = current_gnm_highest_link_num
+#
+#                                 if len(current_gnm_best_16s_list) == 1:
+#                                     file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (current_gnm_best_16s_list[0], current_gnm, current_gnm_highest_link_num))
+#                                     gnm_with_assignment.add(current_gnm)
+#                                     MarkerGene_with_assignment.add(current_gnm_best_16s_list[0])
+#                                     gnm_to_assignmed_16s_dict[current_gnm] = {current_gnm_best_16s_list[0]}
+#                                     best_16s_processed_gnm_list.add(current_gnm)
+#                                 else:
+#                                     # process here
+#                                     current_gnm_best_16s_mean_iden_list = get_mean_iden_list(current_gnm_best_16s_list, pairwise_16s_iden_dict)
+#                                     sorted_best_16s_list = [seq_id for mean_iden, seq_id in sorted(zip(current_gnm_best_16s_mean_iden_list, current_gnm_best_16s_list), reverse=True)]
+#
+#                                     add_index = 0
+#                                     for linked_16s in sorted_best_16s_list:
+#                                         if add_index == 0:
+#                                             file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
+#                                             gnm_with_assignment.add(current_gnm)
+#                                             MarkerGene_with_assignment.add(linked_16s)
+#                                             if current_gnm not in gnm_to_assignmed_16s_dict:
+#                                                 gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
+#                                             else:
+#                                                 gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
+#                                         else:
+#                                             # get identity list with already assigned 16s
+#                                             already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(current_gnm)
+#                                             iden_with_already_assigned_16s_list = []
+#                                             for each_assigned_16s in already_assigned_16s_list:
+#                                                 marker_key = '__|__'.join(sorted([each_assigned_16s, linked_16s]))
+#                                                 marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
+#                                                 iden_with_already_assigned_16s_list.append(marker_key_iden)
+#                                             if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
+#                                                 file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
+#                                                 gnm_with_assignment.add(current_gnm)
+#                                                 MarkerGene_with_assignment.add(linked_16s)
+#                                                 if current_gnm not in gnm_to_assignmed_16s_dict:
+#                                                     gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
+#                                                 else:
+#                                                     gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
+#                                         add_index += 1
+#                                     best_16s_processed_gnm_list.add(current_gnm)
+#
+#                             # process current one here
+#                             # get identity list with already assigned 16s
+#                             already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(GenomicSeq)
+#                             iden_with_already_assigned_16s_list = []
+#                             for each_assigned_16s in already_assigned_16s_list:
+#                                 marker_key = '__|__'.join(sorted([each_assigned_16s, MarkerGene]))
+#                                 marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
+#                                 iden_with_already_assigned_16s_list.append(marker_key_iden)
+#                             if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
+#
+#                                 gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
+#                                 if (linkage_num * 100 / gnm_max_link_num) >= within_gnm_linkage_num_diff:
+#                                     file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (MarkerGene, GenomicSeq, linkage_num))
+#                                     gnm_with_assignment.add(GenomicSeq)
+#                                     MarkerGene_with_assignment.add(MarkerGene)
+#                                     if GenomicSeq not in gnm_to_assignmed_16s_dict:
+#                                         gnm_to_assignmed_16s_dict[GenomicSeq] = {MarkerGene}
+#                                     else:
+#                                         gnm_to_assignmed_16s_dict[GenomicSeq].add(MarkerGene)
+#                                 else:
+#                                     # check length, if shorter than assigned, ignore this one by adding it to MarkerGene_to_be_ignored
+#                                     MarkerGene_len = marker_len_dict[MarkerGene]
+#                                     already_assigned_16s_len_list = [marker_len_dict[s16] for s16 in already_assigned_16s_list]
+#                                     median_assign_16s_len = np.median(already_assigned_16s_len_list)
+#                                     if (median_assign_16s_len - MarkerGene_len) > 50:
+#                                         MarkerGene_to_be_ignored.add(MarkerGene)
+#                     else:
+#                         # first check if previous one processed
+#                         if current_gnm not in best_16s_processed_gnm_list:
+#
+#                             gnm_max_link_num_dict[current_gnm] = current_gnm_highest_link_num
+#
+#                             # process unprocessed
+#                             if len(current_gnm_best_16s_list) == 1:
+#                                 file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (current_gnm_best_16s_list[0], current_gnm, current_gnm_highest_link_num))
+#                                 gnm_with_assignment.add(current_gnm)
+#                                 MarkerGene_with_assignment.add(current_gnm_best_16s_list[0])
+#                                 gnm_to_assignmed_16s_dict[current_gnm] = {current_gnm_best_16s_list[0]}
+#                                 best_16s_processed_gnm_list.add(current_gnm)
+#                             else:
+#                                 current_gnm_best_16s_mean_iden_list = get_mean_iden_list(current_gnm_best_16s_list, pairwise_16s_iden_dict)
+#                                 sorted_best_16s_list = [seq_id for mean_iden, seq_id in sorted(zip(current_gnm_best_16s_mean_iden_list, current_gnm_best_16s_list), reverse=True)]
+#
+#                                 add_index = 0
+#                                 for linked_16s in sorted_best_16s_list:
+#                                     if add_index == 0:
+#                                         file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
+#                                         gnm_with_assignment.add(current_gnm)
+#                                         MarkerGene_with_assignment.add(linked_16s)
+#                                         if current_gnm not in gnm_to_assignmed_16s_dict:
+#                                             gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
+#                                         else:
+#                                             gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
+#                                     else:
+#                                         # get identity list with already assigned 16s
+#                                         already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(current_gnm)
+#                                         iden_with_already_assigned_16s_list = []
+#                                         for each_assigned_16s in already_assigned_16s_list:
+#                                             marker_key = '__|__'.join(sorted([each_assigned_16s, linked_16s]))
+#                                             marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
+#                                             iden_with_already_assigned_16s_list.append(marker_key_iden)
+#
+#                                         if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
+#                                             file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
+#                                             gnm_with_assignment.add(current_gnm)
+#                                             MarkerGene_with_assignment.add(linked_16s)
+#                                             if current_gnm not in gnm_to_assignmed_16s_dict:
+#                                                 gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
+#                                             else:
+#                                                 gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
+#                                     add_index += 1
+#                                 best_16s_processed_gnm_list.add(current_gnm)
+#
+#                         # then process current one
+#                         if GenomicSeq in best_16s_processed_gnm_list:
+#                             # get identity list with already assigned 16s
+#                             already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(GenomicSeq)
+#
+#
+#                             iden_with_already_assigned_16s_list = []
+#                             for each_assigned_16s in already_assigned_16s_list:
+#                                 marker_key = '__|__'.join(sorted([each_assigned_16s, MarkerGene]))
+#                                 marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
+#                                 iden_with_already_assigned_16s_list.append(marker_key_iden)
+#
+#                             if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
+#
+#                                 gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
+#                                 if (linkage_num * 100 / gnm_max_link_num) >= within_gnm_linkage_num_diff:
+#                                     file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (MarkerGene, GenomicSeq, linkage_num))
+#                                     gnm_with_assignment.add(GenomicSeq)
+#                                     MarkerGene_with_assignment.add(MarkerGene)
+#                                     if GenomicSeq not in gnm_to_assignmed_16s_dict:
+#                                         gnm_to_assignmed_16s_dict[GenomicSeq] = {MarkerGene}
+#                                     else:
+#                                         gnm_to_assignmed_16s_dict[GenomicSeq].add(MarkerGene)
+#                                 else:
+#                                     # check length, if shorter than assigned, ignore this one by adding it to MarkerGene_with_assignment
+#                                     already_assigned_16s_len_list = [marker_len_dict[s16] for s16 in already_assigned_16s_list]
+#                                     median_assign_16s_len = np.median(already_assigned_16s_len_list)
+#                                     if (median_assign_16s_len - MarkerGene_len) > 50:
+#                                         MarkerGene_to_be_ignored.add(MarkerGene)
+#                         else:
+#                             current_gnm = GenomicSeq
+#                             current_gnm_best_16s_list = [MarkerGene]
+#                             current_gnm_highest_link_num = linkage_num
+#     file_out_handle.close()
+#
+
+def filter_linkages_iteratively_new(sorted_file_in, pairwise_16s_iden_dict, within_genome_16s_divergence_cutoff,
+                                    marker_len_dict,
                                     min_linkages, within_gnm_linkage_num_diff, file_out,
                                     marker_to_gnm_linking_cigar_dict_16s_side,
                                     marker_to_gnm_linking_cigar_dict_ctg_side,
                                     marker_to_ctg_gnm_Key_connector):
-
     # filter linkage
-    gnm_max_link_num_dict = {}
     file_out_handle = open(file_out, 'w')
     MarkerGene_with_assignment = set()
     MarkerGene_to_be_ignored = set()
-    current_gnm = ''
-    current_gnm_best_16s_list = []
-    current_gnm_highest_link_num = 0
     gnm_with_assignment = set()
-    gnm_to_assignmed_16s_dict = dict()
-    best_16s_processed_gnm_list = set()
+    gnm_best_16s_link_num_dict = {}
+    gnm_assigned_16s_dict = {}
     for each_match in open(sorted_file_in):
         if each_match.startswith('MarkerGene,GenomicSeq,Number'):
             file_out_handle.write(each_match)
@@ -361,7 +585,10 @@ def filter_linkages_iteratively_new(sorted_file_in, pairwise_16s_iden_dict, with
 
             if linkage_num >= min_linkages:
 
-                # first check if linked to conserved regions
+                ########### quality pre-check (I guess) ###########
+                # failed linkage will be added to MarkerGene_to_be_ignored
+
+                # first check if linked to conserved regions ???
                 already_assigned_16s_list = []
                 iden_with_already_assigned_16s_list = []
                 for already_assigned_16s in MarkerGene_with_assignment:
@@ -371,10 +598,11 @@ def filter_linkages_iteratively_new(sorted_file_in, pairwise_16s_iden_dict, with
                     iden_with_already_assigned_16s_list.append(current_key_value)
 
                 if len(already_assigned_16s_list) > 0:
-                    sorted_best_matched_16s_list = [[seq_id, mean_iden] for mean_iden, seq_id in sorted(zip(iden_with_already_assigned_16s_list, already_assigned_16s_list), reverse=True)]
-                    best_matched_marker      = sorted_best_matched_16s_list[0][0]
+                    sorted_best_matched_16s_list = [[seq_id, mean_iden] for mean_iden, seq_id in sorted(
+                        zip(iden_with_already_assigned_16s_list, already_assigned_16s_list), reverse=True)]
+                    best_matched_marker = sorted_best_matched_16s_list[0][0]
                     best_matched_marker_iden = sorted_best_matched_16s_list[0][1]
-                    best_matched_marker_len  = marker_len_dict[best_matched_marker]
+                    best_matched_marker_len = marker_len_dict[best_matched_marker]
                     if ((best_matched_marker_len - MarkerGene_len) >= 200) and (best_matched_marker_iden >= 99):
 
                         # get clp pct at gnm level
@@ -388,176 +616,41 @@ def filter_linkages_iteratively_new(sorted_file_in, pairwise_16s_iden_dict, with
                         if (linking_cigar_16s_side_clp_pct >= 60) and (linking_cigar_ctg_side_clp_pct >= 60):
                             MarkerGene_to_be_ignored.add(MarkerGene)
 
-                if (MarkerGene in MarkerGene_with_assignment) or (MarkerGene in MarkerGene_to_be_ignored):
-                    pass
-                else:
-                    if current_gnm == '':
-                        current_gnm = GenomicSeq
-                        current_gnm_best_16s_list.append(MarkerGene)
-                        current_gnm_highest_link_num = linkage_num
+                ###################### process here ######################
 
-                    elif current_gnm == GenomicSeq:
+                if (MarkerGene not in MarkerGene_with_assignment) and (MarkerGene not in MarkerGene_to_be_ignored):
 
-                        if linkage_num == current_gnm_highest_link_num:
-                            current_gnm_best_16s_list.append(MarkerGene)
-                        else:
-                            # process markers with highest number of linking reads
-                            if current_gnm not in best_16s_processed_gnm_list:
-
-                                gnm_max_link_num_dict[current_gnm] = current_gnm_highest_link_num
-
-                                if len(current_gnm_best_16s_list) == 1:
-                                    file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (current_gnm_best_16s_list[0], current_gnm, current_gnm_highest_link_num))
-                                    gnm_with_assignment.add(current_gnm)
-                                    MarkerGene_with_assignment.add(current_gnm_best_16s_list[0])
-                                    gnm_to_assignmed_16s_dict[current_gnm] = {current_gnm_best_16s_list[0]}
-                                    best_16s_processed_gnm_list.add(current_gnm)
-
-                                else:
-                                    # process here
-                                    current_gnm_best_16s_mean_iden_list = get_mean_iden_list(current_gnm_best_16s_list, pairwise_16s_iden_dict)
-                                    sorted_best_16s_list = [seq_id for mean_iden, seq_id in sorted(zip(current_gnm_best_16s_mean_iden_list, current_gnm_best_16s_list), reverse=True)]
-
-                                    add_index = 0
-                                    for linked_16s in sorted_best_16s_list:
-                                        if add_index == 0:
-                                            file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
-                                            gnm_with_assignment.add(current_gnm)
-                                            MarkerGene_with_assignment.add(linked_16s)
-                                            if current_gnm not in gnm_to_assignmed_16s_dict:
-                                                gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
-                                            else:
-                                                gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
-                                        else:
-                                            # get identity list with already assigned 16s
-                                            already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(current_gnm)
-                                            iden_with_already_assigned_16s_list = []
-                                            for each_assigned_16s in already_assigned_16s_list:
-                                                marker_key = '__|__'.join(sorted([each_assigned_16s, linked_16s]))
-                                                marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
-                                                iden_with_already_assigned_16s_list.append(marker_key_iden)
-                                            if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
-                                                file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
-                                                gnm_with_assignment.add(current_gnm)
-                                                MarkerGene_with_assignment.add(linked_16s)
-                                                if current_gnm not in gnm_to_assignmed_16s_dict:
-                                                    gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
-                                                else:
-                                                    gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
-                                        add_index += 1
-                                    best_16s_processed_gnm_list.add(current_gnm)
-
-                            # process current one here
-                            # get identity list with already assigned 16s
-                            already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(GenomicSeq)
-                            iden_with_already_assigned_16s_list = []
-                            for each_assigned_16s in already_assigned_16s_list:
-                                marker_key = '__|__'.join(sorted([each_assigned_16s, MarkerGene]))
-                                marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
-                                iden_with_already_assigned_16s_list.append(marker_key_iden)
-                            if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
-
-                                gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
-                                if (linkage_num * 100 / gnm_max_link_num) >= within_gnm_linkage_num_diff:
-                                    file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (MarkerGene, GenomicSeq, linkage_num))
-                                    gnm_with_assignment.add(GenomicSeq)
-                                    MarkerGene_with_assignment.add(MarkerGene)
-                                    if GenomicSeq not in gnm_to_assignmed_16s_dict:
-                                        gnm_to_assignmed_16s_dict[GenomicSeq] = {MarkerGene}
-                                    else:
-                                        gnm_to_assignmed_16s_dict[GenomicSeq].add(MarkerGene)
-                                else:
-                                    # check length, if shorter than assigned, ignore this one by adding it to MarkerGene_to_be_ignored
-                                    MarkerGene_len = marker_len_dict[MarkerGene]
-                                    already_assigned_16s_len_list = [marker_len_dict[s16] for s16 in already_assigned_16s_list]
-                                    median_assign_16s_len = np.median(already_assigned_16s_len_list)
-                                    if (median_assign_16s_len - MarkerGene_len) > 50:
-                                        MarkerGene_to_be_ignored.add(MarkerGene)
+                    if GenomicSeq not in gnm_with_assignment:
+                        file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (MarkerGene, GenomicSeq, linkage_num))
+                        gnm_with_assignment.add(GenomicSeq)
+                        MarkerGene_with_assignment.add(MarkerGene)
+                        gnm_assigned_16s_dict[GenomicSeq] = [MarkerGene]
+                        gnm_best_16s_link_num_dict[GenomicSeq] = linkage_num
                     else:
-                        # first check if previous one processed
-                        if current_gnm not in best_16s_processed_gnm_list:
+                        gnm_assigned_16s_list = gnm_assigned_16s_dict[GenomicSeq]
+                        gnm_best_assigned_16s_link_num = gnm_best_16s_link_num_dict[GenomicSeq]
 
-                            gnm_max_link_num_dict[current_gnm] = current_gnm_highest_link_num
+                        # get iden list with already assigned 16s
+                        iden_with_assigned_16s_list = []
+                        for each_assigned_16s in gnm_assigned_16s_list:
+                            marker_to_maker_key = '__|__'.join(sorted([MarkerGene, each_assigned_16s]))
+                            marker_key_iden = pairwise_16s_iden_dict.get(marker_to_maker_key, 0)
+                            iden_with_assigned_16s_list.append(marker_key_iden)
 
-                            # process unprocessed
-                            if len(current_gnm_best_16s_list) == 1:
-                                file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (current_gnm_best_16s_list[0], current_gnm, current_gnm_highest_link_num))
-                                gnm_with_assignment.add(current_gnm)
-                                MarkerGene_with_assignment.add(current_gnm_best_16s_list[0])
-                                gnm_to_assignmed_16s_dict[current_gnm] = {current_gnm_best_16s_list[0]}
-                                best_16s_processed_gnm_list.add(current_gnm)
+                        # get min iden with already assigned 16s
+                        min_iden_with_assigned_16s = min(iden_with_assigned_16s_list)
+
+                        # if min iden higher than within_genome_16s_divergence_cutoff
+                        if min_iden_with_assigned_16s >= within_genome_16s_divergence_cutoff:
+
+                            # filter here
+                            if (linkage_num * 100 / gnm_best_assigned_16s_link_num) >= within_gnm_linkage_num_diff:
+                                file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (MarkerGene, GenomicSeq, linkage_num))
+                                MarkerGene_with_assignment.add(MarkerGene)
+                                gnm_assigned_16s_dict[GenomicSeq] = [MarkerGene]
+                                print(each_match.strip())
                             else:
-                                current_gnm_best_16s_mean_iden_list = get_mean_iden_list(current_gnm_best_16s_list, pairwise_16s_iden_dict)
-                                sorted_best_16s_list = [seq_id for mean_iden, seq_id in sorted(zip(current_gnm_best_16s_mean_iden_list, current_gnm_best_16s_list), reverse=True)]
-
-                                add_index = 0
-                                for linked_16s in sorted_best_16s_list:
-                                    if add_index == 0:
-                                        file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
-                                        gnm_with_assignment.add(current_gnm)
-                                        MarkerGene_with_assignment.add(linked_16s)
-                                        if current_gnm not in gnm_to_assignmed_16s_dict:
-                                            gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
-                                        else:
-                                            gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
-                                    else:
-                                        # get identity list with already assigned 16s
-                                        already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(current_gnm)
-                                        iden_with_already_assigned_16s_list = []
-                                        for each_assigned_16s in already_assigned_16s_list:
-                                            marker_key = '__|__'.join(sorted([each_assigned_16s, linked_16s]))
-                                            marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
-                                            iden_with_already_assigned_16s_list.append(marker_key_iden)
-
-                                        if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
-                                            file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (linked_16s, current_gnm, current_gnm_highest_link_num))
-                                            gnm_with_assignment.add(current_gnm)
-                                            MarkerGene_with_assignment.add(linked_16s)
-                                            if current_gnm not in gnm_to_assignmed_16s_dict:
-                                                gnm_to_assignmed_16s_dict[current_gnm] = {linked_16s}
-                                            else:
-                                                gnm_to_assignmed_16s_dict[current_gnm].add(linked_16s)
-                                    add_index += 1
-                                best_16s_processed_gnm_list.add(current_gnm)
-
-                        # then process current one
-                        if GenomicSeq in best_16s_processed_gnm_list:
-                            # get identity list with already assigned 16s
-                            already_assigned_16s_list = gnm_to_assignmed_16s_dict.get(GenomicSeq)
-
-
-                            iden_with_already_assigned_16s_list = []
-                            for each_assigned_16s in already_assigned_16s_list:
-                                marker_key = '__|__'.join(sorted([each_assigned_16s, MarkerGene]))
-                                marker_key_iden = pairwise_16s_iden_dict.get(marker_key, 0)
-                                iden_with_already_assigned_16s_list.append(marker_key_iden)
-
-                            if min(iden_with_already_assigned_16s_list) >= within_genome_16s_divergence_cutoff:
-
-                                gnm_max_link_num = gnm_max_link_num_dict[GenomicSeq]
-                                if (linkage_num * 100 / gnm_max_link_num) >= within_gnm_linkage_num_diff:
-                                    file_out_handle.write('MarkerGene__%s,GenomicSeq__%s,%s\n' % (MarkerGene, GenomicSeq, linkage_num))
-                                    gnm_with_assignment.add(GenomicSeq)
-                                    MarkerGene_with_assignment.add(MarkerGene)
-                                    if GenomicSeq not in gnm_to_assignmed_16s_dict:
-                                        gnm_to_assignmed_16s_dict[GenomicSeq] = {MarkerGene}
-                                    else:
-                                        gnm_to_assignmed_16s_dict[GenomicSeq].add(MarkerGene)
-                                else:
-                                    # check length, if shorter than assigned, ignore this one by adding it to MarkerGene_with_assignment
-                                    already_assigned_16s_len_list = [marker_len_dict[s16] for s16 in already_assigned_16s_list]
-                                    median_assign_16s_len = np.median(already_assigned_16s_len_list)
-                                    if (median_assign_16s_len - MarkerGene_len) > 50:
-                                        MarkerGene_to_be_ignored.add(MarkerGene)
-                        else:
-                            current_gnm = GenomicSeq
-                            current_gnm_best_16s_list = [MarkerGene]
-                            current_gnm_highest_link_num = linkage_num
-
-    #print('current_gnm: %s' % current_gnm)
-    #print('current_gnm_highest_link_num: %s' % current_gnm_highest_link_num)
-    #print('current_gnm_best_16s_list: %s' % current_gnm_best_16s_list)
-
+                                MarkerGene_to_be_ignored.add(MarkerGene)
     file_out_handle.close()
 
 
@@ -935,15 +1028,24 @@ if __name__ ==  '__main__':
     ##################################################### file in ####################################################
 
     step_1_wd                                   = '/Users/songweizhi/Desktop/tunning_rd1'
-    input_16s_polished                          = '%s/file_in/CAMI_Oral_138_16S_0.999.polished.fa'                      % step_1_wd
-    combined_input_gnms                         = '%s/file_in/3_Oral_refined_MAGs_combined.fa'                          % step_1_wd
-    input_reads_to_16s_sam_MappingRecord_folder = '%s/file_in/Oral_0622_60_60_polish_input_reads_to_16S_MappingRecord'  % step_1_wd
-    blast_results_all_vs_all_16s                = '%s/file_in/Oral_0622_60_60_polish_16S_all_vs_all_blastn.tab'         % step_1_wd
-    rd1_extracted_to_gnm_sam_reformatted_sorted = '%s/file_in/rd1_extracted_to_gnm_reformatted_sorted.sam'              % step_1_wd
-    combined_barrnap_gff                        = '%s/file_in/combined_barrnap.gff'                                     % step_1_wd
-
+    # input_16s_polished                          = '%s/file_in/CAMI_Oral_138_16S_0.999.polished.fa'                      % step_1_wd
+    # combined_input_gnms                         = '%s/file_in/3_Oral_refined_MAGs_combined.fa'                          % step_1_wd
+    # input_reads_to_16s_sam_MappingRecord_folder = '%s/file_in/Oral_0622_60_60_polish_input_reads_to_16S_MappingRecord'  % step_1_wd
+    # blast_results_all_vs_all_16s                = '%s/file_in/Oral_0622_60_60_polish_16S_all_vs_all_blastn.tab'         % step_1_wd
+    # rd1_extracted_to_gnm_sam_reformatted_sorted = '%s/file_in/rd1_extracted_to_gnm_reformatted_sorted.sam'              % step_1_wd
+    # combined_barrnap_gff                        = '%s/file_in/combined_barrnap.gff'                                     % step_1_wd
     min_M_len_16s = 60
     min_M_len_ctg = 60
+
+    input_16s_polished                          = '%s/file_in/MBARC26_SILVA138_polished.QC.fasta'                      % step_1_wd
+    combined_input_gnms                         = '%s/file_in/Refined_refined_bins_renamed_combined_no_ending_16s.fa'                          % step_1_wd
+    input_reads_to_16s_sam_MappingRecord_folder = '%s/file_in/MBARC26_0708_45_45_min1200_input_reads_to_16S_MappingRecord'  % step_1_wd
+    blast_results_all_vs_all_16s                = '%s/file_in/MBARC26_0708_45_45_min1200_16S_all_vs_all_blastn.tab'         % step_1_wd
+    rd1_extracted_to_gnm_sam_reformatted_sorted = '%s/file_in/rd1_extracted_to_gnm_reformatted_sorted.sam'              % step_1_wd
+    combined_barrnap_gff                        = '%s/file_in/combined_barrnap.gff'                                     % step_1_wd
+    min_M_len_16s = 45
+    min_M_len_ctg = 45
+
     min_M_pct = 35
     mismatch_cutoff = 2
     marker_to_ctg_gnm_Key_connector = '___M___'
@@ -956,7 +1058,7 @@ if __name__ ==  '__main__':
     min_16s_gnm_multiple = 0
     min_iden_16s = 98
     min_link_num = 8
-    within_gnm_linkage_num_diff = 80
+    within_gnm_linkage_num_diff = 10
     time_format = '[%Y-%m-%d %H:%M:%S]'
     num_threads = 4
 
@@ -988,7 +1090,7 @@ if __name__ ==  '__main__':
     MappingRecord_dict = {}
     read_base_to_pop = set()
     for each_mp_file in splitted_sam_mp_file_set:
-        if processing_index % 10 == 0:
+        if processing_index % 30 == 0:
             print('Processing %s/%s' % (processing_index, len(splitted_sam_mp_file_set)))
         processing_index += 1
         first_line_base = True

@@ -566,22 +566,39 @@ def linkage_vis_worker(arguments_list):
 
 if __name__ == '__main__':
 
+    # step_2_wd                                       = '/Users/songweizhi/Desktop/tunning_rd2'
+    # reads_file_r1_fasta                             = 'Oral_5_25_R1.fasta'
+    # reads_file_r2_fasta                             = 'Oral_5_25_R2.fasta'
+    # free_living_16s_ref_file                        = '%s/file_in/round2_free_living_16s_refs.txt'                              % step_2_wd
+    # free_living_ctg_ref_file                        = '%s/file_in/round2_free_living_ctg_refs.txt'                              % step_2_wd
+    # mini_assembly_to_16s_reads                      = '%s/file_in/mini_assembly_to_16s_reads.txt'                               % step_2_wd
+    # mini_assembly_to_ctg_reads                      = '%s/file_in/mini_assembly_to_ctg_reads.txt'                               % step_2_wd
+    # blast_results_all_vs_all_16s                    = '%s/file_in/Oral_0705_60_60_16S_all_vs_all_blastn.tab'                    % step_2_wd
+    # mini_assemblies                                 = '%s/file_in/scaffolds.fasta'                                              % step_2_wd
+    # marker_gene_seqs                                = '%s/file_in/CAMI_Oral_138_16S_0.999.polished_min1200.QC.fa'               % step_2_wd
+    # splitted_sam_mp_file_folder                     = '%s/file_in/Oral_0705_60_60_input_reads_to_16S_MappingRecord'             % step_2_wd
+    # sam_file_mini_assembly_reformatted              = '%s/file_in/scaffolds_bowtie_reformatted_16s.sam'                         % step_2_wd
+    # combined_1st_round_unlinked_mag_end_seq         = '%s/file_in/round_1_unlinked_gnm_end_500bp.fa'                            % step_2_wd
+    # rd1_unlinked_mags_sam_bowtie_reformat_sorted    = '%s/file_in/round_1_unlinked_gnm_bowtie_reformatted_sorted.sam'           % step_2_wd
+    # rd2_to_extract_flking_both_r1_fa                = '%s/file_in/rd2_to_extract_flking_both_r1.fa'                             % step_2_wd
+    # rd2_to_extract_flking_both_r2_fa                = '%s/file_in/rd2_to_extract_flking_both_r2.fa'                             % step_2_wd
+    # sam_file_mini_assembly_reformatted_sorted       = '%s/file_in/scaffolds_bowtie_reformatted_sorted.sam'                      % step_2_wd
+    # spades_wd                                       = '%s/file_in/mini_assembly_SPAdes_wd'                                      % step_2_wd
+
     step_2_wd                                       = '/Users/songweizhi/Desktop/tunning_rd2'
-    reads_file_r1_fasta                             = 'Oral_5_25_R1.fasta'
-    reads_file_r2_fasta                             = 'Oral_5_25_R2.fasta'
+    marker_gene_seqs                                = '%s/file_in/MBARC26_SILVA138_polished.QC.fasta'                           % step_2_wd
+    blast_results_all_vs_all_16s                    = '%s/file_in/MBARC26_0705_60_60_min1200_16S_all_vs_all_blastn.tab'         % step_2_wd
+    splitted_sam_mp_file_folder                     = '%s/file_in/MBARC26_0705_60_60_min1200_input_reads_to_16S_MappingRecord'  % step_2_wd
     free_living_16s_ref_file                        = '%s/file_in/round2_free_living_16s_refs.txt'                              % step_2_wd
     free_living_ctg_ref_file                        = '%s/file_in/round2_free_living_ctg_refs.txt'                              % step_2_wd
-    mini_assembly_to_16s_reads                      = '%s/file_in/mini_assembly_to_16s_reads.txt'                               % step_2_wd
-    mini_assembly_to_ctg_reads                      = '%s/file_in/mini_assembly_to_ctg_reads.txt'                               % step_2_wd
-    blast_results_all_vs_all_16s                    = '%s/file_in/Oral_0705_60_60_16S_all_vs_all_blastn.tab'                    % step_2_wd
     mini_assemblies                                 = '%s/file_in/scaffolds.fasta'                                              % step_2_wd
-    marker_gene_seqs                                = '%s/file_in/CAMI_Oral_138_16S_0.999.polished_min1200.QC.fa'               % step_2_wd
-    splitted_sam_mp_file_folder                     = '%s/file_in/Oral_0705_60_60_input_reads_to_16S_MappingRecord'             % step_2_wd
-    sam_file_mini_assembly_reformatted              = '%s/file_in/scaffolds_bowtie_reformatted_16s.sam'                         % step_2_wd
     combined_1st_round_unlinked_mag_end_seq         = '%s/file_in/round_1_unlinked_gnm_end_500bp.fa'                            % step_2_wd
     rd1_unlinked_mags_sam_bowtie_reformat_sorted    = '%s/file_in/round_1_unlinked_gnm_bowtie_reformatted_sorted.sam'           % step_2_wd
     rd2_to_extract_flking_both_r1_fa                = '%s/file_in/rd2_to_extract_flking_both_r1.fa'                             % step_2_wd
     rd2_to_extract_flking_both_r2_fa                = '%s/file_in/rd2_to_extract_flking_both_r2.fa'                             % step_2_wd
+    sam_file_mini_assembly_reformatted_sorted       = '%s/file_in/scaffolds_bowtie_reformatted_sorted.sam'                      % step_2_wd
+    spades_wd                                       = '%s/file_in/mini_assembly_SPAdes_wd'                                      % step_2_wd
+    link_stats_combined_filtered_s1                 = '%s/file_in/MBARC26_0705_60_60_min1200_stats_combined_filtered.txt'               % step_2_wd
 
     ctg_level_min_link                              = 3
     within_gnm_linkage_num_diff                     = 80
@@ -600,6 +617,10 @@ if __name__ == '__main__':
     gap_N_num                                       = 50
     end_ctg_len_for_mafft                           = 1000
     num_threads                                     = 4
+    min_M_len_mini                                  = 45
+    mismatch_cutoff                                 = 2
+    rd2_with_both_mates                             = False
+
     pwd_bowtie2_build_exe                           = '/Users/songweizhi/Softwares/bowtie2/bowtie2-build'
     pwd_bowtie2_exe                                 = '/Users/songweizhi/Softwares/bowtie2/bowtie2'
     bowtie_parameter                                = '--local --all --no-unal -N 1 -L 30'
@@ -622,9 +643,30 @@ if __name__ == '__main__':
     linking_reads_r1_fasta                          = '%s/linking_reads_r1.fa'                                              % step_2_wd
     linking_reads_r2_fasta                          = '%s/linking_reads_r2.fa'                                              % step_2_wd
     vis_folder_rd2                                  = '%s/vis_folder_rd2'                                                   % step_2_wd
+    sam_file_mini_assembly                          = '%s/scaffolds_bowtie.sam'                                             % step_2_wd
+    sam_file_mini_assembly_log                      = '%s/scaffolds_bowtie.log'                                             % step_2_wd
+    sam_file_mini_assembly_reformatted              = '%s/scaffolds_bowtie_reformatted.sam'                                 % step_2_wd
+    sam_file_mini_assembly_reformatted_log          = '%s/scaffolds_bowtie_reformatted.log'                                 % step_2_wd
+    rd2_read_extracted_flanking_both_r1_seq         = '%s/rd2_read_to_extract_flanking_both_R1.fa'                          % step_2_wd
+    rd2_read_extracted_flanking_both_r2_seq         = '%s/rd2_read_to_extract_flanking_both_R2.fa'                          % step_2_wd
+    rd2_read_extracted_flanking_both_r12_seq        = '%s/rd2_read_to_extract_flanking_both_R12.fa'                         % step_2_wd
+    rd2_read_extracted_flanking_both_r12_up_seq     = '%s/rd2_read_to_extract_flanking_both_R12_up.fa'                      % step_2_wd
+    free_living_16s_ref_file_no_linked              = '%s/round2_free_living_16s_refs_no_linked.txt'                        % step_2_wd
+    free_living_ctg_ref_file_no_linked              = '%s/round2_free_living_ctg_refs_no_linked.txt'                        % step_2_wd
 
 
     ####################################################################################################################
+
+    # get linked marker genes and genomic sequences in step 1
+    linked_marker_gene_set = set()
+    linked_genomic_seq_set = set()
+    for each_link in open(link_stats_combined_filtered_s1):
+        if not each_link.startswith('MarkerGene,GenomicSeq,Number'):
+            each_link_split = each_link.strip().split(',')
+            id_16s = each_link_split[0][12:]
+            id_gnm = each_link_split[1][12:]
+            linked_marker_gene_set.add(id_16s)
+            linked_genomic_seq_set.add(id_gnm)
 
     splitted_sam_mp_file_re     = '%s/*.txt' % splitted_sam_mp_file_folder
     splitted_sam_mp_file_set    = glob.glob(splitted_sam_mp_file_re)
@@ -642,9 +684,38 @@ if __name__ == '__main__':
 
     ##################################################### get reads flanking 16s and ctg ####################################################
 
+    # remove already linked ref from free_living_16s_ref_file
+    free_living_16s_ref_file_no_linked_handle = open(free_living_16s_ref_file_no_linked, 'w')
+    for each_16s_ref in open(free_living_16s_ref_file):
+        each_16s_ref_split = each_16s_ref.strip().split('\t')
+        read_id = each_16s_ref_split[0]
+        linked_refs = each_16s_ref_split[1].split(',')
+        linked_to_linked_ref = False
+        for each_linked_ref in linked_refs:
+            if each_linked_ref in linked_marker_gene_set:
+                linked_to_linked_ref = True
+        if linked_to_linked_ref is False:
+           free_living_16s_ref_file_no_linked_handle.write(each_16s_ref)
+    free_living_16s_ref_file_no_linked_handle.close()
+
+    # remove already linked ref from free_living_ctg_ref_file
+    free_living_ctg_ref_file_no_linked_handle = open(free_living_ctg_ref_file_no_linked, 'w')
+    for each_ctg_ref in open(free_living_ctg_ref_file):
+        each_ctg_ref_split = each_ctg_ref.strip().split('\t')
+        read_id = each_ctg_ref_split[0]
+        linked_ctgs = each_ctg_ref_split[1].split(',')
+        linked_to_linked_gnm = False
+        for each_linked_ctg in linked_ctgs:
+            linked_gnm = each_linked_ctg.split(gnm_to_ctg_connector)[0]
+            if linked_gnm in linked_genomic_seq_set:
+                linked_to_linked_gnm = True
+        if linked_to_linked_gnm is False:
+           free_living_ctg_ref_file_no_linked_handle.write(each_ctg_ref)
+    free_living_ctg_ref_file_no_linked_handle.close()
+
     flanking_16s_reads = set()
     flanking_16s_reads_base = set()
-    for free_living_read_16s in open(free_living_16s_ref_file):
+    for free_living_read_16s in open(free_living_16s_ref_file_no_linked):
         free_living_read_16s_split = free_living_read_16s.strip().split('\t')
         if len(free_living_read_16s_split) > 1:
             read_16s_id = free_living_read_16s_split[0]
@@ -654,18 +725,13 @@ if __name__ == '__main__':
 
     flanking_ctg_reads = set()
     flanking_ctg_reads_base = set()
-    for each_read_to_ctg_ref in open(free_living_ctg_ref_file):
+    for each_read_to_ctg_ref in open(free_living_ctg_ref_file_no_linked):
         read_id = each_read_to_ctg_ref.strip().split('\t')[0]
         read_id_base = '.'.join(read_id.split('.')[:-1])
         flanking_ctg_reads.add(read_id)
         flanking_ctg_reads_base.add(read_id_base)
 
     ##################################################### combine reads flanking 16s and contig ####################################################
-
-    rd2_read_extracted_flanking_both_r1_seq     = '%s/rd2_read_to_extract_flanking_both_R1.fa'     % step_2_wd
-    rd2_read_extracted_flanking_both_r2_seq     = '%s/rd2_read_to_extract_flanking_both_R2.fa'     % step_2_wd
-    rd2_read_extracted_flanking_both_r12_seq    = '%s/rd2_read_to_extract_flanking_both_R12.fa'    % step_2_wd
-    rd2_read_extracted_flanking_both_r12_up_seq = '%s/rd2_read_to_extract_flanking_both_R12_up.fa' % step_2_wd
 
     rd2_read_to_extract_flanking_both = set.union(flanking_16s_reads, flanking_ctg_reads)
     rd2_read_to_extract_flanking_both_base = set.union(flanking_16s_reads_base, flanking_ctg_reads_base)
@@ -703,19 +769,8 @@ if __name__ == '__main__':
 
     ######################################### second round linking by assembly #########################################
 
-    sam_file_mini_assembly                          = '%s/scaffolds_bowtie.sam'                         % step_2_wd
-    sam_file_mini_assembly_log                      = '%s/scaffolds_bowtie.log'                         % step_2_wd
-    sam_file_mini_assembly_reformatted              = '%s/scaffolds_bowtie_reformatted.sam'             % step_2_wd
-    sam_file_mini_assembly_reformatted_log          = '%s/scaffolds_bowtie_reformatted.log'             % step_2_wd
-    sam_file_mini_assembly_reformatted_sorted       = '%s/file_in/scaffolds_bowtie_reformatted_sorted.sam'      % step_2_wd
-    spades_wd                                       = '%s/file_in/mini_assembly_SPAdes_wd'              % step_2_wd
-    mini_assemblies                                 = '%s/scaffolds.fasta'                              % spades_wd
+    mini_assemblies                                 = '%s/scaffolds.fasta'                                  % spades_wd
     mini_assemblies_no_ext = '.'.join(mini_assemblies.split('.')[:-1])
-    rd2_with_both_mates = False
-
-    min_M_len_mini = 45
-    mismatch_cutoff = 2
-
 
     # mapping with bowtie
     if rd2_with_both_mates is False:
@@ -902,12 +957,6 @@ if __name__ == '__main__':
                     r1_mini_refs_no_ignored = {key: value for key, value in r1_mini_refs_passed_qc.items() if key not in mini_refs_to_ignore}
                     r2_mini_refs_no_ignored = {key: value for key, value in r2_mini_refs_passed_qc.items() if key not in mini_refs_to_ignore}
 
-                    # if current_read_base == 'S8_242469':
-                    #     print(current_read_base_r1_mini_ref_dict)
-                    #     print(current_read_base_r2_mini_ref_dict)
-                    #     print(r1_mini_refs_no_ignored)
-                    #     print(r2_mini_refs_no_ignored)
-
                     # no mate has no_ignored alignments
                     if (len(r1_mini_refs_no_ignored) == 0) and (len(r2_mini_refs_no_ignored) == 0):
                         pass
@@ -963,7 +1012,7 @@ if __name__ == '__main__':
     ############################################ link mini-assembly to MAGs ############################################
 
     mini_assembly_to_ctg_dict_with_l_r_read_base = {}
-    for free_living_read_ctg in open(free_living_ctg_ref_file):
+    for free_living_read_ctg in open(free_living_ctg_ref_file_no_linked):
         free_living_read_ctg_split = free_living_read_ctg.strip().split('\t')
         read_id = free_living_read_ctg_split[0]
         read_id_base = '.'.join(read_id.split('.')[:-1])
@@ -990,46 +1039,6 @@ if __name__ == '__main__':
                     else:
                         mini_assembly_to_ctg_dict_with_l_r_read_base[mini_assembly_to_ctg_key_with_l_r].add(read_id_base)
 
-
-    ############################################ link mini-assembly to MAGs ############################################
-
-    # round2_free_living_ctg_ref_dict = {}
-    # round2_free_living_ctg_ref_dict_with_l_r = {}
-    # for free_living_read_ctg in open(free_living_ctg_ref_file):
-    #     free_living_read_ctg_split = free_living_read_ctg.strip().split('\t')
-    #     read_ctg_id = free_living_read_ctg_split[0]
-    #     read_ctg_refs = free_living_read_ctg_split[1].split(',')
-    #     read_ctg_refs_no_suffix = []
-    #     read_ctg_refs_with_suffix = []
-    #     for each_read_ctg_ref in read_ctg_refs:
-    #         if each_read_ctg_ref[-2:] in ['_l', '_r']:
-    #             each_read_ctg_ref_no_suffix = each_read_ctg_ref[:-2]
-    #             read_ctg_refs_no_suffix.append(each_read_ctg_ref_no_suffix)
-    #             read_ctg_refs_with_suffix.append(each_read_ctg_ref)
-    #     round2_free_living_ctg_ref_dict[read_ctg_id] = read_ctg_refs_no_suffix
-    #     round2_free_living_ctg_ref_dict_with_l_r[read_ctg_id] = read_ctg_refs_with_suffix
-    #
-    # mini_assembly_to_ctg_dict = {}
-    # mini_assembly_to_ctg_dict_read_base = {}
-    # mini_assembly_to_ctg_dict_with_l_r = {}
-    # mini_assembly_to_ctg_dict_with_l_r_read_base = {}
-    # for each_mini_assembly in open(mini_assembly_to_ctg_reads):
-    #     mini_assembly_split = each_mini_assembly.strip().split('\t')
-    #     mini_assembly_id = mini_assembly_split[0]
-    #     mini_assembly_mapped_reads = mini_assembly_split[1].split(',')
-    #     for each_mapped_read in mini_assembly_mapped_reads:
-    #         each_mapped_read_base = '.'.join(each_mapped_read.split('.')[:-1])
-    #         mapped_read_ctg_refs = round2_free_living_ctg_ref_dict.get(each_mapped_read, [])
-    #         mapped_read_ctg_refs_with_l_r = round2_free_living_ctg_ref_dict_with_l_r.get(each_mapped_read, [])
-    #         for each_mapped_read_ctg_ref_with_l_r in mapped_read_ctg_refs_with_l_r:
-    #             mini_assembly_to_ctg_key_with_l_r = '%s%s%s' % (mini_assembly_id, mini_assembly_to_16s_ctg_connector, each_mapped_read_ctg_ref_with_l_r)
-    #             if mini_assembly_to_ctg_key_with_l_r not in mini_assembly_to_ctg_dict_with_l_r:
-    #                 mini_assembly_to_ctg_dict_with_l_r[mini_assembly_to_ctg_key_with_l_r] = 1
-    #                 mini_assembly_to_ctg_dict_with_l_r_read_base[mini_assembly_to_ctg_key_with_l_r] = {each_mapped_read_base}
-    #             else:
-    #                 mini_assembly_to_ctg_dict_with_l_r[mini_assembly_to_ctg_key_with_l_r] += 1
-    #                 mini_assembly_to_ctg_dict_with_l_r_read_base[mini_assembly_to_ctg_key_with_l_r].add(each_mapped_read_base)
-
     mini_assembly_to_ctg_dict_with_l_r_read_base_min3 = {}
     for each_link in mini_assembly_to_ctg_dict_with_l_r_read_base:
         if len(mini_assembly_to_ctg_dict_with_l_r_read_base[each_link]) >= 3:
@@ -1054,7 +1063,7 @@ if __name__ == '__main__':
     ################################## link 16S to mini-assemblies with MAG assignment #################################
 
     mini_assembly_to_16s_dict_read_base = {}
-    for free_living_read_16s in open(free_living_16s_ref_file):
+    for free_living_read_16s in open(free_living_16s_ref_file_no_linked):
         free_living_read_16s_split = free_living_read_16s.strip().split('\t')
         if len(free_living_read_16s_split) > 1:
             read_id = free_living_read_16s_split[0]
@@ -1086,13 +1095,85 @@ if __name__ == '__main__':
     # filter with link num
     mini_assembly_to_16s_dict_read_base_min3 = {}
     for each_link in mini_assembly_to_16s_dict_read_base:
-        if len(mini_assembly_to_16s_dict_read_base[each_link]) >= 3:
+        if len(mini_assembly_to_16s_dict_read_base[each_link]) >= ctg_level_min_link:
             mini_assembly_to_16s_dict_read_base_min3[each_link] = mini_assembly_to_16s_dict_read_base[each_link]
 
-    ctgs_to_extract_mini = set()
+    ###############
+
+    def filter_linkages_iteratively_16s_to_mini_assembly(file_in_sorted, min_linkages, file_out):
+
+        # do mini-assemblies assigned to the same mag need to have roughly the same number of linkages? think about this later
+        mag_ctg_max_link_num_dict = {}
+        mini_assembly_to_mag_dict = {}
+        mini_assembly_to_ctg_dict = {}
+        file_out_handle = open(file_out, 'w')
+        mini_assembly_with_assignment = set()
+        mag_ctg_set_with_linked_mini_assembly = set()
+        for each_match in open(file_in_sorted):
+            if each_match.endswith(',Number\n'):
+                file_out_handle.write(each_match)
+            else:
+                match_split = each_match.strip().split(',')
+                mini_assembly = match_split[0]
+                mag_ctg_id = match_split[1]
+
+                linkage_num = int(match_split[2])
+                if linkage_num >= min_linkages:
+                    if mini_assembly not in mini_assembly_with_assignment:
+                        if mag_ctg_id not in mag_ctg_max_link_num_dict:
+                            mag_ctg_max_link_num_dict[mag_ctg_id] = linkage_num
+                            file_out_handle.write(each_match)
+                            mini_assembly_to_ctg_dict[mini_assembly] = mag_ctg_id
+                            mini_assembly_with_assignment.add(mini_assembly)
+                            mag_ctg_set_with_linked_mini_assembly.add(mag_ctg_id)
+                        else:
+                            ratio_with_best_assignment = linkage_num / (mag_ctg_max_link_num_dict[mag_ctg_id])
+                            if ratio_with_best_assignment >= 0.8:
+                                file_out_handle.write(each_match)
+                                mini_assembly_to_ctg_dict[mini_assembly] = mag_ctg_id
+                                mini_assembly_with_assignment.add(mini_assembly)
+                                mag_ctg_set_with_linked_mini_assembly.add(mag_ctg_id)
+                            else:
+                                mini_assembly_with_assignment.add(mini_assembly)
+        file_out_handle.close()
+
+        return mini_assembly_to_ctg_dict
+
+
+    stats_mini_assembly_to_16s                      = '%s/stats_mini_assembly_to_16s.txt'                                   % step_2_wd
+    stats_mini_assembly_to_16s_sorted               = '%s/stats_mini_assembly_to_16s_sorted.txt'                            % step_2_wd
+    stats_mini_assembly_to_16s_filtered             = '%s/stats_mini_assembly_to_16s_filtered.txt'                          % step_2_wd
+
+    all_linking_reads_base_set_rd2_mini_to_16s = set()
+    stats_mini_assembly_to_16s_handle = open(stats_mini_assembly_to_16s, 'w')
+    stats_mini_assembly_to_16s_handle.write('Marker,MiniAssembly,Number\n')
+    for each_mini_assembly_to_16s in mini_assembly_to_16s_dict_read_base_min3:
+        linking_reads_mini_to_16s = mini_assembly_to_16s_dict_read_base_min3[each_mini_assembly_to_16s]
+        id_mini_assembly = each_mini_assembly_to_16s.split(mini_assembly_to_16s_ctg_connector)[0]
+        id_16s = each_mini_assembly_to_16s.split(mini_assembly_to_16s_ctg_connector)[1]
+        all_linking_reads_base_set_rd2_mini_to_16s.update(linking_reads_mini_to_16s)
+        stats_mini_assembly_to_16s_handle.write('%s,%s,%s\n' % (id_16s, id_mini_assembly, len(linking_reads_mini_to_16s)))
+    stats_mini_assembly_to_16s_handle.close()
+
+    # sort and filter
+    sort_csv_by_col(stats_mini_assembly_to_16s, stats_mini_assembly_to_16s_sorted, 'Number')
+    marker_to_mini_assembly_dict = filter_linkages_iteratively_16s_to_mini_assembly(stats_mini_assembly_to_16s_sorted, 3, stats_mini_assembly_to_16s_filtered)
+
+
+
+
+    # mini_assembly_linked_both = set(mini_assembly_to_16s_dict_reformatted).intersection(mini_assembly_to_ctg_dict_reformatted)
+    print(mini_assembly_to_ctg_dict)
+
+    mini_assembly_to_ctg_dict
+
+
+
+
+    ###############
+
     all_linking_reads_base_set_rd2_mini_to_16s = set()
     marker_to_gnm_link_num_dict_rd2 = {}
-    linking_reads_tab_rd2_handle = open(linking_reads_tab_rd2, 'w')
     stats_mini_assembly_to_16s_handle = open(stats_GapFilling_ctg, 'w')
     stats_mini_assembly_to_16s_handle.write('MarkerGene,MiniAssembly,Number\n')
     for each_mini_assembly_to_16s in mini_assembly_to_16s_dict_read_base_min3:
@@ -1100,19 +1181,15 @@ if __name__ == '__main__':
         id_mini = each_mini_assembly_to_16s.split(mini_assembly_to_16s_ctg_connector)[0]
         id_16s = each_mini_assembly_to_16s.split(mini_assembly_to_16s_ctg_connector)[1]
         mini_assembly_mag = mini_assembly_to_mag_dict.get(id_mini, None)
-        if len(linking_reads) >= ctg_level_min_link:
-            if mini_assembly_mag != None:
-                stats_mini_assembly_to_16s_handle.write('%s,%s%s%s,%s\n' % (id_16s, mini_assembly_mag, gnm_to_ctg_connector, id_mini, len(linking_reads)))
-                linking_reads_tab_rd2_handle.write('%s\t%s%s%s\t%s\n' % (id_16s, mini_assembly_mag, gnm_to_ctg_connector, id_mini, ','.join(linking_reads)))
-                all_linking_reads_base_set_rd2_mini_to_16s.update(linking_reads)
-                ctgs_to_extract_mini.add(id_mini)
-                marker_to_gnm_key_rd2 = '%s%s%s' % (id_16s, marker_to_ctg_gnm_Key_connector, mini_assembly_mag)
-                if marker_to_gnm_key_rd2 not in marker_to_gnm_link_num_dict_rd2:
-                    marker_to_gnm_link_num_dict_rd2[marker_to_gnm_key_rd2] = len(linking_reads)
-                else:
-                    marker_to_gnm_link_num_dict_rd2[marker_to_gnm_key_rd2] += len(linking_reads)
+        if mini_assembly_mag != None:
+            stats_mini_assembly_to_16s_handle.write('%s,%s%s%s,%s\n' % (id_16s, mini_assembly_mag, gnm_to_ctg_connector, id_mini, len(linking_reads)))
+            all_linking_reads_base_set_rd2_mini_to_16s.update(linking_reads)
+            marker_to_gnm_key_rd2 = '%s%s%s' % (id_16s, marker_to_ctg_gnm_Key_connector, mini_assembly_mag)
+            if marker_to_gnm_key_rd2 not in marker_to_gnm_link_num_dict_rd2:
+                marker_to_gnm_link_num_dict_rd2[marker_to_gnm_key_rd2] = len(linking_reads)
+            else:
+                marker_to_gnm_link_num_dict_rd2[marker_to_gnm_key_rd2] += len(linking_reads)
     stats_mini_assembly_to_16s_handle.close()
-    linking_reads_tab_rd2_handle.close()
 
     # write out linkages at genome level
     stats_GapFilling_gnm_handle = open(stats_GapFilling_file, 'w')
@@ -1129,7 +1206,7 @@ if __name__ == '__main__':
                                 mean_depth_dict_16s, min_16s_gnm_multiple, min_iden_16s, min_link_num, min_link_num,
                                 within_gnm_linkage_num_diff, stats_GapFilling_file_filtered)
 
-    os.system('python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/d7_Oral/assess_linkages_Oral.py')
+    #os.system('python3 /Users/songweizhi/PycharmProjects/MarkerMAG/script_backup/d7_Oral/assess_linkages_Oral.py')
 
     ####################################################################################################################
     ################################################# rd2 visualizing ##################################################
@@ -1202,46 +1279,6 @@ if __name__ == '__main__':
                     MappingRecord_dict[current_read_base___id].r2_16s_refs_no_ignored = current_read_base___r2_16s_refs_no_ignored
                     MappingRecord_dict[current_read_base___id].shared_16s_refs_no_ignored = current_read_base___shared_16s_refs_no_ignored
 
-
-    ##################################################### read in sam file ####################################################
-
-    # mini_assembly_len_dict_rd2_vis = {}
-    # mini_assembly_mp_dict_rd2_vis = {}
-    # with open(sam_file_mini_assembly_reformatted) as sam_file_mini_assembly_reformatted_opened:
-    #     for each_read in sam_file_mini_assembly_reformatted_opened:
-    #         each_read_split = each_read.strip().split('\t')
-    #         if each_read.startswith('@'):
-    #             mini_assembly_id = ''
-    #             mini_assembly_len = 0
-    #             for each_element in each_read_split:
-    #                 if each_element.startswith('SN:'):
-    #                     mini_assembly_id = each_element[3:]
-    #                 if each_element.startswith('LN:'):
-    #                     mini_assembly_len = int(each_element[3:])
-    #             mini_assembly_len_dict_rd2_vis[mini_assembly_id] = mini_assembly_len
-    #         else:
-    #             cigar = each_read_split[5]
-    #             if cigar != '*':
-    #                 read_id = each_read_split[0]
-    #                 read_id_base = '.'.join(read_id.split('.')[:-1])
-    #                 read_strand = read_id.split('.')[-1]
-    #                 ref_id = each_read_split[2]
-    #                 ref_pos = int(each_read_split[3])
-    #
-    #                 if read_id_base not in mini_assembly_mp_dict_rd2_vis:
-    #                     mini_assembly_mp_dict_rd2_vis[read_id_base] = MappingRecord()
-    #
-    #                 if read_strand == '1':
-    #                     if ref_id not in mini_assembly_mp_dict_rd2_vis[read_id_base].r1_mini_ref_dict:
-    #                         mini_assembly_mp_dict_rd2_vis[read_id_base].r1_mini_ref_dict[ref_id] = {ref_pos: cigar}
-    #                     else:
-    #                         mini_assembly_mp_dict_rd2_vis[read_id_base].r1_mini_ref_dict[ref_id][ref_pos] = cigar
-    #
-    #                 if read_strand == '2':
-    #                     if ref_id not in mini_assembly_mp_dict_rd2_vis[read_id_base].r2_mini_ref_dict:
-    #                         mini_assembly_mp_dict_rd2_vis[read_id_base].r2_mini_ref_dict[ref_id] = {ref_pos: cigar}
-    #                     else:
-    #                         mini_assembly_mp_dict_rd2_vis[read_id_base].r2_mini_ref_dict[ref_id][ref_pos] = cigar
 
     #########################################################################################################
 
@@ -1408,58 +1445,5 @@ if __name__ == '__main__':
 
 
 ''' 
-
-
-
-bowtie2 -x mini_assembly_SPAdes_wd/scaffolds -U rd2_read_to_extract_flanking_both_R1.fa,rd2_read_to_extract_flanking_both_R2.fa -S bbb.sam -p 4 -f --local --all --no-unal -N 1 -L 30 2> scaffolds_bowtie.log
-bowtie2 -x mini_assembly_SPAdes_wd/scaffolds -U rd2_read_to_extract_flanking_both_R1.fa,rd2_read_to_extract_flanking_both_R2.fa -S aaa.sam -p 4 -f --local --all --no-unal -N 1 -L 30 2> scaffolds_bowtie.log
-
-reformat.sh in=scaffolds_bowtie.sam out=scaffolds_bowtie_reformatted.sam sam=1.4 2> scaffolds_bowtie_reformatted.log
-samtools sort -n -O sam --threads 4 -o scaffolds_bowtie_reformatted_sorted.sam scaffolds_bowtie_reformatted.sam
-
-
-bowtie2 -x /Users/songweizhi/Desktop/tunning_rd2/file_in/mini_assembly_SPAdes_wd/scaffolds -U /Users/songweizhi/Desktop/tunning_rd2/rd2_read_to_extract_flanking_both_R1.fa,/Users/songweizhi/Desktop/tunning_rd2/rd2_read_to_extract_flanking_both_R2.fa -S /Users/songweizhi/Desktop/tunning_rd2/scaffolds_bowtie.sam -p 4 -f --local --all --no-unal -N 1 -L 30 2> /Users/songweizhi/Desktop/tunning_rd2/scaffolds_bowtie.log
-reformat.sh in=/Users/songweizhi/Desktop/tunning_rd2/scaffolds_bowtie.sam out=/Users/songweizhi/Desktop/tunning_rd2/scaffolds_bowtie_reformatted.sam sam=1.4 2> /Users/songweizhi/Desktop/tunning_rd2/scaffolds_bowtie_reformatted.log
-samtools sort -n -O sam --threads 4 -o /Users/songweizhi/Desktop/tunning_rd2/file_in/scaffolds_bowtie_reformatted_sorted.sam /Users/songweizhi/Desktop/tunning_rd2/scaffolds_bowtie_reformatted.sam
-
-
-
-# why S7_9224725.2 did not mapped to mini NODE_4
-
-bowtie2 -x mini_assembly_SPAdes_wd/scaffolds -U rd2_read_to_extract_flanking_both_R12.fa -S scaffolds_bowtie.sam -p 12 -f --local --all --no-unal -N 1 -L 30 2> scaffolds_bowtie.log
-bowtie2 -x mini_assembly_SPAdes_wd/scaffolds -U rd2_read_to_extract_flanking_both_R1.fa,rd2_read_to_extract_flanking_both_R2.fa -S scaffolds_bowtie.sam -p 4 -f --local --all --no-unal -N 1 -L 30 2> scaffolds_bowtie.log
-
-bowtie2 -x mini_assembly_SPAdes_wd/scaffolds -U rd2_read_to_extract_flanking_both_R1.fa,rd2_read_to_extract_flanking_both_R2.fa -S scaffolds_bowtie.sam -p 4 -f --all --no-unal -N 1 -L 30 2> scaffolds_bowtie.log
-reformat.sh in=scaffolds_bowtie.sam out=scaffolds_bowtie_reformatted.sam sam=1.4 2> scaffolds_bowtie_reformatted.log
-samtools sort -n -O sam --threads 4 -o scaffolds_bowtie_reformatted_sorted.sam scaffolds_bowtie_reformatted.sam
-
-
-bowtie2 -x mini_assembly_SPAdes_wd/scaffolds -U S7_9224725.fa -S S7_9224725.sam -p 4 -f --all --no-unal -N 1 -L 30 2> S7_9224725_scaffolds_bowtie.log
-
-
-
-bowtie2-build --quiet -f NODE4.fa NODE4
-bowtie2 -x NODE4 -U S7_9224725.fa -S S7_9224725_vs_NODE4.sam -p 4 -f --all --no-unal -N 1 -L 30 
-
-
-# on Katana
-bowtie2-build --quiet -f NODE26.fa NODE26
-bowtie2 -x NODE26 -U S15_645227.fa -S S15_645227_vs_NODE26_Katana.sam -p 4 -f --all --no-unal -N 1 -L 30 
-
-# on MAC
-cd /Users/songweizhi/Desktop
-/Users/songweizhi/Softwares/bowtie2/bowtie2-build --quiet -f NODE26.fa NODE26
-/Users/songweizhi/Softwares/bowtie2/bowtie2 -x NODE26 -U S15_645227.fa -S S15_645227_vs_NODE26_Mac.sam -p 4 -f --all --no-unal -N 1 -L 30 
-
-index_ref_cmd = '%s --quiet -f %s %s' % (pwd_bowtie2_build_exe, pwd_seq_file_cbd, pwd_seq_file_cbd_index)
-bowtie2_cmd = '%s -x %s -U %s,%s -S %s -p 1 -f %s 2> %s' % (
-cd /Users/songweizhi/Desktop/tunning_rd2/vis_folder_rd2/CAMI_Oral_subsample_50_571___Oral_57/NODE_26_length_405_cov_0.571942___CAMI_Oral_subsample_50_571
-/Users/songweizhi/Softwares/bowtie2/bowtie2-build --quiet -f cbd.fa cbd
-/Users/songweizhi/Softwares/bowtie2/bowtie2 -x cbd -U R1.fa,R2.fa -S test.sam -p 1 -f --local --all --no-unal -N 1 -L 30
-/Users/songweizhi/Softwares/bowtie2/bowtie2 -x cbd -U S15_645227_R1.fa,S15_645227_R2.fa -S S15_645227_test.sam -p 1 -f --local --all --no-unal -N 1 -L 30
-/Users/songweizhi/Softwares/bowtie2/bowtie2-build --quiet -f cbd_2.fa cbd_2
-/Users/songweizhi/Softwares/bowtie2/bowtie2 -x cbd_2 -U S15_645227_R1.fa,S15_645227_R2.fa -S S15_645227_test_2.sam -p 1 -f --local --all --no-unal -N 1 -L 30
-
-
 
 '''
