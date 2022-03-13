@@ -29,9 +29,8 @@ How it works
   
   Read coverage of MAGs and their linked 16S rRNA genes might be biased by guanine-cytosine (GC) content [[Reference](https://doi.org/10.1093/nar/gks001)].
     Read coverage are weighted by GC content bias before estimating the copy number of 16S rRNA genes in MAGs. 
-    GC content bias is calculated as described [here](https://support.illumina.com/content/dam/illumina-support/help/Illumina_DRAGEN_Bio_IT_Platform_v3_7_1000000141465/Content/SW/Informatics/Dragen/GCBiasReport_fDG.htm).
-  
-  + An example of GC content bias from the MBARC-26 dataset that we used for benchmarking MarkerMAG can be found [here](doc/README_GC_bias.md).
+    GC content bias is calculated as described [here](https://support.illumina.com/content/dam/illumina-support/help/Illumina_DRAGEN_Bio_IT_Platform_v3_7_1000000141465/Content/SW/Informatics/Dragen/GCBiasReport_fDG.htm). 
+    An example of GC content bias from the MBARC-26 dataset that we used for benchmarking MarkerMAG can be found [here](doc/README_GC_bias.md).
 
 
 MarkerMAG modules
@@ -46,10 +45,7 @@ MarkerMAG modules
     + `rename_reads`: rename paired reads ([manual](doc/README_rename_reads.md))
     + `matam_16s`: assemble 16S rRNA genes with Matam ([manual](doc/README_matam_16s.md))
     + `barrnap_16s`: identify 16S rRNA genes from genomes/MAGs with Barrnap ([manual](doc/README_barrnap_16s.md))
-    + `uclust_16s`: cluster 16S rRNA genes with Usearch ([manual](doc/README_uclust_16s.md))
-    + `subsample_reads`: subsample reads with Usearch ([manual](doc/README_subsample_reads.md))
-
-
+    
 Dependencies
 ---
  
@@ -59,24 +55,33 @@ Dependencies
   [seqtk](https://github.com/lh3/seqtk), 
   [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
   [Samtools](http://www.htslib.org), 
-  [metaSPAdes](https://cab.spbu.ru/software/meta-spades/) and 
-  [Usearch](https://www.drive5.com/usearch/)
+  [HMMER](http://hmmer.org), 
+  [metaSPAdes](https://cab.spbu.ru/software/meta-spades/), 
+  [Usearch](https://www.drive5.com/usearch/), 
+  as well as Python packages, including 
+  [Biopython](https://biopython.org), 
+  [numpy](https://numpy.org), 
+  [pandas](https://pandas.pydata.org), 
+  [seaborn](https://seaborn.pydata.org), 
+  [plotly](https://plotly.com), 
+  [multiprocessing](https://docs.python.org/3/library/multiprocessing.html) and
+  [distutils](https://docs.python.org/3/library/distutils.html).
 
-+ Dependencies need to be in your system path
++ Dependencies need to be in your system path.
 + Dependencies for supplementary modules can be found from their own manual page.
  
 
 How to install
 ---
 
-+ BioSAK has been tested on Linux and MacOS, but NOT on Windows.
++ MarkerMAG has been tested on Linux and MacOS, but NOT on Windows.
 + MarkerMAG is implemented in [python3](https://www.python.org), it can be installed with pip3:
   
       # install with 
       pip3 install MarkerMAG
       
-      # install a specific version of MarkerMAG (e.g. 1.1.3)
-      pip3 install MarkerMAG==1.1.3
+      # install a specific version of MarkerMAG (e.g. 1.1.15)
+      pip3 install MarkerMAG==1.1.15
         
       # upgrade with 
       pip3 install --upgrade MarkerMAG
@@ -135,7 +140,6 @@ Output files
 
     | MAG | Copies | 
     |:---:|:---:|
-    | MAG_6  |  2.46  |
     | MAG_9  |  1.97  |
     | MAG_59 |  3.41  |
 
