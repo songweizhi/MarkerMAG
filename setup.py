@@ -9,6 +9,7 @@ def version():
 
     return version_file.readline().strip()
 
+
 __long_description__ = '''
 
 MarkerMAG: linking MAGs with 16S rRNA marker genes
