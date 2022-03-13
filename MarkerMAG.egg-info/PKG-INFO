@@ -1,0 +1,24 @@
+Metadata-Version: 2.1
+Name: MarkerMAG
+Version: 1.1.15
+Summary: linking MAGs with 16S rRNA marker genes
+Home-page: https://github.com/songweizhi/MarkerMAG
+Author: Weizhi Song, Torsten Thomas
+Author-email: songwz03@gmail.com
+License: GPL3+
+Keywords: Bioinformatics Metagenomics MAG 16S
+Platform: UNKNOWN
+License-File: LICENSE.txt
+
+
+
+MarkerMAG: linking MAGs with 16S rRNA marker genes
+
+Weizhi Song, Torsten Thomas
+
+Center for Marine Science & Innovation (CMSI)
+
+University of New South Wales, Sydney, Australia
+
+
+

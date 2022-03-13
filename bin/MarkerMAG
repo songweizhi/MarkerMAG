@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+
+# Copyright (C) 2020, Weizhi Song, Torsten Thomas.
+# songwz03@gmail.com or t.thomas@unsw.edu.au
+
+# MarkerMAG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# MarkerMAG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+import warnings
+import argparse
+from datetime import datetime
+from MarkerMAG.MarkerMAG_config import config_dict
+
+def version(config_dict):
+    version_file = open('%s/VERSION' % config_dict['config_file_path'])
+    return version_file.readline().strip()
+
+
+def print_main_help():
+
+    help_message = ''' 
+           ...::: MarkerMAG v%s :::...
+
+    link             ->  link MAGs to 16S rRNA genes
+    get_cp_num       ->  estimate copy number of 16S rRNA genes
+    rename_reads     ->  rename paired short reads
+    matam_16s        ->  reconstruct 16S rRNA genes with Matam
+    uclust_16s       ->  cluster 16S rRNA genes with Usearch
+    barrnap_16s      ->  identify 16S rRNA genes with Barrnap
+    subsample_reads  ->  subsample reads with Usearch
+
+    ''' % version(config_dict)
+    print(help_message)
+
+
+if __name__ == '__main__':
+
+    # initialize the options parser
+    parser = argparse.ArgumentParser()
+#    subparsers = parser.add_subparsers(help="--", dest='subparser_name')
+    subparsers = parser.add_subparsers()
+
+    # disable warning message
+    warnings.filterwarnings('ignore')
+
+    # parse options
+    if (len(sys.argv) == 1) or (sys.argv[1] in ['-h', '-help', '--help']):
+        print_main_help()
+        sys.exit(0)
+
+    elif sys.argv[1] == 'link':
+        from MarkerMAG import link_16s
+        default_prefix = 'MyRun_%s' % datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+        link_16s_parser = subparsers.add_parser('link', description='Linking MAGs with 16S rRNA marker genes', usage=link_16s.link_Marker_MAG_usage)
+
+        # Specify argument group
+        link_16s_parser_input_files = link_16s_parser.add_argument_group("Input and output files")
+        link_16s_parser_marker      = link_16s_parser.add_argument_group("Marker related parameters")
+        link_16s_parser_mag         = link_16s_parser.add_argument_group("MAG related parameters")
+        link_16s_parser_read_aln    = link_16s_parser.add_argument_group("Parameters for read alignment")
+        link_16s_parser_linking     = link_16s_parser.add_argument_group("Parameters for linking")
+        link_16s_parser_get_cn      = link_16s_parser.add_argument_group("Parameters for estimating 16S copy number")
+        link_16s_parser_program     = link_16s_parser.add_argument_group("Program settings")
+        link_16s_parser_dependency  = link_16s_parser.add_argument_group("Dependencies related")
+        link_16s_parser_debug       = link_16s_parser.add_argument_group("For debugging, do NOT specify")
+
+        # Input files
+        link_16s_parser_input_files.add_argument('-p',          required=False, metavar='',             default=default_prefix, help='Output prefix, (default: SystemTime)')
+        link_16s_parser_input_files.add_argument('-marker',     required=True,  metavar='',                                     help='Marker gene sequences')
+        link_16s_parser_input_files.add_argument('-mag',        required=True,  metavar='',                                     help='Metagenome-assembled-genome (MAG) folder')
+        link_16s_parser_input_files.add_argument('-x',          required=True,  metavar='',                                     help='MAG file extension')
+        link_16s_parser_input_files.add_argument('-r1',         required=True,  metavar='',                                     help='Paired reads r1 (fasta format)')
+        link_16s_parser_input_files.add_argument('-r2',         required=True,  metavar='',                                     help='Paired reads r2 (fasta format)')
+        link_16s_parser_input_files.add_argument('-o',          required=False, metavar='', default=None,                       help='Output folder, (default: current working directory)')
+
+        # Marker related parameters
+        link_16s_parser_marker.add_argument('-no_polish',       required=False, action="store_true",                            help='Skip checking if there are non-16S sequences at the end of provided 16S rRNA gene sequences. Specify only if you are confident with the quality of your 16S rRNA gene sequences. ')
+        link_16s_parser_marker.add_argument('-min_16s_len',     required=False, metavar='', type=int,   default=1200,           help='Minimum length of 16S (bp) for linking, (default: %(default)s)')
+        link_16s_parser_marker.add_argument('-cluster_iden',    required=False, metavar='', type=float, default=99,             help='Identity cutoff for 16S clustering, (default: %(default)s)')
+        link_16s_parser_marker.add_argument('-no_cluster',      required=False, action="store_true",                            help='Skip clustering input 16S rRNA gene sequences')
+        link_16s_parser_marker.add_argument('-max_16s_div',     required=False, metavar='', type=float, default=1,              help='Maximum genetic divergence (in percentage) of 16S rRNA genes that allow to be linked to the same MAG (default: %(default)s)')
+
+        # MAG related parameters
+        link_16s_parser_mag.add_argument('-keep_ctg_end_16s',   required=False, action="store_true",                            help='Do NOT remove 16S sequences at the end of MAG contigs, not recommended')
+
+        # Parameters for read alignment
+        link_16s_parser_read_aln.add_argument('-mismatch',       required=False, metavar='', type=float, default=2,              help='Maximum mismatch percentage, (default: %(default)s)')
+        link_16s_parser_read_aln.add_argument('-aln_len',        required=False, metavar='', type=int,   default=45,             help='Minimum read alignment length (bp), (default: %(default)s)')
+        link_16s_parser_read_aln.add_argument('-aln_pct',        required=False, metavar='', type=float, default=35,             help='Minimum read alignment percentage, (default: %(default)s)')
+
+        # Parameters for linking
+        link_16s_parser_linking.add_argument('-min_link',       required=False, metavar='', type=int,   default=9,              help='Minimum number of linkages to report, (default: %(default)s)')
+
+        # Parameters for estimating 16S copy number
+        link_16s_parser_get_cn.add_argument('-skip_cn',             required=False, action="store_true",                    help='Skip calculating the copy number of linked 16S rRNA genes')
+        link_16s_parser_get_cn.add_argument('-r16s',                required=False,                                         help='matam_16s_reads')
+        link_16s_parser_get_cn.add_argument('-subsample_pct',       required=False, metavar='', type=float, default=25,     help='used a fraction of reads for MAG coverage estimation (in percentage), default:25')
+        link_16s_parser_get_cn.add_argument('-min_insert_size_16s', required=False, metavar='', default=-1000,              help='min_insert_size_16s, (default: %(default)s)')
+        link_16s_parser_get_cn.add_argument('-ignore_gc_bias',      required=False, metavar='', type=int,   default=150,    help='ignore GC bias, (default: %(default)s)')
+        link_16s_parser_get_cn.add_argument('-ignore_ends_len_16s', required=False, metavar='', type=int,   default=150,    help='ignore_ends_len_16s, (default: %(default)s)')
+        link_16s_parser_get_cn.add_argument('-ignore_lowest_pct',   required=False, metavar='', type=float, default=25,     help='pos_pct_to_ignore_lowest, (default: %(default)s)')
+        link_16s_parser_get_cn.add_argument('-ignore_highest_pct',  required=False, metavar='', type=float, default=25,     help='pos_pct_to_ignore_highest, (default: %(default)s)')
+        link_16s_parser_get_cn.add_argument('-both_pair_mapped',    required=False, action='store_true',                    help='both_pair_mapped')
+
+        # Program settings
+        link_16s_parser_program.add_argument('-t',               required=False, metavar='', type=int,   default=1,              help='Number of threads, (default: %(default)s)')
+        link_16s_parser_program.add_argument('-tmp',             required=False, action="store_true",                            help='Keep temporary files')
+        link_16s_parser_program.add_argument('-quiet',           required=False, action="store_true",                            help='Not report progress')
+        link_16s_parser_program.add_argument('-force',           required=False, action="store_true",                            help='Force overwrite existing results')
+
+        # Dependencies related
+        #link_16s_parser_dependency.add_argument('-mira',          required=False, action="store_true",                           help='run Mira, instead of Spades')
+        #link_16s_parser_dependency.add_argument('-mira_tmp',      required=False, metavar='',           default=None,            help='tmp dir for mira')
+
+        # For debugging
+        link_16s_parser_debug.add_argument('-test_mode',        required=False, action="store_true",                            help='Only for debugging, do not provide')
+        link_16s_parser_debug.add_argument('-sorted_sam16s',    required=False, metavar='',             default=None,           help='Mapping of input reads to 16S')
+        link_16s_parser_debug.add_argument('-vis_all',          required=False, action="store_true",                            help='Vis all linkages, including those filtered out')
+        link_16s_parser_debug.add_argument('-ref_16s_cp_num',   required=False, metavar='',             default=None,           help='Copy number of 16S in reference genomes')
+
+        args = vars(parser.parse_args())
+        link_16s.link_16s(args, config_dict)
+
+    elif sys.argv[1] == 'get_cp_num':
+        from MarkerMAG import get_cp_num
+        get_16s_copy_num_parser = subparsers.add_parser('get_cp_num', description='Estimate copy number of linked 16S rRNA genes', usage=get_cp_num.get_cp_num_usage)
+        get_16s_copy_num_parser.add_argument('-o',                      required=False, metavar='', default='.',                help='output folder, default current folder')
+        get_16s_copy_num_parser.add_argument('-p',                      required=True,                                          help='output prefix')
+        get_16s_copy_num_parser.add_argument('-r1',                     required=False, metavar='',                             help='paired reads r1 (fasta format)')
+        get_16s_copy_num_parser.add_argument('-r2',                     required=False, metavar='',                             help='paired reads r2 (fasta format)')
+        get_16s_copy_num_parser.add_argument('-r16s',                   required=False, metavar='', default=None,               help='matam_16s_reads')
+        get_16s_copy_num_parser.add_argument('-linkages',               required=False, metavar='',                             help='identified_linkage_gnm_level')
+        get_16s_copy_num_parser.add_argument('-marker',                 required=False, metavar='',                             help='markers clustered at 99')
+        get_16s_copy_num_parser.add_argument('-mag',                    required=False, metavar='', default=None,               help='MAG folder')
+        get_16s_copy_num_parser.add_argument('-x',                      required=False, metavar='', default=None,               help='MAG extension')
+        get_16s_copy_num_parser.add_argument('-cp_mags',                required=False, metavar='', default=None,               help='combined_prefixed_mags')
+        get_16s_copy_num_parser.add_argument('-cp_mag_gff',             required=False, metavar='', default=None,               help='combined_prefixed_mags_gff')
+        get_16s_copy_num_parser.add_argument('-mismatch',               required=False, metavar='', type=float, default=2,      help='mismatch_cutoff')
+        get_16s_copy_num_parser.add_argument('-aln_len',                required=False, metavar='', type=int,   default=50,     help='min_M_len')
+        get_16s_copy_num_parser.add_argument('-subsample_pct',          required=False, metavar='', type=float, default=25,     help='used a fraction of reads for MAG coverage estimation (in percentage), default:25')
+        get_16s_copy_num_parser.add_argument('-min_insert_size_16s',    required=False, metavar='',             default=-1000,  help='min_insert_size_16s')
+        get_16s_copy_num_parser.add_argument('-ignore_gc_bias',         required=False, action="store_true",                    help='ignore GC bias')
+        get_16s_copy_num_parser.add_argument('-ignore_ends_len_16s',    required=False, metavar='', type=int,   default=150,    help='ignore_ends_len_16s')
+        get_16s_copy_num_parser.add_argument('-ignore_lowest_pct',      required=False, metavar='', type=float, default=25,     help='pos_pct_to_ignore_lowest')
+        get_16s_copy_num_parser.add_argument('-ignore_highest_pct',     required=False, metavar='', type=float, default=25,     help='pos_pct_to_ignore_highest')
+        get_16s_copy_num_parser.add_argument('-both_pair_mapped',       required=False, action='store_true',                    help='both_pair_mapped')
+        get_16s_copy_num_parser.add_argument('-mag_cov_gc',             required=False, default=None,                           help='mag_depth_gc txt file')
+        get_16s_copy_num_parser.add_argument('-mag_gc_bias',            required=False, default=None,                           help='mag_gc_bias folder')
+        get_16s_copy_num_parser.add_argument('-sam_16s_sorted_by_read', required=False, default=None,                           help='read_to_16s_sam')
+        get_16s_copy_num_parser.add_argument('-ref_16s_cp_num',         required=False, default=None,                           help='provided_cp_num_txt')
+        get_16s_copy_num_parser.add_argument('-t',                      required=False, type=int, default=1,                    help='number of threads')
+        get_16s_copy_num_parser.add_argument('-force',                  required=False, action="store_true",                    help='Force overwrite existing results')
+        get_16s_copy_num_parser.add_argument('-quiet',                  required=False, action="store_true",                    help='Not report progress')
+        args = vars(parser.parse_args())
+        for each_key in config_dict:
+            args[each_key] = config_dict[each_key]
+        get_cp_num.get_16s_copy_num(args)
+
+    elif sys.argv[1] == 'rename_reads':
+        from MarkerMAG import rename_reads
+        rename_reads_parser = subparsers.add_parser('rename_reads', description='Rename reads', usage=rename_reads.rename_reads_usage)
+        rename_reads_parser.add_argument('-r1',  required=True, type=str,               help='forward reads, fasta format')
+        rename_reads_parser.add_argument('-r2',  required=True, type=str,               help='reverse reads, fasta format')
+        rename_reads_parser.add_argument('-p',   required=True, type=str,               help='prefix of output file and read id')
+        rename_reads_parser.add_argument('-fq',  required=False, action="store_true",   help='rename reads with quality score')
+        rename_reads_parser.add_argument('-t',   required=False, type=int, default=1,   help='number of threads, default: 1')
+        args = vars(parser.parse_args())
+        rename_reads.rename_reads(args)
+
+    elif sys.argv[1] == 'matam_16s':
+        from MarkerMAG import matam_16s
+        matam_16s_parser = subparsers.add_parser('matam_16s', description='Assemble 16S rRNA genes with Matam', usage=matam_16s.matam_16s_usage)
+        matam_16s_parser.add_argument('-p',              required=True,  metavar='',                                            help='output prefix')
+        matam_16s_parser.add_argument('-r1',             required=False, metavar='', default=None,                              help='forward reads')
+        matam_16s_parser.add_argument('-r2',             required=False, metavar='', default=None,                              help='reverse reads')
+        matam_16s_parser.add_argument('-r16s',           required=False, metavar='', default=None,                              help='extracted 16S reads, specify if you already have 16S reads identified from metagenomic dataset')
+        matam_16s_parser.add_argument('-pct',            required=True,  metavar='', type=str, default='1,5,10,25,50,75,100',   help='subsample percentage, must be integer, between 1-100, deafault: 1,5,10,25,50,75,100')
+        matam_16s_parser.add_argument('-d',              required=False, metavar='', type=str,                                  help='Matam ref db, controls "-d" in Matam')
+        matam_16s_parser.add_argument('-i',              required=False, metavar='', type=float, default=0.999,                 help='cluster identity cutoff, do not provide value lower than 0.99, default: 0.999')
+        matam_16s_parser.add_argument('-t',              required=False, metavar='', type=int, default=1,                       help='number of threads, default: 1')
+        matam_16s_parser.add_argument('-mem',            required=False, metavar='', type=int, default=10240,                   help='maximum memory to be allocated to Matam (in MB), controls "--max_memory" in Matam, default: 10240')
+        matam_16s_parser.add_argument('-force',          required=False, action="store_true",                                   help='force overwrite existing results')
+        matam_16s_parser.add_argument('-quiet',          required=False, action="store_true",                                   help='not report progress')
+        matam_16s_parser.add_argument('-matam',          required=False, metavar='', type=str, default='matam_assembly.py',     help='path to matam_assembly.py, default: matam_assembly.py')
+        matam_16s_parser.add_argument('-seqtk',          required=False, metavar='', type=str, default='seqtk',                 help='path to seqtk executable file, default: seqtk')
+        matam_16s_parser.add_argument('-usearch',        required=False, metavar='', type=str, default='usearch',               help='path to usearch executable file, default: usearch')
+        args = vars(parser.parse_args())
+        matam_16s.matam_16s(args)
+
+    elif sys.argv[1] == 'uclust_16s':
+        from MarkerMAG import uclust_16s
+        uclust_16S_parser = subparsers.add_parser('uclust_16s', description='Cluster 16S with Usearch', usage=uclust_16s.uclust_16S_usage)
+        uclust_16S_parser.add_argument('-in',           required=True,                          help='fasta file')
+        uclust_16S_parser.add_argument('-i',            required=False, type=float, default=1,  help='Identity cutoff (0-1), default: 1')
+        uclust_16S_parser.add_argument('-out',          required=True,                          help='file out')
+        args = vars(parser.parse_args())
+        uclust_16s.uclust_16S(args)
+
+    elif sys.argv[1] == 'subsample_reads':
+        from MarkerMAG import subsample_reads
+        subsample_reads_parser = subparsers.add_parser('subsample_reads', description='subsample paired reads', usage=subsample_reads.subsample_reads_usage)
+        subsample_reads_parser.add_argument('-r1',      required=True, type=str,            help='forward reads')
+        subsample_reads_parser.add_argument('-r2',      required=True, type=str,            help='reverse reads')
+        subsample_reads_parser.add_argument('-ratio',   required=True, type=str,            help='subsample ratio, 0-1')
+        subsample_reads_parser.add_argument('-usearch', required=False, default='usearch',  help='path to usearch executable file, default: usearch')
+        args = vars(parser.parse_args())
+        subsample_reads.subsample_reads(args)
+
+    elif sys.argv[1] == 'barrnap_16s':
+        from MarkerMAG import barrnap_16s
+        barrnap_16s_parser = subparsers.add_parser('barrnap_16s', description='identify 16S sequences with Barrnap', usage=barrnap_16s.barrnap_16s_usage)
+        barrnap_16s_parser.add_argument('-p',       required=True, type=str,               help='output prefix')
+        barrnap_16s_parser.add_argument('-g',       required=True, type=str,               help='genome folder')
+        barrnap_16s_parser.add_argument('-x',       required=False, default='fasta',       help='genome file extension, default: fasta')
+        barrnap_16s_parser.add_argument('-t',       required=False, type=int, default=1,   help='number of threads, default: 1')
+        barrnap_16s_parser.add_argument('-force',   required=False, action="store_true",   help='force overwrite existing results')
+        args = vars(parser.parse_args())
+        barrnap_16s.barrnap_16s(args)
+
+    else:
+        print('Unrecognized command: %s, program exited' % sys.argv[1])
+        exit()
+
+
+upload_to_pypi_cmd = '''
+
+cd /Users/songweizhi/PycharmProjects/MarkerMAG
+rm -r build dist MarkerMAG.egg-info
+python3 setup.py sdist bdist_wheel
+# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+twine upload dist/* --verbose
+songweizhi
+
+shan88
+
+pip3 install --upgrade MarkerMAG
+
+pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
+
+'''

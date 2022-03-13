@@ -1,0 +1,14 @@
+1.1.15
+- bug fixing
+
+1.1.3 and
+- exit if no 16S passed QC
+
+1.0.35
+- fixed input reads format related bug for matam16s
+
+1.0.34
+- bug fixing
+
+1.0.0
+- initial release

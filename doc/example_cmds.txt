@@ -1,0 +1,51 @@
+
+# 57884, 57885 and 57886 are metagenomes derived from microbial communities on the surface of three replicates of marine alga samples.
+MAGs were obtained by coassembly of the three datasets.
+
+# combine the forward and reverse reads from the three datasets separately.
+cat 57884_R1.fastq 57885_R1.fastq 57886_R1.fastq > BH_ER_050417_R1.fastq
+cat 57884_R2.fastq 57885_R2.fastq 57886_R2.fastq > BH_ER_050417_R2.fastq
+
+##################################### assemble 16S rRNA gene sequences with Matam ######################################
+
+# rename reads for Matam
+module load python/3.7.3
+source ~/mypython3env/bin/activate
+python3 rename_reads.py -r1 BH_ER_050417_R1.fastq -r2 BH_ER_050417_R2.fastq -p Kelp -fq
+
+# assembly 16S with Matam
+module load python/3.6.5
+source ~/mypython365env/bin/activate
+module load java/7u51
+module load gcc/7.3.0
+module load sparsehash/2.0.3
+module load matam/1.5.3
+module load samtools/1.9
+module load usearch/11.0.667
+module load seqtk/20190219
+module load idba/1.1.3
+export PATH=/home/z5039045/anaconda3/bin:$PATH
+cd /srv/scratch/z5039045/MarkerMAG_wd/Kelp
+fq2fa Kelp_R1.fastq Kelp_R1.fasta
+fq2fa Kelp_R2.fastq Kelp_R2.fasta
+MarkerMAG matam_16s -p BH_ER_050417 -r1 Kelp_R1.fasta -r2 Kelp_R2.fasta -pct 1,5,10,25,50,75,100 -d /srv/scratch/z5039045/DB/Matam/SILVA_128_SSURef_NR95 -i 0.995 -t 16 -force
+
+################################################### link 16S to MAGs ###################################################
+
+module unload python
+module load python/3.7.3
+source ~/mypython3env/bin/activate
+module unload R
+module load R/4.0.2
+module load blast+/2.9.0
+module load bowtie/2.3.5.1
+module load samtools/1.10
+module load spades/3.14.0
+module load gcc/8.4.0
+module load boost/1.73.0-gcc8
+module load mira/v5rc2
+
+cd /srv/scratch/z5039045/MarkerMAG_wd/Kelp
+MarkerMAG link -p Kelp -r1 Kelp_R1.fastq -r2 Kelp_R2.fastq -marker BH_ER_050417_Matam16S_wd/BH_ER_050417_16S_reads_subset_100_Matam_wd/workdir/scaffolds.NR.min_500bp.abd.fa -mag BH_ER_050417_refined_bins -x fasta -t 16 -tmp -force -mira_tmp $TMPDIR
+
+########################################################################################################################

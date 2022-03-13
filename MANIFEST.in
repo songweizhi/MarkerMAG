@@ -1,0 +1,5 @@
+include README.md
+include MarkerMAG/MarkerMAG_config.py
+include MarkerMAG/VERSION
+include MarkerMAG/SILVA_16S_order.fasta
+recursive-include MarkerMAG/vxtractor/*
