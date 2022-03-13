@@ -245,7 +245,6 @@ songweizhi
 shan88
 
 pip3 install --upgrade MarkerMAG
-
 pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
 
 '''
