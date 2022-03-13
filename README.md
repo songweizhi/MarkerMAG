@@ -97,18 +97,22 @@ How to run
    2. A set of 16S rRNA gene sequences (either user-provided or generated with the `matam_16s` module) 
    3. The **quality-filtered** metagenomic reads used to generate the data above
 
+
 + :warning: MarkerMAG is designed to work with paired short-read data (i.e. Illumina). It assumes the id of reads in pair in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module ([manual](doc/README_rename_reads.md)). 
 
+
 + Input reads to MarkerMAG need to be quality-filtered. If the input reads were provided in fastq format, MarkerMAG will first convert them into fasta format.
+
 
 + Although you can use your preferred tool to reconstruct 16S rRNA gene sequences from the metagenomic dataset, 
    MarkerMAG does have a supplementary module (`matam_16s`) to reconstruct 16S rRNA genes. 
    Please refer to the manual [here](doc/README_matam_16s.md) if you want to give it a go.
 
-+ Link 16S rRNA gene sequences with MAGs: 
 
-      MarkerMAG link -p Soil -marker Soil_16S.fa -mag Soil_MAGs -x fa -r1 R1.fa -r2 R2.fa -t 12
++ Link 16S rRNA gene sequences with MAGs ([demo dataset](https://drive.google.com/drive/folders/1edzpj6QV6jRQ24F1wT_9pIDzOIV_b3ki?usp=sharing)): 
+
+      MarkerMAG link -p Demo -r1 demo_R1.fasta -r2 demo_R2.fasta -marker demo_16S.fasta -mag demo_MAGs -x fa -t 12
 
 
 Output files
