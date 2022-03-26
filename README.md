@@ -15,7 +15,7 @@ Publication
 Updates
 ---
 
-+ 2022-03-12 - A [demo dataset](https://drive.google.com/drive/folders/1edzpj6QV6jRQ24F1wT_9pIDzOIV_b3ki?usp=sharing) (together with command) has been prepared! You can use it to check if MarkerMAG was installed successfully on your system.
++ 2022-03-12 - A [demo dataset](https://drive.google.com/drive/folders/1edzpj6QV6jRQ24F1wT_9pIDzOIV_b3ki?usp=sharing) (together with command) has been prepared! You can use it to check if MarkerMAG is installed successfully on your system.
 
 
 How it works
@@ -30,7 +30,7 @@ How it works
   Read coverage of MAGs and their linked 16S rRNA genes might be biased by guanine-cytosine (GC) content [[Reference](https://doi.org/10.1093/nar/gks001)].
     Read coverage are weighted by GC content bias before estimating the copy number of 16S rRNA genes in MAGs. 
     GC content bias is calculated as described [here](https://support.illumina.com/content/dam/illumina-support/help/Illumina_DRAGEN_Bio_IT_Platform_v3_7_1000000141465/Content/SW/Informatics/Dragen/GCBiasReport_fDG.htm). 
-    An example of GC content bias from the MBARC-26 dataset that we used for benchmarking MarkerMAG can be found [here](doc/README_GC_bias.md).
+    An example of GC content bias from the MBARC-26 dataset that we used for benchmarking MarkerMAG is [here](doc/README_GC_bias.md).
 
 
 MarkerMAG modules
@@ -58,17 +58,16 @@ Dependencies
   [HMMER](http://hmmer.org), 
   [metaSPAdes](https://cab.spbu.ru/software/meta-spades/), 
   [Usearch](https://www.drive5.com/usearch/), 
-  as well as Python packages, including 
+  as well as several Python packages, including 
   [Biopython](https://biopython.org), 
   [numpy](https://numpy.org), 
   [pandas](https://pandas.pydata.org), 
-  [seaborn](https://seaborn.pydata.org), 
-  [plotly](https://plotly.com), 
-  [multiprocessing](https://docs.python.org/3/library/multiprocessing.html) and
-  [distutils](https://docs.python.org/3/library/distutils.html).
+  [seaborn](https://seaborn.pydata.org) and 
+  [plotly](https://plotly.com).
 
-+ Dependencies need to be in your system path.
-+ Dependencies for supplementary modules can be found from their own manual page.
++ Software dependencies need to be in your system path.
+
++ Dependencies for the supplementary modules can be found from the corresponding manual page.
  
 
 How to install

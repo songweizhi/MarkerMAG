@@ -7,7 +7,7 @@ GC content bias
 The GC content for the two 16S rRNA genes in the genomes of Fervidobacterium pennivorans is 61.35%, which is much higher than the average GC content of the entire genomes (38.5%).
 
 The two figures below were obtained by mapping the quality-filtered paired short reads to the completed reference genome, 
-from which you can see that read coverage (sequencing depth) of the 16S rRNA gene regions (highlighted) (maybe also the entire rRNA operon regions) is much lower than the flanking regions.
+from which you can see that read coverage (sequencing depth) of the 16S rRNA gene regions (maybe also the entire rRNA operon) is much lower than the flanking regions.
 
 ![GC_bias_FP](images/FP_read_coverage.png)
 
