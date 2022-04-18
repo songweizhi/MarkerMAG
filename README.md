@@ -15,7 +15,7 @@ Publication
 Updates
 ---
 
-+ 2022-03-12 - A [demo dataset](https://drive.google.com/drive/folders/1edzpj6QV6jRQ24F1wT_9pIDzOIV_b3ki?usp=sharing) (together with command) has been prepared! You can use it to check if MarkerMAG is installed successfully on your system.
++ 2022-03-12 - A [demo dataset](https://doi.org/10.5281/zenodo.6466784) (together with command) has been prepared! You can use it to check if MarkerMAG is installed successfully on your system.
 
 
 How it works
