@@ -69,8 +69,8 @@ How to install
       # install with 
       pip3 install MarkerMAG
       
-      # install a specific version of MarkerMAG (e.g. 1.1.24)
-      pip3 install MarkerMAG==1.1.24
+      # install a specific version of MarkerMAG (e.g. 1.1.26)
+      pip3 install MarkerMAG==1.1.26
         
       # upgrade with 
       pip3 install --upgrade MarkerMAG
@@ -80,7 +80,9 @@ How to install
 
       conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
       conda activate MarkerMAG
-      MarkerMAG -h
+      cd MarkerMAG_demo_data
+      MarkerMAG link -p Demo -r1 demo_R1.fasta -r2 demo_R2.fasta -marker demo_16S.fasta -mag demo_MAGs -x fa -t 12
+
 
 + :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
 
