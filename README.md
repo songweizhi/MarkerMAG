@@ -75,7 +75,7 @@ How to install
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
-+ You can also install MarkerMAG with Conda, which installs the third-party dependencies for you. 
++ A Conda package for MarkerMAG is also available, which will install the third-party dependencies for you.
   However, you'll need to install usearch on your own as it's not available in conda due to license issue.
 
       conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
@@ -94,18 +94,17 @@ How to run
 + MarkerMAG’s input consists of 
    1. A set of user-provided MAGs
    2. A set of 16S rRNA gene sequences (either user-provided or generated with the `matam_16s` module) 
-   3. The **quality-filtered** paired-end reads used to generate the data above
+   3. The **quality-filtered** paired-end reads used to generate the data above. 
+      If the input reads are provided in fastq format, MarkerMAG will first convert them into fasta format.
    
 + :warning: MarkerMAG is designed to work with paired short-read data (i.e. Illumina). It assumes the id of reads in pair in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module ([manual](doc/README_rename_reads.md)). 
-
-+ Input reads to MarkerMAG need to be quality-filtered. If the input reads were provided in fastq format, MarkerMAG will first convert them into fasta format.
 
 + Although you can use your preferred tool to reconstruct 16S rRNA gene sequences from the metagenomic dataset, 
    MarkerMAG does have a supplementary module (`matam_16s`) to reconstruct 16S rRNA genes. 
    Please refer to the manual [here](doc/README_matam_16s.md) if you want to give it a go.
 
-+ Link 16S rRNA gene sequences with MAGs ([demo dataset](https://drive.google.com/drive/folders/1edzpj6QV6jRQ24F1wT_9pIDzOIV_b3ki?usp=sharing)): 
++ Link 16S rRNA gene sequences with MAGs ([demo dataset](https://doi.org/10.5281/zenodo.6466784)): 
 
       MarkerMAG link -p Demo -r1 demo_R1.fasta -r2 demo_R2.fasta -marker demo_16S.fasta -mag demo_MAGs -x fa -t 12
 
@@ -146,3 +145,5 @@ Output files
  
    *If you saw error message from Tablet that says input files format can not be understood, 
    please refer to [here](https://github.com/cropgeeks/tablet/issues/15) for a potential solution.
+
+
