@@ -87,7 +87,7 @@ How to install
 
 + Alternatively, you can install it with Conda
 
-      # download markermag-1.1.23-py39_0.tar.bz2
+      # download markermag-1.1.23-py39_0.tar.bz2 from github repo
       conda create -n MarkerMAG -c bioconda markermag-1.1.23-py39_0.tar.bz2 
       conda activate MarkerMAG
       MarkerMAG -h
