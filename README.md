@@ -45,53 +45,46 @@ MarkerMAG modules
     + `rename_reads`: rename paired reads ([manual](doc/README_rename_reads.md))
     + `matam_16s`: assemble 16S rRNA genes with Matam ([manual](doc/README_matam_16s.md))
     + `barrnap_16s`: identify 16S rRNA genes from genomes/MAGs with Barrnap ([manual](doc/README_barrnap_16s.md))
-    
-Dependencies
+
+
+How to install
 ---
- 
-+ Dependencies for the `link` module: 
+
++ MarkerMAG has been tested on Linux and MacOS, but NOT on Windows.
+
+
++ MarkerMAG is implemented in [python3](https://www.python.org), It can be installed with pip. 
+  Software dependencies need to be in your system path. 
+  Dependencies for the `link` module include 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download), 
   [Barrnap](https://github.com/tseemann/barrnap), 
   [seqtk](https://github.com/lh3/seqtk), 
   [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
   [Samtools](http://www.htslib.org), 
   [HMMER](http://hmmer.org), 
-  [metaSPAdes](https://cab.spbu.ru/software/meta-spades/), 
-  [Usearch](https://www.drive5.com/usearch/), 
-  as well as Python packages, including 
-  [Biopython](https://biopython.org), 
-  [numpy](https://numpy.org), 
-  [pandas](https://pandas.pydata.org), 
-  [seaborn](https://seaborn.pydata.org) and 
-  [plotly](https://plotly.com).
-
-+ Software dependencies need to be in your system path.
-
-+ Dependencies for the supplementary modules can be found from the corresponding manual page.
- 
-
-How to install
----
-
-+ MarkerMAG has been tested on Linux and MacOS, but NOT on Windows.
-+ MarkerMAG is implemented in [python3](https://www.python.org), it can be installed with pip3:
+  [metaSPAdes](https://cab.spbu.ru/software/meta-spades/) and 
+  [Usearch](https://www.drive5.com/usearch/).
+  Dependencies for the supplementary modules are provided in their corresponding manual page.
   
       # install with 
       pip3 install MarkerMAG
       
-      # install a specific version of MarkerMAG (e.g. 1.1.23)
-      pip3 install MarkerMAG==1.1.23
+      # install a specific version of MarkerMAG (e.g. 1.1.24)
+      pip3 install MarkerMAG==1.1.24
         
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
-+ Alternatively, you can install it with Conda. you need to install **usearch** on your own as it's not available on conda due to license issues.
++ You can also install MarkerMAG with Conda, which installs the third-party dependencies for you. 
+  However, you'll need to install usearch on your own as it's not available in conda due to license issue.
 
       conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
       conda activate MarkerMAG
       MarkerMAG -h
-      
+
 + :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
+
+
 + [Here](doc/README_example_cmds.md) are some example commands for UNSW Katana users.
 
 
@@ -128,7 +121,7 @@ Output files
     | matam_16S_12  | MAG_9 | 102| Rd1 |
     | matam_16S_6   | MAG_59| 55 | Rd2 |
 
-2. Summary of identified linkages at contig level:
+2. Summary of identified linkages at contig level (with figure):
 
     |Marker___MAG (linkages)	|Contig	        |Round_1	|Round_2	|
     |:---:|:---:|:---:|:---:|
@@ -137,15 +130,12 @@ Output files
     |matam_16S_12___MAG_9(102)	            |Contig_840	    |102	    |0          |
     |matam_16S_6___MAG_59(39)	            |Contig_171	    |0	        |55         |
 
-   as well as its visualization:
-   
    ![linkages](doc/images/linkages_plot_2.png)
 
+3. Copy number of linked 16S rRNA genes.
 
-3. Copy number of linked 16S rRNA genes
 
-
-4. Visualization of individual linkage
+4. Visualization of individual linkage.
   
    MarkerMAG supports the visualization of identified linkages (needs [Tablet](https://ics.hutton.ac.uk/tablet/)). 
    Output files for visualization ([example](doc/vis_folder)) can be found in the [Prefix]_linkage_visualization_rd1/2 folders. 
