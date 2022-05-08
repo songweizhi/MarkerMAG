@@ -85,13 +85,12 @@ How to install
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
-+ Alternatively, you can install it with Conda
++ Alternatively, you can install it with Conda. you need to install **usearch** on your own as it's not available on conda due to license issues.
 
-      # download markermag-1.1.23-py39_0.tar.bz2 from github repo
-      conda create -n MarkerMAG -c bioconda markermag-1.1.23-py39_0.tar.bz2 
+      conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
       conda activate MarkerMAG
       MarkerMAG -h
-
+      
 + :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
 + [Here](doc/README_example_cmds.md) are some example commands for UNSW Katana users.
 
