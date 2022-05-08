@@ -7,6 +7,7 @@
 
 Publication
 ---
+
 + **Song WZ**, Zhang S, Thomas T* (2021) MarkerMAG: linking metagenome-assembled genomes (MAGs) with 16S rRNA marker genes using paired-end short reads (under review)
 + Contact: Dr. Weizhi Song (songwz03@gmail.com), Prof. Torsten Thomas (t.thomas@unsw.edu.au)
 + Center for Marine Science & Innovation, University of New South Wales, Sydney, Australia
@@ -23,7 +24,6 @@ How it works
 
 + Workflow of MarkerMAG
 ![linkages](doc/images/MarkerMAG_workflow.png)
-
 
 + GC content bias
   
@@ -58,7 +58,7 @@ Dependencies
   [HMMER](http://hmmer.org), 
   [metaSPAdes](https://cab.spbu.ru/software/meta-spades/), 
   [Usearch](https://www.drive5.com/usearch/), 
-  as well as several Python packages, including 
+  as well as Python packages, including 
   [Biopython](https://biopython.org), 
   [numpy](https://numpy.org), 
   [pandas](https://pandas.pydata.org), 
@@ -79,11 +79,18 @@ How to install
       # install with 
       pip3 install MarkerMAG
       
-      # install a specific version of MarkerMAG (e.g. 1.1.15)
-      pip3 install MarkerMAG==1.1.15
+      # install a specific version of MarkerMAG (e.g. 1.1.23)
+      pip3 install MarkerMAG==1.1.23
         
       # upgrade with 
       pip3 install --upgrade MarkerMAG
+
++ Alternatively, you can install it with Conda
+
+      # download markermag-1.1.23-py39_0.tar.bz2
+      conda create -n MarkerMAG -c bioconda markermag-1.1.23-py39_0.tar.bz2 
+      conda activate MarkerMAG
+      MarkerMAG -h
 
 + :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
 + [Here](doc/README_example_cmds.md) are some example commands for UNSW Katana users.
@@ -91,23 +98,20 @@ How to install
 
 How to run
 ---
+
 + MarkerMAG’s input consists of 
    1. A set of user-provided MAGs
    2. A set of 16S rRNA gene sequences (either user-provided or generated with the `matam_16s` module) 
-   3. The **quality-filtered** metagenomic reads used to generate the data above
-
-
+   3. The **quality-filtered** paired-end reads used to generate the data above
+   
 + :warning: MarkerMAG is designed to work with paired short-read data (i.e. Illumina). It assumes the id of reads in pair in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module ([manual](doc/README_rename_reads.md)). 
 
-
 + Input reads to MarkerMAG need to be quality-filtered. If the input reads were provided in fastq format, MarkerMAG will first convert them into fasta format.
-
 
 + Although you can use your preferred tool to reconstruct 16S rRNA gene sequences from the metagenomic dataset, 
    MarkerMAG does have a supplementary module (`matam_16s`) to reconstruct 16S rRNA genes. 
    Please refer to the manual [here](doc/README_matam_16s.md) if you want to give it a go.
-
 
 + Link 16S rRNA gene sequences with MAGs ([demo dataset](https://drive.google.com/drive/folders/1edzpj6QV6jRQ24F1wT_9pIDzOIV_b3ki?usp=sharing)): 
 
@@ -141,10 +145,6 @@ Output files
 
 3. Copy number of linked 16S rRNA genes
 
-    | MAG | Copies | 
-    |:---:|:---:|
-    | MAG_9  |  1.97  |
-    | MAG_59 |  3.41  |
 
 4. Visualization of individual linkage
   
