@@ -16,6 +16,7 @@ Publication
 Updates
 ---
 
++ 2022-05-08 - A Conda package for MarkerMAG is available now, please refers to the "**How to install**" section for details.
 + 2022-03-12 - A [demo dataset](https://doi.org/10.5281/zenodo.6466784) (together with command) has been prepared! You can use it to check if MarkerMAG is installed successfully on your system.
 
 
@@ -72,7 +73,7 @@ How to install
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
-+ A Conda package for MarkerMAG is also available, which will install the third-party dependencies for you.
++ A Conda package for MarkerMAG is available now, which will install the third-party dependencies for you.
   However, you'll need to install usearch on your own as it's not available in conda due to license issue.
 
       conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
