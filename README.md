@@ -68,9 +68,6 @@ How to install
   
       # install with 
       pip3 install MarkerMAG
-      
-      # install a specific version of MarkerMAG (e.g. 1.1.26)
-      pip3 install MarkerMAG==1.1.26
         
       # upgrade with 
       pip3 install --upgrade MarkerMAG
