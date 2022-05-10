@@ -16,8 +16,8 @@ Publication
 Updates
 ---
 
-+ 2022-05-08 - A Conda package for MarkerMAG is available now, please refers to the "**How to install**" section for details.
-+ 2022-03-12 - A [demo dataset](https://doi.org/10.5281/zenodo.6466784) (together with command) has been prepared! You can use it to check if MarkerMAG is installed successfully on your system.
++ 2022-05-08 - A Conda package for MarkerMAG is now available, please refers to "**How to install**" section for details.
++ 2022-03-12 - A [demo dataset](https://doi.org/10.5281/zenodo.6466784) (together with command) has now been provided! You can use it to check if MarkerMAG is installed successfully on your system.
 
 
 MarkerMAG modules
@@ -39,7 +39,6 @@ How to install
 
 + MarkerMAG has been tested on Linux and MacOS, but NOT on Windows.
 
-
 + MarkerMAG is implemented in [python3](https://www.python.org), It can be installed with pip. 
   Software dependencies need to be in your system path. 
   Dependencies for the `link` module include 
@@ -59,17 +58,15 @@ How to install
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
-+ A Conda package for MarkerMAG is available now, which will install the third-party dependencies for you.
-  However, you'll need to install usearch on your own as it's not available in conda due to license issue.
++ A Conda package that automatically installs MarkerMAG's third-party dependencies (except usearch) is now available. 
+  Please note that you'll need to install [Usearch](https://www.drive5.com/usearch/) on your own as it's not available in Conda due to license issue.
 
       conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
       conda activate MarkerMAG
       cd MarkerMAG_demo_data
       MarkerMAG link -p Demo -r1 demo_R1.fasta -r2 demo_R2.fasta -marker demo_16S.fasta -mag demo_MAGs -x fa -t 12
 
-
 + :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
-
 
 + [Here](doc/README_example_cmds.md) are some example commands for UNSW Katana users.
 
@@ -131,5 +128,4 @@ Output files
  
    *If you saw error message from Tablet that says input files format can not be understood, 
    please refer to [here](https://github.com/cropgeeks/tablet/issues/15) for a potential solution.
-
 
