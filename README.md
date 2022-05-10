@@ -20,20 +20,6 @@ Updates
 + 2022-03-12 - A [demo dataset](https://doi.org/10.5281/zenodo.6466784) (together with command) has been prepared! You can use it to check if MarkerMAG is installed successfully on your system.
 
 
-How it works
----
-
-+ Workflow of MarkerMAG
-![linkages](doc/images/MarkerMAG_workflow.png)
-
-+ GC content bias
-  
-  Read coverage of MAGs and their linked 16S rRNA genes might be biased by guanine-cytosine (GC) content [[Reference](https://doi.org/10.1093/nar/gks001)].
-    Read coverage are weighted by GC content bias before estimating the copy number of 16S rRNA genes in MAGs. 
-    GC content bias is calculated as described [here](https://support.illumina.com/content/dam/illumina-support/help/Illumina_DRAGEN_Bio_IT_Platform_v3_7_1000000141465/Content/SW/Informatics/Dragen/GCBiasReport_fDG.htm). 
-    An example of GC content bias from the MBARC-26 dataset that we used for benchmarking MarkerMAG is [here](doc/README_GC_bias.md).
-
-
 MarkerMAG modules
 ---
 
