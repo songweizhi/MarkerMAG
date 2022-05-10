@@ -58,7 +58,7 @@ How to install
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
-+ A Conda package that automatically installs MarkerMAG's third-party dependencies (except usearch :warning:) is now available. 
++ A Conda package that automatically installs MarkerMAG's third-party dependencies (except [Usearch](https://www.drive5.com/usearch/) :warning:) is now available. 
   Please note that you'll need to install [Usearch](https://www.drive5.com/usearch/) on your own as it's not available in Conda due to license issue.
 
       conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
