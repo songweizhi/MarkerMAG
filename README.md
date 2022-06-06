@@ -62,7 +62,7 @@ How to install
 + A Conda package that automatically installs MarkerMAG's third-party dependencies (except [Usearch](https://www.drive5.com/usearch/) :warning:) is now available. 
   Please note that you'll need to install [Usearch](https://www.drive5.com/usearch/) on your own as it's not available in Conda due to license issue.
 
-      conda create -n MarkerMAG -c bioconda -c songweizhi MarkerMAG
+      conda create -n MarkerMAG -c bioconda MarkerMAG
       conda activate MarkerMAG
       cd MarkerMAG_demo_data
       MarkerMAG link -p Demo -r1 demo_R1.fasta -r2 demo_R2.fasta -marker demo_16S.fasta -mag demo_MAGs -x fa -t 12
