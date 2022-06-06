@@ -9,7 +9,7 @@
 Publication
 ---
 
-+ **Song WZ**, Zhang S, Thomas T* (2021) MarkerMAG: linking metagenome-assembled genomes (MAGs) with 16S rRNA marker genes using paired-end short reads (under review)
++ **Song WZ**, Zhang S, Thomas T* (2022) MarkerMAG: linking metagenome-assembled genomes (MAGs) with 16S rRNA marker genes using paired-end short reads, _Bioinformatics_ (**under review**)
 + Contact: Dr. Weizhi Song (songwz03@gmail.com), Prof. Torsten Thomas (t.thomas@unsw.edu.au)
 + Center for Marine Science & Innovation, University of New South Wales, Sydney, Australia
 
@@ -17,7 +17,7 @@ Publication
 Updates
 ---
 
-+ 2022-05-08 - A Conda package for MarkerMAG is now available, please refers to "**How to install**" section for details.
++ 2022-05-08 - MarkerMAG is now available on Bioconda, please refers to "**How to install**" for details.
 + 2022-03-12 - A [demo dataset](https://doi.org/10.5281/zenodo.6466784) (together with command) has now been provided! You can use it to check if MarkerMAG is installed successfully on your system.
 
 
@@ -38,10 +38,23 @@ MarkerMAG modules
 How to install
 ---
 
-+ MarkerMAG has been tested on Linux and MacOS, but NOT on Windows.
++ MarkerMAG is implemented in [python3](https://www.python.org), 
+  It has been tested on Linux and MacOS, but NOT on Windows.
 
-+ MarkerMAG is implemented in [python3](https://www.python.org), It can be installed with pip. 
-  Software dependencies need to be in your system path. 
++ A Conda package that automatically installs MarkerMAG's third-party dependencies (except [Usearch](https://www.drive5.com/usearch/) :warning:) is now available. 
+  Please note that you'll need to install [Usearch](https://www.drive5.com/usearch/) on your own as it's not available in Conda due to license issue.
+
+      # install with 
+      conda create -n MarkerMAG_env -c bioconda MarkerMAG
+      
+      # To activate the environment    
+      conda activate MarkerMAG_env
+      # MarkerMAG is ready for running now, type "MarkerMAG -h" for help
+      
+      # To deactivate the environment
+      conda deactivate
+
++ It can also be installed with pip. Software dependencies need to be in your system path in this case. 
   Dependencies for the `link` module include 
   [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download), 
   [Barrnap](https://github.com/tseemann/barrnap), 
@@ -58,14 +71,6 @@ How to install
         
       # upgrade with 
       pip3 install --upgrade MarkerMAG
-
-+ A Conda package that automatically installs MarkerMAG's third-party dependencies (except [Usearch](https://www.drive5.com/usearch/) :warning:) is now available. 
-  Please note that you'll need to install [Usearch](https://www.drive5.com/usearch/) on your own as it's not available in Conda due to license issue.
-
-      conda create -n MarkerMAG -c bioconda MarkerMAG
-      conda activate MarkerMAG
-      cd MarkerMAG_demo_data
-      MarkerMAG link -p Demo -r1 demo_R1.fasta -r2 demo_R2.fasta -marker demo_16S.fasta -mag demo_MAGs -x fa -t 12
 
 + :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
 
