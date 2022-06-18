@@ -4,12 +4,13 @@
 [![pypi licence](https://img.shields.io/pypi/l/MarkerMAG.svg)](https://opensource.org/licenses/gpl-3.0.html)
 [![pypi version](https://img.shields.io/pypi/v/MarkerMAG.svg)](https://pypi.python.org/pypi/MarkerMAG) 
 [![Bioconda](https://img.shields.io/conda/vn/bioconda/markermag.svg?color=green)](https://anaconda.org/bioconda/markermag)
+[![DOI         ](https://img.shields.io/static/v1.svg?label=DOI&message=10.1093/bioinformatics/btac398&color=orange)](https://doi.org/10.1093/bioinformatics/btac398)
 
 
 Publication
 ---
 
-+ **Song WZ**, Zhang S, Thomas T* (2022) MarkerMAG: linking metagenome-assembled genomes (MAGs) with 16S rRNA marker genes using paired-end short reads, _Bioinformatics_ (**accepted**)
++ **Song WZ**, Zhang S, Thomas T* (2022) MarkerMAG: linking metagenome-assembled genomes (MAGs) with 16S rRNA marker genes using paired-end short reads, _Bioinformatics_. [https://doi.org/10.1093/bioinformatics/btac398](https://doi.org/10.1093/bioinformatics/btac398)
 + Contact: Dr. Weizhi Song (songwz03@gmail.com), Prof. Torsten Thomas (t.thomas@unsw.edu.au)
 + Center for Marine Science & Innovation, University of New South Wales, Sydney, Australia
 
@@ -72,9 +73,9 @@ How to install
       # upgrade with 
       pip3 install --upgrade MarkerMAG
 
-+ :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
-
 + [Here](doc/README_example_cmds.md) are some example commands for UNSW Katana users.
+
++ :warning: If you clone the repository directly off GitHub you might end up with a version that is still under development.
 
 
 How to run
