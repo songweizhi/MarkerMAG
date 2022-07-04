@@ -84,8 +84,7 @@ How to run
 + MarkerMAG’s input consists of 
    1. A set of user-provided MAGs
    2. A set of 16S rRNA gene sequences (either user-provided or generated with the `matam_16s` module) 
-   3. The **quality-filtered** paired-end reads used to generate the data above. 
-      If the input reads are provided in fastq format, MarkerMAG will first convert them into fasta format.
+   3. Input reads need to be **quality-filtered** and in fasta format (no quality score).
    
 + :warning: MarkerMAG is designed to work with paired short-read data (i.e. Illumina). It assumes the id of reads in pair in the format of `XXXX.1` and `XXXX.2`. The only difference is the last character.
    You can rename your reads with MarkerMAG's `rename_reads` module ([manual](doc/README_rename_reads.md)). 
