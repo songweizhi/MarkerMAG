@@ -7,5 +7,9 @@ Manual for the `barrnap_16s` module
 
 
 + Example command
-              
-      MarkerMAG barrnap_16s -p demo -g MAG_files -x fa -t 6 -force
+
+      # for single genome
+      MarkerMAG barrnap_16s -g MAG_1.fa
+
+      # for multiple genomes
+      MarkerMAG barrnap_16s -g MAG_files -x fa -t 6
