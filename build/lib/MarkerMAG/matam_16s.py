@@ -15,9 +15,6 @@ matam_16s_usage = '''
 MarkerMAG matam_16s -p Test -r1 R1.fastq -r2 R2.fastq -t 12 -d path/to/SILVA_138_SSURef_NR99
 MarkerMAG matam_16s -p Test -r16s 16S_reads.fastq -t 12 -d path/to/SILVA_138_SSURef_NR99
 
-# please refer to here for the preparation of input files
-https://github.com/songweizhi/MarkerMAG/blob/master/doc/README_matam_16s.md
-
 ==================================================================================================
 '''
 
@@ -203,16 +200,17 @@ def parse_uclust_output(uclust_output_table, cluster_to_member_file):
 
     cluster_id_set = set()
     cluster_to_seq_member_dict = {}
-    for each_line in open(uclust_output_table):
-        each_line_split = each_line.strip().split('\t')
-        cluster_id = each_line_split[1]
-        seq_id = each_line_split[8].split(' ')[0]
-        cluster_id_set.add(int(cluster_id))
+    with open(uclust_output_table) as uot:
+        for each_line in uot:
+            each_line_split = each_line.strip().split('\t')
+            cluster_id = each_line_split[1]
+            seq_id = each_line_split[8].split(' ')[0]
+            cluster_id_set.add(int(cluster_id))
 
-        if cluster_id not in cluster_to_seq_member_dict:
-            cluster_to_seq_member_dict[cluster_id] = {seq_id}
-        else:
-            cluster_to_seq_member_dict[cluster_id].add(seq_id)
+            if cluster_id not in cluster_to_seq_member_dict:
+                cluster_to_seq_member_dict[cluster_id] = {seq_id}
+            else:
+                cluster_to_seq_member_dict[cluster_id].add(seq_id)
 
     # write out cluster sequence members
     cluster_to_member_file_handle = open(cluster_to_member_file, 'w')

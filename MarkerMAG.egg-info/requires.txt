@@ -1,0 +1,7 @@
+biopython
+pandas
+plotly
+seaborn
+matplotlib
+numpy
+setuptools

@@ -99,15 +99,16 @@ def plot_gc_bias(GC_bias_txt, gc_content_mag, gc_content_16s_list, mag_global_me
     cov_list = []
     norm_cov_list = []
     count_num_list = []
-    for each_line in open(GC_bias_txt):
-        each_line_split = each_line.strip().split()
-        if not each_line.startswith('GC'):
-            gc = int(each_line_split[0])
-            cov = float(each_line_split[1])
-            count_num = int(each_line_split[2])
-            gc_content_list.append(gc)
-            cov_list.append(cov)
-            count_num_list.append(count_num)
+    with open(GC_bias_txt) as GCbt:
+        for each_line in GCbt:
+            each_line_split = each_line.strip().split()
+            if not each_line.startswith('GC'):
+                gc = int(each_line_split[0])
+                cov = float(each_line_split[1])
+                count_num = int(each_line_split[2])
+                gc_content_list.append(gc)
+                cov_list.append(cov)
+                count_num_list.append(count_num)
 
     gc_content_array = np.array(gc_content_list)
     cov_array = np.array(cov_list)
@@ -749,48 +750,49 @@ def remove_high_mismatch(sam_in, aln_len_cutoff, mismatch_cutoff, sam_out):
 
     sam_out_handle = open(sam_out, 'w')
     ref_len_dict = {}
-    for each_read in open(sam_in):
-        each_read_split = each_read.strip().split('\t')
-        if each_read.startswith('@'):
-            sam_out_handle.write(each_read)
-
-            marker_id = ''
-            marker_len = 0
-            for each_element in each_read_split:
-                if each_element.startswith('SN:'):
-                    marker_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    marker_len = int(each_element[3:])
-            ref_len_dict[marker_id] = marker_len
-
-        else:
-            ref_id = each_read_split[2]
-            ref_pos = int(each_read_split[3])
-            cigar = each_read_split[5]
-            if cigar == '*':
+    with open(sam_in) as si:
+        for each_read in si:
+            each_read_split = each_read.strip().split('\t')
+            if each_read.startswith('@'):
                 sam_out_handle.write(each_read)
+
+                marker_id = ''
+                marker_len = 0
+                for each_element in each_read_split:
+                    if each_element.startswith('SN:'):
+                        marker_id = each_element[3:]
+                    if each_element.startswith('LN:'):
+                        marker_len = int(each_element[3:])
+                ref_len_dict[marker_id] = marker_len
+
             else:
-                cigar_splitted = cigar_splitter(cigar)
-                both_ends_clp = check_both_ends_clipping(cigar_splitted)
-                if both_ends_clp is False:
-                    r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(cigar_splitted)
-                    if r1_mismatch_pct <= mismatch_cutoff:
+                ref_id = each_read_split[2]
+                ref_pos = int(each_read_split[3])
+                cigar = each_read_split[5]
+                if cigar == '*':
+                    sam_out_handle.write(each_read)
+                else:
+                    cigar_splitted = cigar_splitter(cigar)
+                    both_ends_clp = check_both_ends_clipping(cigar_splitted)
+                    if both_ends_clp is False:
+                        r1_aligned_len, r1_aligned_pct, r1_clipping_len, r1_clipping_pct, r1_mismatch_pct = get_cigar_stats(cigar_splitted)
+                        if r1_mismatch_pct <= mismatch_cutoff:
 
-                        if r1_aligned_len >= aln_len_cutoff:
+                            if r1_aligned_len >= aln_len_cutoff:
 
-                            # check if clp in middle
-                            if ('S' not in cigar) and ('s' not in cigar):
-                                sam_out_handle.write(each_read)
-                            else:
-                                clip_in_middle = True
-                                if (cigar_splitted[0][-1] in ['S', 's']) and (ref_pos == 1):
-                                    clip_in_middle = False
-                                if (cigar_splitted[-1][-1] in ['S', 's']):
-                                    if (ref_pos + r1_aligned_len - 1) == ref_len_dict[ref_id]:
-                                        clip_in_middle = False
-
-                                if clip_in_middle is False:
+                                # check if clp in middle
+                                if ('S' not in cigar) and ('s' not in cigar):
                                     sam_out_handle.write(each_read)
+                                else:
+                                    clip_in_middle = True
+                                    if (cigar_splitted[0][-1] in ['S', 's']) and (ref_pos == 1):
+                                        clip_in_middle = False
+                                    if (cigar_splitted[-1][-1] in ['S', 's']):
+                                        if (ref_pos + r1_aligned_len - 1) == ref_len_dict[ref_id]:
+                                            clip_in_middle = False
+
+                                    if clip_in_middle is False:
+                                        sam_out_handle.write(each_read)
     sam_out_handle.close()
 
 
@@ -1095,71 +1097,73 @@ def filter_sam_file(splitted_sam_mp_file_set, min_insert_size_16s, both_pair_map
 
     # filter sam file
     pwd_sam_file_filtered_handle = open(sam_file_filtered, 'w')
-    for each_line in open(sam_file_sorted):
-        if each_line.startswith('@'):
-            pwd_sam_file_filtered_handle.write(each_line)
-        else:
-            each_line_split = each_line.strip().split('\t')
-            read_id = each_line_split[0]
-            read_base = read_id[:-2]
-            read_strand = read_id[-1]
-            ref_id = each_line_split[2]
-            if read_base in MappingRecord_dict:
+    with open(sam_file_sorted) as sfs:
+        for each_line in sfs:
+            if each_line.startswith('@'):
+                pwd_sam_file_filtered_handle.write(each_line)
+            else:
+                each_line_split = each_line.strip().split('\t')
+                read_id = each_line_split[0]
+                read_base = read_id[:-2]
+                read_strand = read_id[-1]
+                ref_id = each_line_split[2]
+                if read_base in MappingRecord_dict:
 
-                to_write = False
-                if (ref_id in MappingRecord_dict[read_base].shared_16s_refs_no_ignored):
-                    if keep_uniq is True:
-                        if len(MappingRecord_dict[read_base].shared_16s_refs_no_ignored) == 1:
+                    to_write = False
+                    if (ref_id in MappingRecord_dict[read_base].shared_16s_refs_no_ignored):
+                        if keep_uniq is True:
+                            if len(MappingRecord_dict[read_base].shared_16s_refs_no_ignored) == 1:
+                                to_write = True
+                        else:
                             to_write = True
-                    else:
-                        to_write = True
 
-                if both_pair_mapped is False:
-                    if (ref_id not in MappingRecord_dict[read_base].shared_16s_refs_no_ignored):
-                        if read_strand == '1':
-                            if (ref_id in MappingRecord_dict[read_base].r1_16s_refs_no_ignored):
-                                if keep_uniq is True:
-                                    if len(MappingRecord_dict[read_base].r1_16s_refs_no_ignored) == 1:
+                    if both_pair_mapped is False:
+                        if (ref_id not in MappingRecord_dict[read_base].shared_16s_refs_no_ignored):
+                            if read_strand == '1':
+                                if (ref_id in MappingRecord_dict[read_base].r1_16s_refs_no_ignored):
+                                    if keep_uniq is True:
+                                        if len(MappingRecord_dict[read_base].r1_16s_refs_no_ignored) == 1:
+                                            to_write = True
+                                    else:
                                         to_write = True
-                                else:
-                                    to_write = True
-                        if read_strand == '2':
-                            if (ref_id in MappingRecord_dict[read_base].r2_16s_refs_no_ignored):
-                                if keep_uniq is True:
-                                    if len(MappingRecord_dict[read_base].r2_16s_refs_no_ignored) == 1:
+                            if read_strand == '2':
+                                if (ref_id in MappingRecord_dict[read_base].r2_16s_refs_no_ignored):
+                                    if keep_uniq is True:
+                                        if len(MappingRecord_dict[read_base].r2_16s_refs_no_ignored) == 1:
+                                            to_write = True
+                                    else:
                                         to_write = True
-                                else:
-                                    to_write = True
-                if to_write is True:
-                    pwd_sam_file_filtered_handle.write(each_line)
+                    if to_write is True:
+                        pwd_sam_file_filtered_handle.write(each_line)
     pwd_sam_file_filtered_handle.close()
 
     # read filtered sam into dict
     read_to_ref_dict = {}
     ref_len_dict = {}
     read_len_dict = {}
-    for each_line in open(sam_file_filtered):
-        each_line_split = each_line.strip().split('\t')
-        if each_line.startswith('@'):
-            mini_assembly_id = ''
-            mini_assembly_len = 0
-            for each_element in each_line_split:
-                if each_element.startswith('SN:'):
-                    mini_assembly_id = each_element[3:]
-                if each_element.startswith('LN:'):
-                    mini_assembly_len = int(each_element[3:])
-            ref_len_dict[mini_assembly_id] = mini_assembly_len
-        else:
-            read_id = each_line_split[0]
-            ref_id = each_line_split[2]
-            read_len = len(each_line_split[9])
-
-            # if ref_id in linked_16s_set:
-            if read_id not in read_to_ref_dict:
-                read_to_ref_dict[read_id] = {ref_id}
+    with open(sam_file_filtered) as sff:
+        for each_line in sff:
+            each_line_split = each_line.strip().split('\t')
+            if each_line.startswith('@'):
+                mini_assembly_id = ''
+                mini_assembly_len = 0
+                for each_element in each_line_split:
+                    if each_element.startswith('SN:'):
+                        mini_assembly_id = each_element[3:]
+                    if each_element.startswith('LN:'):
+                        mini_assembly_len = int(each_element[3:])
+                ref_len_dict[mini_assembly_id] = mini_assembly_len
             else:
-                read_to_ref_dict[read_id].add(ref_id)
-            read_len_dict[read_id] = read_len
+                read_id = each_line_split[0]
+                ref_id = each_line_split[2]
+                read_len = len(each_line_split[9])
+
+                # if ref_id in linked_16s_set:
+                if read_id not in read_to_ref_dict:
+                    read_to_ref_dict[read_id] = {ref_id}
+                else:
+                    read_to_ref_dict[read_id].add(ref_id)
+                read_len_dict[read_id] = read_len
 
     # randomly select one ref for reads mapped to multiple 16S rRNA gene sequences
     ref_to_read_dict_overall = {}
@@ -1182,16 +1186,17 @@ def filter_sam_file(splitted_sam_mp_file_set, min_insert_size_16s, both_pair_map
 
     # get random one sam file
     pwd_sam_file_filtered_random_handle = open(sam_file_filtered_random, 'w')
-    for each_line in open(sam_file_filtered):
-        if each_line.startswith('@'):
-            pwd_sam_file_filtered_random_handle.write(each_line)
-        else:
-            each_line_split = each_line.strip().split('\t')
-            read_id = each_line_split[0]
-            ref_id = each_line_split[2]
-            random_ref = read_to_ref_dict_random_one.get(read_id, 'NA')
-            if ref_id == random_ref:
+    with open(sam_file_filtered) as sff:
+        for each_line in sff:
+            if each_line.startswith('@'):
                 pwd_sam_file_filtered_random_handle.write(each_line)
+            else:
+                each_line_split = each_line.strip().split('\t')
+                read_id = each_line_split[0]
+                ref_id = each_line_split[2]
+                random_ref = read_to_ref_dict_random_one.get(read_id, 'NA')
+                if ref_id == random_ref:
+                    pwd_sam_file_filtered_random_handle.write(each_line)
     pwd_sam_file_filtered_random_handle.close()
 
 
@@ -1343,12 +1348,13 @@ def calculate_cp_num(gnm_to_linked_16s_dict, mag_gc_bias_op_folder, depth_dict_m
         if os.path.isfile(gc_bias_txt):
             # read in gc bias
             gc_bias_dict = {}
-            for each_gc in open(gc_bias_txt):
-                if not each_gc.startswith('GC\tCoverage\tNumber\tProportion'):
-                    each_gc_split = each_gc.strip().split('\t')
-                    gc_value = int(each_gc_split[0])
-                    gc_depth = float(each_gc_split[1])
-                    gc_bias_dict[gc_value] = gc_depth
+            with open(gc_bias_txt) as gbt:
+                for each_gc in gbt:
+                    if not each_gc.startswith('GC\tCoverage\tNumber\tProportion'):
+                        each_gc_split = each_gc.strip().split('\t')
+                        gc_value = int(each_gc_split[0])
+                        gc_depth = float(each_gc_split[1])
+                        gc_bias_dict[gc_value] = gc_depth
 
             for each_linked_16s in current_mag_linked_16s:
                 depth_mag = depth_dict_mag.get(each_mag, 'NA')
@@ -1382,25 +1388,26 @@ def vxtractor_output_to_dict(vxtractor_op, seq_len_dict, end_len_to_ignore, igno
 
     # read in variable regions
     seq_var_con_region_dict = {}
-    for each_line in open(vxtractor_op):
-        if not each_line.startswith(('Command:', 'Options:', 'Sequence,')):
-            each_line_no_quote_symbol = ''
-            for each_char in each_line.strip():
-                if each_char not in ['"', '\'', '']:
-                    each_line_no_quote_symbol += each_char
+    with open(vxtractor_op) as vo:
+        for each_line in vo:
+            if not each_line.startswith(('Command:', 'Options:', 'Sequence,')):
+                each_line_no_quote_symbol = ''
+                for each_char in each_line.strip():
+                    if each_char not in ['"', '\'', '']:
+                        each_line_no_quote_symbol += each_char
 
-            each_line_split = each_line_no_quote_symbol.strip().split(',')
-            seq_id = each_line_split[0]
-            seq_var_con_region_dict[seq_id] = {}
-            seq_var_regions = each_line_split[37:46]
+                each_line_split = each_line_no_quote_symbol.strip().split(',')
+                seq_id = each_line_split[0]
+                seq_var_con_region_dict[seq_id] = {}
+                seq_var_regions = each_line_split[37:46]
 
-            for (var_id, var_range) in zip(var_region_id_list, seq_var_regions):
-                var_range_to_store = 'na'
-                if var_range not in ['', 'notfound']:
-                    if 'wrongorder' not in var_range:
-                        if 'HMM=' not in var_range:
-                            var_range_to_store = sorted([int(i) for i in var_range.split('-')])
-                seq_var_con_region_dict[seq_id][var_id] = var_range_to_store
+                for (var_id, var_range) in zip(var_region_id_list, seq_var_regions):
+                    var_range_to_store = 'na'
+                    if var_range not in ['', 'notfound']:
+                        if 'wrongorder' not in var_range:
+                            if 'HMM=' not in var_range:
+                                var_range_to_store = sorted([int(i) for i in var_range.split('-')])
+                    seq_var_con_region_dict[seq_id][var_id] = var_range_to_store
 
     # get conserved regions
     for each_seq in seq_var_con_region_dict:
@@ -1553,52 +1560,56 @@ def opt_estimation(depth_file_all, depth_file_linked, pos_cov_file_all, pos_cov_
     mean_depth_mag_dict = {}
     mean_depth_16s_all = {}
     mean_depth_16s_all_norm = {}
-    for each_16s in open(depth_file_all):
-        if not each_16s.startswith('MAG	16S	MAG_depth	16S_depth'):
-            each_16s_split = each_16s.strip().split('\t')
-            id_mag = each_16s_split[0]
-            id_16s = each_16s_split[1]
-            mag_depth = float(each_16s_split[2])
-            mean_depth = float(each_16s_split[3])
-            mean_depth_norm = float(each_16s_split[4])
-            mean_depth_mag_dict[id_mag] = mag_depth
-            mean_depth_16s_all[id_16s] = mean_depth
-            mean_depth_16s_all_norm[id_16s] = mean_depth_norm
-            marker_to_mag_dict[id_16s] = id_mag
+    with open(depth_file_all) as dfa:
+        for each_16s in dfa:
+            if not each_16s.startswith('MAG	16S	MAG_depth	16S_depth'):
+                each_16s_split = each_16s.strip().split('\t')
+                id_mag = each_16s_split[0]
+                id_16s = each_16s_split[1]
+                mag_depth = float(each_16s_split[2])
+                mean_depth = float(each_16s_split[3])
+                mean_depth_norm = float(each_16s_split[4])
+                mean_depth_mag_dict[id_mag] = mag_depth
+                mean_depth_16s_all[id_16s] = mean_depth
+                mean_depth_16s_all_norm[id_16s] = mean_depth_norm
+                marker_to_mag_dict[id_16s] = id_mag
 
     # read in mean depth (linked 16S)
     mean_depth_16s_linked = {}
     mean_depth_16s_linked_norm = {}
-    for each_16s in open(depth_file_linked):
-        if not each_16s.startswith('MAG	16S	MAG_depth	16S_depth'):
-            each_16s_split = each_16s.strip().split('\t')
-            id_16s = each_16s_split[1]
-            mean_depth = float(each_16s_split[3])
-            mean_depth_norm = float(each_16s_split[4])
-            mean_depth_16s_linked[id_16s] = mean_depth
-            mean_depth_16s_linked_norm[id_16s] = mean_depth_norm
+    with open(depth_file_linked) as dfl:
+        for each_16s in dfl:
+            if not each_16s.startswith('MAG	16S	MAG_depth	16S_depth'):
+                each_16s_split = each_16s.strip().split('\t')
+                id_16s = each_16s_split[1]
+                mean_depth = float(each_16s_split[3])
+                mean_depth_norm = float(each_16s_split[4])
+                mean_depth_16s_linked[id_16s] = mean_depth
+                mean_depth_16s_linked_norm[id_16s] = mean_depth_norm
 
     # read in depth by bp (all 16S)
     depth_by_bp_dict_all = {}
-    for each_bp_all in open(pos_cov_file_all):
-        each_bp_all_split = each_bp_all.strip().split('\t')
-        ref_if = each_bp_all_split[0]
-        pos = each_bp_all_split[1]
-        depth = int(each_bp_all_split[2])
-        if ref_if not in depth_by_bp_dict_all:
-            depth_by_bp_dict_all[ref_if] = {}
-        depth_by_bp_dict_all[ref_if][pos] = depth
+    with open(pos_cov_file_all) as pcfa:
+        for each_bp_all in pcfa:
+            each_bp_all_split = each_bp_all.strip().split('\t')
+            ref_if = each_bp_all_split[0]
+            pos = each_bp_all_split[1]
+            depth = int(each_bp_all_split[2])
+            if ref_if not in depth_by_bp_dict_all:
+                depth_by_bp_dict_all[ref_if] = {}
+            depth_by_bp_dict_all[ref_if][pos] = depth
 
     # read in depth by bp (linked 16S)
     depth_by_bp_dict_linked = {}
-    for each_bp_all in open(pos_cov_file_linked):
-        each_bp_all_split = each_bp_all.strip().split('\t')
-        ref_if = each_bp_all_split[0]
-        pos = each_bp_all_split[1]
-        depth = int(each_bp_all_split[2])
-        if ref_if not in depth_by_bp_dict_linked:
-            depth_by_bp_dict_linked[ref_if] = {}
-        depth_by_bp_dict_linked[ref_if][pos] = depth
+    with open(pos_cov_file_linked) as pcfl:
+        for each_bp_all in pcfl:
+            each_bp_all_split = each_bp_all.strip().split('\t')
+            ref_if = each_bp_all_split[0]
+            pos = each_bp_all_split[1]
+            depth = int(each_bp_all_split[2])
+            if ref_if not in depth_by_bp_dict_linked:
+                depth_by_bp_dict_linked[ref_if] = {}
+            depth_by_bp_dict_linked[ref_if][pos] = depth
 
     seq_var_con_combined_pos_dict = vxtractor_output_to_dict(vxtractor_op, seq_len_dict, end_len_to_ignore, ignore_region_end_pct, min_region_len_no_ignored)
 
@@ -1696,25 +1707,26 @@ def keep_best_blast_hit(file_in, file_out):
     best_hit_line = ''
     best_hit_query_id = ''
     best_hit_score = 0
-    for blast_hit in open(file_in):
-        blast_hit_split = blast_hit.strip().split('\t')
-        query_id = blast_hit_split[0]
-        bit_score = float(blast_hit_split[11])
+    with open(file_in) as fi:
+        for blast_hit in fi:
+            blast_hit_split = blast_hit.strip().split('\t')
+            query_id = blast_hit_split[0]
+            bit_score = float(blast_hit_split[11])
 
-        if best_hit_query_id == '':
-            best_hit_query_id = query_id
-            best_hit_line = blast_hit
-            best_hit_score = bit_score
+            if best_hit_query_id == '':
+                best_hit_query_id = query_id
+                best_hit_line = blast_hit
+                best_hit_score = bit_score
 
-        elif (query_id == best_hit_query_id) and (bit_score > best_hit_score):
-            best_hit_score = bit_score
-            best_hit_line = blast_hit
+            elif (query_id == best_hit_query_id) and (bit_score > best_hit_score):
+                best_hit_score = bit_score
+                best_hit_line = blast_hit
 
-        elif query_id != best_hit_query_id:
-            file_out_handle.write(best_hit_line)
-            best_hit_query_id = query_id
-            best_hit_line = blast_hit
-            best_hit_score = bit_score
+            elif query_id != best_hit_query_id:
+                file_out_handle.write(best_hit_line)
+                best_hit_query_id = query_id
+                best_hit_line = blast_hit
+                best_hit_score = bit_score
 
     file_out_handle.write(best_hit_line)
     file_out_handle.close()
@@ -1759,12 +1771,13 @@ def run_vxtractor_on_input_16s(input_16s, silva_ref_seq, get_16s_domain_wd, num_
     keep_best_blast_hit(blast_op, blast_op_best_hit)
 
     query_domain_dict = {}
-    for each_hit in open(blast_op_best_hit):
-        each_hit_split = each_hit.strip().split('\t')
-        query_id = each_hit_split[0]
-        ref_id = each_hit_split[1]
-        ref_domain = silva_seq_domain_dict[ref_id]
-        query_domain_dict[query_id] = ref_domain
+    with open(blast_op_best_hit) as bobh:
+        for each_hit in bobh:
+            each_hit_split = each_hit.strip().split('\t')
+            query_id = each_hit_split[0]
+            ref_id = each_hit_split[1]
+            ref_domain = silva_seq_domain_dict[ref_id]
+            query_domain_dict[query_id] = ref_domain
 
     bac_16s_num = 0
     arc_16s_num = 0
@@ -1783,8 +1796,8 @@ def run_vxtractor_on_input_16s(input_16s, silva_ref_seq, get_16s_domain_wd, num_
     input_16s_bac_handle.close()
     input_16s_arc_handle.close()
 
-    vxtractor_cmd_bac = 'perl %s -a -h %s -c %s -o /dev/null %s &> /dev/null' % (vxtractor_perl, hmm_folder_bac, vxtractor_op_csv_bac, input_16s_bac)
-    vxtractor_cmd_arc = 'perl %s -a -h %s -c %s -o /dev/null %s &> /dev/null' % (vxtractor_perl, hmm_folder_arc, vxtractor_op_csv_arc, input_16s_arc)
+    vxtractor_cmd_bac = 'perl %s -a -h %s -c %s -o /dev/null %s' % (vxtractor_perl, hmm_folder_bac, vxtractor_op_csv_bac, input_16s_bac)
+    vxtractor_cmd_arc = 'perl %s -a -h %s -c %s -o /dev/null %s' % (vxtractor_perl, hmm_folder_arc, vxtractor_op_csv_arc, input_16s_arc)
     if bac_16s_num > 0:
         os.system(vxtractor_cmd_bac)
     if arc_16s_num > 0:
@@ -1801,9 +1814,10 @@ def run_vxtractor_on_input_16s(input_16s, silva_ref_seq, get_16s_domain_wd, num_
 
     # check if output empty
     processed_seq_num = 0
-    for each_line in open(vxtractor_op_combined):
-        if not each_line.startswith(('Command:', 'Options:', 'Sequence,')):
-            processed_seq_num += 1
+    with open(vxtractor_op_combined) as voc:
+        for each_line in voc:
+            if not each_line.startswith(('Command:', 'Options:', 'Sequence,')):
+                processed_seq_num += 1
     if processed_seq_num == 0:
         print('vxtractor failed, program exited!')
         exit()
@@ -2061,11 +2075,9 @@ def get_16s_copy_num(args):
         os.system(bowtie_build_cmd)
 
         if reads_subsample_pct_for_mag_cov_gc == 100:
-            #mapping_cmd_mag = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --xeq --no-mixed --no-discordant --no-1mm-upfront --no-unal &> /dev/null' % (index_folder, combined_prefixed_mags_no_ext, reads_file_r1, reads_file_r2, sam_file_reads_to_mag, num_threads)
-            mapping_cmd_mag = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --xeq --no-unal &> /dev/null' % (index_folder, combined_prefixed_mags_no_ext, reads_file_r1, reads_file_r2, sam_file_reads_to_mag, num_threads)
+            mapping_cmd_mag = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --xeq --no-unal --quiet' % (index_folder, combined_prefixed_mags_no_ext, reads_file_r1, reads_file_r2, sam_file_reads_to_mag, num_threads)
         else:
-            #mapping_cmd_mag = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --xeq --no-mixed --no-discordant --no-1mm-upfront --no-unal &> /dev/null' % (index_folder, combined_prefixed_mags_no_ext, reads_file_r1_subset, reads_file_r2_subset, sam_file_reads_to_mag, num_threads)
-            mapping_cmd_mag = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --xeq --no-unal &> /dev/null' % (index_folder, combined_prefixed_mags_no_ext, reads_file_r1_subset, reads_file_r2_subset, sam_file_reads_to_mag, num_threads)
+            mapping_cmd_mag = 'bowtie2 -x %s/%s -1 %s -2 %s -S %s -p %s -f --xeq --no-unal --quiet' % (index_folder, combined_prefixed_mags_no_ext, reads_file_r1_subset, reads_file_r2_subset, sam_file_reads_to_mag, num_threads)
         report_and_log((mapping_cmd_mag), pwd_log_file, True)
         os.system(mapping_cmd_mag)
 
@@ -2086,8 +2098,8 @@ def get_16s_copy_num(args):
 
         # sort filtered_sam
         report_and_log(('Get_cn: sorting filtered sam file'), pwd_log_file, keep_quiet)
-        #sort_cmd_mag = 'samtools sort -O sam --threads %s -o %s %s &> /dev/null' % (num_threads, sam_file_reads_to_mag_filtered_sorted, sam_file_reads_to_mag)
-        sort_cmd_mag = 'samtools sort -O sam --threads %s -o %s %s &> /dev/null' % (num_threads, sam_file_reads_to_mag_filtered_sorted, sam_file_reads_to_mag_filtered_both_mapped)
+        #sort_cmd_mag = 'samtools sort -O sam --threads %s -o %s %s' % (num_threads, sam_file_reads_to_mag_filtered_sorted, sam_file_reads_to_mag)
+        sort_cmd_mag = 'samtools sort -O sam --threads %s -o %s %s' % (num_threads, sam_file_reads_to_mag_filtered_sorted, sam_file_reads_to_mag_filtered_both_mapped)
         report_and_log((sort_cmd_mag), pwd_log_file, True)
         os.system(sort_cmd_mag)
         #os.remove(sam_file_reads_to_mag)
@@ -2119,19 +2131,20 @@ def get_16s_copy_num(args):
     gnm_to_linked_16s_gc_content_dict = {}
     gnm_to_linked_16s_dict = {}
     linked_16s_to_gnm_dict = {}
-    for each_linkage in open(identified_linkage_gnm_level):
-        each_linkage_split = each_linkage.strip().split('\t')
-        if not each_linkage.startswith('MarkerGene	GenomicSeq	Linkage	Round'):
-            id_16s = each_linkage_split[0]
-            id_gnm = each_linkage_split[1]
-            gc_content_16s = marker_gc_content_dict[id_16s]
-            if id_gnm not in gnm_to_linked_16s_dict:
-                gnm_to_linked_16s_dict[id_gnm] = {id_16s}
-                gnm_to_linked_16s_gc_content_dict[id_gnm] = [gc_content_16s]
-            else:
-                gnm_to_linked_16s_dict[id_gnm].add(id_16s)
-                gnm_to_linked_16s_gc_content_dict[id_gnm].append(gc_content_16s)
-            linked_16s_to_gnm_dict[id_16s] = id_gnm
+    with open(identified_linkage_gnm_level) as ilgl:
+        for each_linkage in ilgl:
+            each_linkage_split = each_linkage.strip().split('\t')
+            if not each_linkage.startswith('MarkerGene	GenomicSeq	Linkage	Round'):
+                id_16s = each_linkage_split[0]
+                id_gnm = each_linkage_split[1]
+                gc_content_16s = marker_gc_content_dict[id_16s]
+                if id_gnm not in gnm_to_linked_16s_dict:
+                    gnm_to_linked_16s_dict[id_gnm] = {id_16s}
+                    gnm_to_linked_16s_gc_content_dict[id_gnm] = [gc_content_16s]
+                else:
+                    gnm_to_linked_16s_dict[id_gnm].add(id_16s)
+                    gnm_to_linked_16s_gc_content_dict[id_gnm].append(gc_content_16s)
+                linked_16s_to_gnm_dict[id_16s] = id_gnm
 
     unlinked_16s_set = set()
     for each_16s in marker_len_dict:
@@ -2185,30 +2198,31 @@ def get_16s_copy_num(args):
 
     # get region_to_ignore_dict
     region_to_ignore_dict = {}
-    for each_gene in open(combined_prefixed_mags_gff):
-        if not each_gene.startswith('#'):
-            each_gene_split = each_gene.strip().split('\t')
-            ctg_id = each_gene_split[0]
-            mag_id = ctg_id.split(gnm_to_ctg_connector)[0]
-            hit_start = int(each_gene_split[3])
+    with open(combined_prefixed_mags_gff) as cpmg:
+        for each_gene in cpmg:
+            if not each_gene.startswith('#'):
+                each_gene_split = each_gene.strip().split('\t')
+                ctg_id = each_gene_split[0]
+                mag_id = ctg_id.split(gnm_to_ctg_connector)[0]
+                hit_start = int(each_gene_split[3])
 
-            # get to_ignore_region_start
-            to_ignore_region_start = hit_start - window_len
-            if to_ignore_region_start < 1:
-                to_ignore_region_start = 1
+                # get to_ignore_region_start
+                to_ignore_region_start = hit_start - window_len
+                if to_ignore_region_start < 1:
+                    to_ignore_region_start = 1
 
-            # get to_ignore_region_end
-            hit_end = int(each_gene_split[4])
-            to_ignore_region_end = hit_end
+                # get to_ignore_region_end
+                hit_end = int(each_gene_split[4])
+                to_ignore_region_end = hit_end
 
-            # initialize dict
-            if mag_id not in region_to_ignore_dict:
-                region_to_ignore_dict[mag_id] = dict()
-            if ctg_id not in region_to_ignore_dict[mag_id]:
-                region_to_ignore_dict[mag_id][ctg_id] = set()
+                # initialize dict
+                if mag_id not in region_to_ignore_dict:
+                    region_to_ignore_dict[mag_id] = dict()
+                if ctg_id not in region_to_ignore_dict[mag_id]:
+                    region_to_ignore_dict[mag_id][ctg_id] = set()
 
-            for pos in list(range(to_ignore_region_start, (to_ignore_region_end + 1))):
-                region_to_ignore_dict[mag_id][ctg_id].add(pos)
+                for pos in list(range(to_ignore_region_start, (to_ignore_region_end + 1))):
+                    region_to_ignore_dict[mag_id][ctg_id].add(pos)
 
     ################################################## read in depth file ##################################################
 
@@ -2223,21 +2237,22 @@ def get_16s_copy_num(args):
 
         report_and_log(('Get_cn: reading in depth file'), pwd_log_file, keep_quiet)
         seq_pos_depth_dict_gnm_ctg = {}
-        for each_bp in open(sam_file_reads_to_mag_filtered_sorted_depth):
-            each_bp_split = each_bp.strip().split('\t')
-            seq_id = each_bp_split[0]
-            gnm_id = seq_id.split(gnm_to_ctg_connector)[0]
-            seq_pos = each_bp_split[1]
-            pos_depth = int(each_bp_split[2])
-            if reads_subsample_pct_for_mag_cov_gc != 100:
-                pos_depth = pos_depth * round(100/reads_subsample_pct_for_mag_cov_gc)
+        with open(sam_file_reads_to_mag_filtered_sorted_depth) as sfrtmfsd:
+            for each_bp in sfrtmfsd:
+                each_bp_split = each_bp.strip().split('\t')
+                seq_id = each_bp_split[0]
+                gnm_id = seq_id.split(gnm_to_ctg_connector)[0]
+                seq_pos = each_bp_split[1]
+                pos_depth = int(each_bp_split[2])
+                if reads_subsample_pct_for_mag_cov_gc != 100:
+                    pos_depth = pos_depth * round(100/reads_subsample_pct_for_mag_cov_gc)
 
-            # get seq_pos_depth_dict_gnm_ctg
-            if gnm_id not in seq_pos_depth_dict_gnm_ctg:
-                seq_pos_depth_dict_gnm_ctg[gnm_id] = dict()
-            if seq_id not in seq_pos_depth_dict_gnm_ctg[gnm_id]:
-                seq_pos_depth_dict_gnm_ctg[gnm_id][seq_id] = dict()
-            seq_pos_depth_dict_gnm_ctg[gnm_id][seq_id][seq_pos] = pos_depth
+                # get seq_pos_depth_dict_gnm_ctg
+                if gnm_id not in seq_pos_depth_dict_gnm_ctg:
+                    seq_pos_depth_dict_gnm_ctg[gnm_id] = dict()
+                if seq_id not in seq_pos_depth_dict_gnm_ctg[gnm_id]:
+                    seq_pos_depth_dict_gnm_ctg[gnm_id][seq_id] = dict()
+                seq_pos_depth_dict_gnm_ctg[gnm_id][seq_id][seq_pos] = pos_depth
 
         # make this multiprocessing
         get_gc_bias_argument_lol = []
@@ -2290,9 +2305,9 @@ def get_16s_copy_num(args):
         os.system(index_all_16s_cmd)
 
         if matam_16s_reads is None:
-            map_16s_reads_to_linked_16s_cmd = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f --local --xeq --all --no-unal -N 1 -L 30 &> /dev/null' % (marker_seq_index, reads_file_r1, reads_file_r2, all_16s_sam_file, num_threads)
+            map_16s_reads_to_linked_16s_cmd = 'bowtie2 -x %s -U %s,%s -S %s -p %s -f --local --xeq --all --no-unal -N 1 -L 30 --quiet' % (marker_seq_index, reads_file_r1, reads_file_r2, all_16s_sam_file, num_threads)
         else:
-            map_16s_reads_to_linked_16s_cmd = 'bowtie2 -x %s -U %s -S %s -p %s -f --local --xeq --all --no-unal -N 1 -L 30 &> /dev/null' % (marker_seq_index, matam_16s_reads, all_16s_sam_file, num_threads)
+            map_16s_reads_to_linked_16s_cmd = 'bowtie2 -x %s -U %s -S %s -p %s -f --local --xeq --all --no-unal -N 1 -L 30 --quiet' % (marker_seq_index, matam_16s_reads, all_16s_sam_file, num_threads)
         report_and_log((map_16s_reads_to_linked_16s_cmd), pwd_log_file, True)
         os.system(map_16s_reads_to_linked_16s_cmd)
 
@@ -2301,7 +2316,7 @@ def get_16s_copy_num(args):
             print(all_16s_sam_file)
             exit()
 
-        sort_by_read_cmd = 'samtools sort -n -O sam --threads %s -o %s %s &> /dev/null' % (num_threads, all_16s_sam_file_sorted, all_16s_sam_file)
+        sort_by_read_cmd = 'samtools sort -n -O sam --threads %s -o %s %s' % (num_threads, all_16s_sam_file_sorted, all_16s_sam_file)
         report_and_log(('Get_cn: sorting sam file by read id'), pwd_log_file, keep_quiet)
         report_and_log((sort_by_read_cmd), pwd_log_file, True)
         os.system(sort_by_read_cmd)
@@ -2375,12 +2390,12 @@ def get_16s_copy_num(args):
     # sort sam file
     report_and_log(('Get_cn: sorting filtered sam file by contig id'), pwd_log_file, keep_quiet)
 
-    sort_by_ctg_cmd        = 'samtools sort -O sam --threads %s -o %s %s &> /dev/null' % (num_threads, all_16s_sam_file_filtered_random_sorted, all_16s_sam_file_filtered_random)
+    sort_by_ctg_cmd        = 'samtools sort -O sam --threads %s -o %s %s' % (num_threads, all_16s_sam_file_filtered_random_sorted, all_16s_sam_file_filtered_random)
     report_and_log((sort_by_ctg_cmd), pwd_log_file, True)
     os.system(sort_by_ctg_cmd)
     os.remove(all_16s_sam_file_filtered_random)
 
-    sort_by_ctg_cmd_linked = 'samtools sort -O sam --threads %s -o %s %s &> /dev/null' % (num_threads, linked_16s_sam_file_filtered_random_sorted, linked_16s_sam_file_filtered_random)
+    sort_by_ctg_cmd_linked = 'samtools sort -O sam --threads %s -o %s %s' % (num_threads, linked_16s_sam_file_filtered_random_sorted, linked_16s_sam_file_filtered_random)
     report_and_log((sort_by_ctg_cmd_linked), pwd_log_file, True)
     os.system(sort_by_ctg_cmd_linked)
     os.remove(linked_16s_sam_file_filtered_random)
@@ -2405,35 +2420,38 @@ def get_16s_copy_num(args):
 
     depth_dict_mag = {}
     gc_content_dict_mag = {}
-    for each_mag in open(mag_depth_GC_content_file):
-        if not each_mag.startswith('MAG\tDepth(x)\tGC(%)'):
-            each_mag_split = each_mag.strip().split('\t')
-            mag_id = each_mag_split[0]
-            mag_depth = float(each_mag_split[1])
-            mag_gc_content = float(each_mag_split[2])
-            depth_dict_mag[mag_id] = mag_depth
-            gc_content_dict_mag[mag_id] = mag_gc_content
+    with open(mag_depth_GC_content_file) as mdGCcf:
+        for each_mag in mdGCcf:
+            if not each_mag.startswith('MAG\tDepth(x)\tGC(%)'):
+                each_mag_split = each_mag.strip().split('\t')
+                mag_id = each_mag_split[0]
+                mag_depth = float(each_mag_split[1])
+                mag_gc_content = float(each_mag_split[2])
+                depth_dict_mag[mag_id] = mag_depth
+                gc_content_dict_mag[mag_id] = mag_gc_content
 
     ######################################## read in 16S depth and GC content ########################################
 
     depth_dict_16s_all = {}
     gc_content_dict_16s = {}
-    for each_16s in open(depth_GC_content_file_all):
-        if not each_16s.startswith('16S\tDepth(x)\tGC(%)'):
-            each_16s_split = each_16s.strip().split('\t')
-            s16_id = each_16s_split[0]
-            s16_depth = float(each_16s_split[1])
-            s16_gc_content = float(each_16s_split[2])
-            depth_dict_16s_all[s16_id] = s16_depth
-            gc_content_dict_16s[s16_id] = s16_gc_content
+    with open(depth_GC_content_file_all) as dGCcfa:
+        for each_16s in dGCcfa:
+            if not each_16s.startswith('16S\tDepth(x)\tGC(%)'):
+                each_16s_split = each_16s.strip().split('\t')
+                s16_id = each_16s_split[0]
+                s16_depth = float(each_16s_split[1])
+                s16_gc_content = float(each_16s_split[2])
+                depth_dict_16s_all[s16_id] = s16_depth
+                gc_content_dict_16s[s16_id] = s16_gc_content
 
     depth_dict_16s_linked = {}
-    for each_16s in open(depth_GC_content_file_linked):
-        if not each_16s.startswith('16S\tDepth(x)\tGC(%)'):
-            each_16s_split = each_16s.strip().split('\t')
-            s16_id = each_16s_split[0]
-            s16_depth = float(each_16s_split[1])
-            depth_dict_16s_linked[s16_id] = s16_depth
+    with open(depth_GC_content_file_linked) as dGCcfl:
+        for each_16s in dGCcfl:
+            if not each_16s.startswith('16S\tDepth(x)\tGC(%)'):
+                each_16s_split = each_16s.strip().split('\t')
+                s16_id = each_16s_split[0]
+                s16_depth = float(each_16s_split[1])
+                depth_dict_16s_linked[s16_id] = s16_depth
 
     ######################################## get 16S copy number ########################################
 
@@ -2454,27 +2472,29 @@ def get_16s_copy_num(args):
     # get reported_ref_16s_copy_num_dict
     reported_ref_16s_copy_num_dict = {}
     if provided_cp_num_txt is not None:
-        for each_ref in open(provided_cp_num_txt):
-            if not each_ref.startswith('Genome\t'):
-                each_ref_split = each_ref.strip().split('\t')
-                ref_id = each_ref_split[0]
-                reported_copy_num = float(each_ref_split[1])
-                reported_ref_16s_copy_num_dict[ref_id] = reported_copy_num
+        with open(provided_cp_num_txt) as pcnt:
+            for each_ref in pcnt:
+                if not each_ref.startswith('Genome\t'):
+                    each_ref_split = each_ref.strip().split('\t')
+                    ref_id = each_ref_split[0]
+                    reported_copy_num = float(each_ref_split[1])
+                    reported_ref_16s_copy_num_dict[ref_id] = reported_copy_num
 
     mag_cp_num_dict = {}
     mag_cp_num_dict_norm = {}
-    for each_16s in open(estimated_cp_num_txt_by_16s):
-        if not each_16s.startswith('MAG	16S	Coverage'):
-            each_16s_split = each_16s.strip().split('\t')
-            mag_id = each_16s_split[0]
-            cp_num = float(each_16s_split[5])
-            cp_num_norm = float(each_16s_split[6])
-            if mag_id not in mag_cp_num_dict:
-                mag_cp_num_dict[mag_id] = cp_num
-                mag_cp_num_dict_norm[mag_id] = cp_num_norm
-            else:
-                mag_cp_num_dict[mag_id] += cp_num
-                mag_cp_num_dict_norm[mag_id] += cp_num_norm
+    with open(estimated_cp_num_txt_by_16s) as ecnt16:
+        for each_16s in ecnt16:
+            if not each_16s.startswith('MAG	16S	Coverage'):
+                each_16s_split = each_16s.strip().split('\t')
+                mag_id = each_16s_split[0]
+                cp_num = float(each_16s_split[5])
+                cp_num_norm = float(each_16s_split[6])
+                if mag_id not in mag_cp_num_dict:
+                    mag_cp_num_dict[mag_id] = cp_num
+                    mag_cp_num_dict_norm[mag_id] = cp_num_norm
+                else:
+                    mag_cp_num_dict[mag_id] += cp_num
+                    mag_cp_num_dict_norm[mag_id] += cp_num_norm
 
     estimated_16s_cp_num_list = []
     estimated_16s_cp_num_list_norm = []

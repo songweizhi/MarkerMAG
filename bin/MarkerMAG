@@ -22,6 +22,7 @@ import argparse
 from datetime import datetime
 from MarkerMAG.MarkerMAG_config import config_dict
 
+
 def version(config_dict):
     version_file = open('%s/VERSION' % config_dict['config_file_path'])
     return version_file.readline().strip()
@@ -118,10 +119,6 @@ if __name__ == '__main__':
         link_16s_parser_program.add_argument('-tmp',             required=False, action="store_true",                            help='Keep temporary files')
         link_16s_parser_program.add_argument('-quiet',           required=False, action="store_true",                            help='Not report progress')
         link_16s_parser_program.add_argument('-force',           required=False, action="store_true",                            help='Force overwrite existing results')
-
-        # Dependencies related
-        #link_16s_parser_dependency.add_argument('-mira',          required=False, action="store_true",                           help='run Mira, instead of Spades')
-        #link_16s_parser_dependency.add_argument('-mira_tmp',      required=False, metavar='',           default=None,            help='tmp dir for mira')
 
         # For debugging
         link_16s_parser_debug.add_argument('-test_mode',        required=False, action="store_true",                            help='Only for debugging, do not provide')
@@ -220,8 +217,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'barrnap_16s':
         from MarkerMAG import barrnap_16s
         barrnap_16s_parser = subparsers.add_parser('barrnap_16s', description='identify 16S sequences with Barrnap', usage=barrnap_16s.barrnap_16s_usage)
-        barrnap_16s_parser.add_argument('-p',       required=True, type=str,               help='output prefix')
-        barrnap_16s_parser.add_argument('-g',       required=True, type=str,               help='genome folder')
+        barrnap_16s_parser.add_argument('-g',       required=True, type=str,               help='genome folder/file')
         barrnap_16s_parser.add_argument('-x',       required=False, default='fasta',       help='genome file extension, default: fasta')
         barrnap_16s_parser.add_argument('-t',       required=False, type=int, default=1,   help='number of threads, default: 1')
         barrnap_16s_parser.add_argument('-force',   required=False, action="store_true",   help='force overwrite existing results')
@@ -235,16 +231,29 @@ if __name__ == '__main__':
 
 upload_to_pypi_cmd = '''
 
+conda deactivate      
 cd /Users/songweizhi/PycharmProjects/MarkerMAG
 rm -r build dist MarkerMAG.egg-info
-python3 setup.py sdist bdist_wheel
-# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+#python3 setup.py sdist bdist_wheel
+/usr/local/bin/python3.6 setup.py sdist bdist_wheel
 twine upload dist/* --verbose
-songweizhi
 
+songweizhi
 shan88
+
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 pip3 install --upgrade MarkerMAG
 pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
+'''
 
+
+'''
+To-do:
+1. insert size is important
+2. check duplicate sequences in input files
+3. ignore reads with two continuous mismatch  56=2x55=
+4. no mismatch in clipping reads?
+5. put vis at the final step
+6. if all MAGs are linked
 '''

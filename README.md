@@ -4,7 +4,7 @@
 [![pypi licence](https://img.shields.io/pypi/l/MarkerMAG.svg)](https://opensource.org/licenses/gpl-3.0.html)
 [![pypi version](https://img.shields.io/pypi/v/MarkerMAG.svg)](https://pypi.python.org/pypi/MarkerMAG) 
 [![Bioconda](https://img.shields.io/conda/vn/bioconda/markermag.svg?color=green)](https://anaconda.org/bioconda/markermag)
-[![DOI         ](https://img.shields.io/static/v1.svg?label=DOI&message=10.1093/bioinformatics/btac398&color=orange)](https://doi.org/10.1093/bioinformatics/btac398)
+[![DOI](https://img.shields.io/static/v1.svg?label=DOI&message=10.1093/bioinformatics/btac398&color=orange)](https://doi.org/10.1093/bioinformatics/btac398)
 
 
 Publication
