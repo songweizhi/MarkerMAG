@@ -10,7 +10,7 @@
 Publication
 ---
 
-+ **Song WZ**, Zhang S, Thomas T* (2022) MarkerMAG: linking metagenome-assembled genomes (MAGs) with 16S rRNA marker genes using paired-end short reads, _Bioinformatics_. [https://doi.org/10.1093/bioinformatics/btac398](https://doi.org/10.1093/bioinformatics/btac398)
++ **Weizhi Song**, Shan Zhang, Torsten Thomas*, MarkerMAG: linking metagenome-assembled genomes (MAGs) with 16S rRNA marker genes using paired-end short reads, Bioinformatics, 2022, btac398, [https://doi.org/10.1093/bioinformatics/btac398](https://doi.org/10.1093/bioinformatics/btac398)
 + Contact: Dr. Weizhi Song (songwz03@gmail.com), Prof. Torsten Thomas (t.thomas@unsw.edu.au)
 + Center for Marine Science & Innovation, University of New South Wales, Sydney, Australia
 
@@ -52,7 +52,7 @@ How to install
       conda activate MarkerMAG_env
       # MarkerMAG is ready for running now, type "MarkerMAG -h" for help
       
-      # To deactivate the environment
+      # To leave the environment
       conda deactivate
 
 + It can also be installed with pip. Software dependencies need to be in your system path in this case. 

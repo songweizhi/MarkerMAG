@@ -241,10 +241,7 @@ twine upload dist/* --verbose
 songweizhi
 shan88
 
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-
 pip3 install --upgrade MarkerMAG
-pip3 install --upgrade -i https://test.pypi.org/simple/ MarkerMAG
 '''
 
 

@@ -59,6 +59,7 @@ def barrnap_16s(args):
 
     # define file name
     barrnap_16s_wd          = '%s_barrnap_16s_wd'               % output_prefix
+    barrnap_cmd_txt         = '%s/barrnap_commadns.txt'         % barrnap_16s_wd
     barrnap_op_foler        = '%s/%s_barrnap_outputs'           % (barrnap_16s_wd, output_prefix)
     output_seq_16s_folder   = '%s/%s_16S_seq'                   % (barrnap_16s_wd, output_prefix)
     combined_16s_seqs       = '%s/%s_16S.fasta'                 % (barrnap_16s_wd, output_prefix)
@@ -98,8 +99,12 @@ def barrnap_16s(args):
         pwd_op_ffn = '%s/%s.ffn' % (barrnap_op_foler, gnm_id)
         pwd_op_gff = '%s/%s.gff' % (barrnap_op_foler, gnm_id)
         pwd_op_log = '%s/%s.log' % (barrnap_op_foler, gnm_id)
-        barrnap_cmd = 'barrnap --quiet -o %s %s > %s 2> %s' % (pwd_op_ffn, pwd_genome, pwd_op_gff, pwd_op_log)
+        barrnap_cmd = 'barrnap --quiet --outseq %s %s > %s 2> %s' % (pwd_op_ffn, pwd_genome, pwd_op_gff, pwd_op_log)
         argument_list_for_barrnap.append(barrnap_cmd)
+
+    # write out barrnap commands
+    with open(barrnap_cmd_txt, 'w') as barrnap_cmd_txt_handle:
+        barrnap_cmd_txt_handle.write('\n'.join(argument_list_for_barrnap))
 
     # run barrnap with multiprocessing
     pool = mp.Pool(processes=num_threads)
