@@ -65,3 +65,5 @@ Copy number of 16S rRNA genes in reference genomes are provided in the bottom ro
        # run matam with matam_16s
        matam_db_folder='/srv/scratch/z5039045/DB/Matam'
        MarkerMAG matam_16s -p soil -r1 soil_R1.fastq -r2 soil_R2.fastq -pct 1,5,10,25,50,75,100 -i 0.999 -d $matam_db_folder/SILVA_138_2_SSURef_NR99_id99/SILVA_138.2_SSURef_NR99_tax_silva_NR99 -t 12
+
+
